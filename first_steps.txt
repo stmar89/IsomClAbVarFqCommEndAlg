@@ -392,7 +392,8 @@
     // u is a map u:U->OA giving representatives 
     // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
         U,u:=units_quotient_01(S); //u:U->A
-        id_sigma:=hom< U->U | [ (x-sigma(x))@@u : x in [ u(x) : x in Generators(U)] ]>;
+        Ugens_inA:=[ u(U.i) : i in [1..Ngens(U)] ];
+        id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in Ugens_inA ]>;
         F:=Kernel(id_sigma);
         return U,u,F;
     end function;
@@ -408,14 +409,26 @@
     end function;
 
     // TEST
+    /*
     P:=places_01_E(E)[1];
     P:=primes_of_S_above_place_of_E(WR,P)[1];
     units_quotient_P(WR,P);
     units_quotient_01(WR);
     units_quotient_fixed(WR,sigma);
+    S:=WR;
+    U,u:=units_quotient_01(S); //u:U->A
+    [ u(x) : x in Generators(U) ];
+    
+
+    id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in [ u(x) : x in Generators(U)] ]>;
+    F:=Kernel(id_sigma);
+    F;
+    */
+
     oo:=OverOrders(WR);
     for S in oo do
-        units_quotient_fixed(S,sigma);
+        Index(MaximalOrder(A),S);
+        _:=units_quotient_fixed(S,sigma);
     end for;
 
 
