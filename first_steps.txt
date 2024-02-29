@@ -97,7 +97,8 @@
     // I dropped the tilde from the notation...I don't hate my life enough.
     // ################### 
     L<zeta>:=CyclotomicField(q-1);
-    sigma_L:=hom< L->L | zeta:->zeta^p >; //does not have inverse
+    sigma_L:=hom< L->L | [ zeta^p ] >; //does not have inverse
+    assert sigma_L(2) eq 2;
     OL:=MaximalOrder(L);
     zb_OL:=Basis(OL);
 
@@ -125,8 +126,6 @@
     // Delta E \to A, the natural embedding
     Delta_map:=map< E->A | z:->SumOfProducts(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A) >;
 
-
-
     // tilde sigma: acts as zeta:->zeta^q on each compoenent of A
     sigma_image:=function(x)
         x_comp:=Components(x);
@@ -143,6 +142,7 @@
     end function;
     // TODO add inverse
     sigma:=map< A-> A | x:->sigma_image(x) >; //does not have inverse
+    assert forall{ x : x in [ Delta_map(y) : y in ZBasis(MaximalOrder(E))] | x eq sigma(x) };
 
     // tilde W_R: order isomorphic to W \otimes R
     gens_WR:=&cat[ [ embs_A[i](nfs_A_abs[i]!z*pi_A_comps[i]) , 
@@ -204,17 +204,9 @@
     end function;
    
     //TODO 
-    // - the following 4 functions should be intrinsics. 
+    // - the following 3 functions should be intrinsics. 
     // - using the build it intrinsics for number fields is probably faster (maybe they use p-adics factorizations); 
     // - everything should be cached as attributs.
-
-    uniformizer:=function(P)
-        Q,q:=Quotient(P,P^2);
-        repeat
-            t:=Random(Q);
-        until not IsZero(t);
-        return t@@q;
-    end function;
 
     inertia_degree:=function(P)
         q:=Index(Order(P),P);
@@ -333,7 +325,7 @@
     // Given an order S in A and a prime P of S, it computes U:=O_{A,P}^*/S_P^*,
     // where O_A is the maximal order of A, together with map u:U->O_A
     // This is based on Lemma ADDREF
-        q:=Index(Order(P),P);
+        q:=Index(S,P);
         t,p:=IsPrimePower(q);
         assert t; delete t; delete q;
         OA:=MaximalOrder(Algebra(S));
@@ -358,6 +350,7 @@
             // gens is a set of generators of (S/ff+P^m)^* = (S_P/ff_P)^* in A.
         U,u0:=quo<D_OA | [ g@@d_OA : g in gens ]>; // u0:D_OA->U
         u:=map<U->Algebra(OA) | x:->d_OA(x@@u0), y:->u0(y@@d_OA) >;
+        assert forall{ g : g in Generators(U) | (u(g))@@u eq g};
         return U,u;
     end function;
    
@@ -400,9 +393,7 @@
     // u is a map u:U->OA giving representatives 
     // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
         U,u:=units_quotient_01(S); //u:U->A
-//TODO issue with the @@u step in the next line
-    UAO,uOA:=UnitGroup(MaximalOrder(Algebra(S)));
-    [ u(x)@@uOA : x in Generators(U) ];
+//TODO issue with the @@u step in the next line ... it seems that sigma has issues. see above
         id_sigma:=hom< U->U | [ (x-sigma(x))@@u : x in [ u(x) : x in Generators(U)] ]>;
         F:=Kernel(id_sigma);
         return U,u,F;
