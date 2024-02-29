@@ -366,13 +366,19 @@
         OA:=MaximalOrder(A);
         return PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
     end function;
+    
+    primes_of_S_above_place_of_E:=function(S,P)
+    // given a maximal ideal P of OE and an order S of A returns the maximal ideals of S above P
+        oneS:=OneIdeal(S);
+        A:=Algebra(S);
+        pp:=primes_of_A_above_place_of_E(A,P);
+        pp:=[ oneS meet (S!!P) : P in pp ];
+        return Setseq(Seqset(&cat[PrimesAbove(P) : P in pp ]));
+    end function;
 
     units_quotient_01:=function(S)
     // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA
-        oneS:=OneIdeal(S);
-        pp:=&cat[ primes_of_A_above_place_of_E(A,P) : P in places_01_E(E) ];
-        pp:=[ oneS meet (S!!P) : P in pp ];
-        primes_01_S:=Setseq(Seqset(&cat[PrimesAbove(P) : P in pp ]));
+        primes_01_S:=&cat[ primes_of_S_above_place_of_E(S,P) : P in places_01_E(E)];
         Us:=[];
         us:=[];
         for P in primes_01_S do
@@ -384,6 +390,7 @@
         U,embs,projs:=DirectSum(Us);
         u:=map<U->Algebra(S) |  x:->&*[ us[i](projs[i](x)) : i in [1..n] ],
                                 y:->&+[ embs[i](y@@us[i]) : i in [1..n] ] >;
+        assert forall{ g : g in Generators(U) | (u(g))@@u eq g};
         return U,u;
     end function;
 
@@ -393,6 +400,9 @@
     // u is a map u:U->OA giving representatives 
     // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
         U,u:=units_quotient_01(S); //u:U->A
+//TODO issue with the @@u step in the next line
+    UAO,uOA:=UnitGroup(MaximalOrder(Algebra(S)));
+    [ u(x)@@uOA : x in Generators(U) ];
         id_sigma:=hom< U->U | [ (x-sigma(x))@@u : x in [ u(x) : x in Generators(U)] ]>;
         F:=Kernel(id_sigma);
         return U,u,F;
@@ -409,6 +419,7 @@
     end function;
 
     // TEST
+    units_quotient_fixed(WR,sigma);
     oo:=OverOrders(WR);
     for S in oo do
         units_quotient_fixed(S,sigma);
