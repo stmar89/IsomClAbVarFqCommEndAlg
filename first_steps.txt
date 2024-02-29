@@ -158,36 +158,56 @@
         gens_max:=[ embs_A[i](nfs_A_abs[i]!z*Components(g)[i]) 
                            : i in [1..#nfs_A], z in zb_OL , g in zbOEinA ];
         assert IsMaximal(Order(gens_max));
+        time _:=MaximalOrder(A);
+        time _:=IsMaximal(WR);
     // end test...it looks good
 
-    time _:=MaximalOrder(A);
-    time _:=IsMaximal(WR);
 
     // now we starting working on the part with slope in (0,1)
     // Step 1: W'_R-isomorphism classes.
     O_A:=MaximalOrder(A);
 
-    // how do I find the primes of slope in (0,1);
-    slope_A:=function(P)
-    // given a prime of WR returns the slope of P
-    // see beginning of 4.3.1, for the definition
-    // TODO we should store the slope of P, mm and all other primes above P
-        O:=MaximalOrder(Algebra(P));
-        pp:=PrimesAbove(O!!P);
-        mm:=pp[1];
-        _,comp:=IsProductOfIdeals(mm);
-        ind:=[ i : i in [1..#comp] | not NumberField(Order(comp[i]))!1 in comp[i] ];
-        assert #ind eq 1;
-        ind:=ind[1];
-        mm:=comp[ind];
-        pi_ind:=Components(pi_A)[ind];
-        val_pi:=Valuation(pi_ind,mm);
-        e_mm:=RamificationIndex(mm);
-        return val_pi/(a*e_mm);
+//    // how do I find the primes of slope in (0,1);
+//    slope_A:=function(P)
+//    // given a prime of WR returns the slope of P
+//    // see beginning of 4.3.1, for the definition
+//    // TODO we should store the slope of P, mm and all other primes above P
+//        O:=MaximalOrder(Algebra(P));
+//        pp:=PrimesAbove(O!!P);
+//        mm:=pp[1];
+//        _,comp:=IsProductOfIdeals(mm);
+//        ind:=[ i : i in [1..#comp] | not NumberField(Order(comp[i]))!1 in comp[i] ];
+//        assert #ind eq 1;
+//        ind:=ind[1];
+//        mm:=comp[ind];
+//        pi_ind:=Components(pi_A)[ind];
+//        val_pi:=Valuation(pi_ind,mm);
+//        e_mm:=RamificationIndex(mm);
+//        return val_pi/(a*e_mm);
+//    end function;
+
+    primes_of_A_above_place_of_E:=function(A,P)
+    // given a maximal ideal P of OE returns the maximal ideals of OA above P
+        OA:=MaximalOrder(A);
+        return PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+    end function;
+    
+    primes_of_S_above_place_of_E:=function(S,P)
+    // given a maximal ideal P of OE and an order S of A returns the maximal ideals of S above P
+        oneS:=OneIdeal(S);
+        A:=Algebra(S);
+        pp:=primes_of_A_above_place_of_E(A,P);
+        pp:=[ oneS meet (S!!P) : P in pp ];
+        return Setseq(Seqset(&cat[PrimesAbove(P) : P in pp ]));
+    end function;
+
+    places_01_E:=function(E)
+    // returns the places of E_p of slope in (0,1)
+        return [ P : P in PrimesAbove(p*MaximalOrder(E)) | 0 lt sp and sp lt 1 where sp:=slope_E(P) ]; 
     end function;
 
     // We compute the W'_R-isomorpshim classes of W'_R-ideals.
-    pp_01:=[ P : P in PrimesAbove(p*WR) | 0 lt sp and sp lt 1 where sp:=slope_A(P) ];
+    pp_01:=&cat[ primes_of_A_above_place_of_E(A,P) : P in places_01_E(E) ];
     k:=Valuation(Index(O_A,WR),p);
     part_01:=[];
     for P in pp_01 do
@@ -196,18 +216,10 @@
         Append(~part_01, [ WR!!I : I in wk ]);
     end for;
 
-    // Step 2
-
-    places_01_E:=function(E)
-    // returns the places of E_p of slope in (0,1)
-        return [ P : P in PrimesAbove(p*MaximalOrder(E)) | 0 lt sp and sp lt 1 where sp:=slope_E(P) ]; 
-    end function;
-   
     //TODO 
     // - the following 3 functions should be intrinsics. 
     // - using the build it intrinsics for number fields is probably faster (maybe they use p-adics factorizations); 
     // - everything should be cached as attributs.
-
     inertia_degree:=function(P)
         q:=Index(Order(P),P);
         t,p,f:=IsPrimePower(q);
@@ -232,6 +244,8 @@
         assert t;
         return valuation(p,P);
     end function;
+   
+
 
     exponents_from_Waterhouse:=function(P)
     // Use Proposition~\ref{prop:FVstable_OO} to compute up to $\Delta'$-isomorphism all $W'\{F,V\}$-ideals $J_1,\ldots,J_m$ having maximal multiplicator ring $\OO_{A'}$, each $J_j$ given as tuples of vectors of the form $(t_\nu^{\varepsilon_{j,\nu,1}},\ldots, t_\nu^{\varepsilon_{j,\nu,g_\nu}})_\nu$.
@@ -353,21 +367,6 @@
         assert forall{ g : g in Generators(U) | (u(g))@@u eq g};
         return U,u;
     end function;
-   
-    primes_of_A_above_place_of_E:=function(A,P)
-    // given a maximal ideal P of OE returns the maximal ideals of OA above P
-        OA:=MaximalOrder(A);
-        return PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
-    end function;
-    
-    primes_of_S_above_place_of_E:=function(S,P)
-    // given a maximal ideal P of OE and an order S of A returns the maximal ideals of S above P
-        oneS:=OneIdeal(S);
-        A:=Algebra(S);
-        pp:=primes_of_A_above_place_of_E(A,P);
-        pp:=[ oneS meet (S!!P) : P in pp ];
-        return Setseq(Seqset(&cat[PrimesAbove(P) : P in pp ]));
-    end function;
 
     units_quotient_01:=function(S)
     // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA
@@ -393,7 +392,6 @@
     // u is a map u:U->OA giving representatives 
     // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
         U,u:=units_quotient_01(S); //u:U->A
-//TODO issue with the @@u step in the next line ... it seems that sigma has issues. see above
         id_sigma:=hom< U->U | [ (x-sigma(x))@@u : x in [ u(x) : x in Generators(U)] ]>;
         F:=Kernel(id_sigma);
         return U,u,F;
@@ -410,6 +408,10 @@
     end function;
 
     // TEST
+    P:=places_01_E(E)[1];
+    P:=primes_of_S_above_place_of_E(WR,P)[1];
+    units_quotient_P(WR,P);
+    units_quotient_01(WR);
     units_quotient_fixed(WR,sigma);
     oo:=OverOrders(WR);
     for S in oo do
