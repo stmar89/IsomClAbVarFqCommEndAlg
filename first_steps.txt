@@ -1,7 +1,9 @@
 /* vim: set syntax=magma : */
 /*
     TODO
-    Add references to the paper (scan for ADDREF, some might be missing)
+    - Add references to the paper (scan for ADDREF, some might be missing)
+    - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
+        Need to implement it.
 */
 
     AttachSpec("~/AlgEt/spec");
@@ -46,7 +48,6 @@
     sing:=SingularPrimes(R);
     sing_ell:=[];
     sing_0:=[];
-    sing_01:=[];
     sing_1:=[];
     for P in sing do
         ind:=Index(R,P);
@@ -58,9 +59,6 @@
                 Append(~sing_0,P);
             elif sP eq 1 then
                 Append(~sing_1,P);
-            else
-                assert 0 lt sP and sP lt 1;
-                Append(~sing_01,P);
             end if;
         end if;
     end for;
@@ -78,20 +76,15 @@
         Append(~part_ell, [ R!!I : I in WKICM(R_ell) ]);
     end for;
 
-    // slope 0
+    // slope 0 and 1
     part_0:=[];
+    part_1:=[];
     for P in sing_0 do
         R_P:=Order( ZBasis(R) cat ZBasis(O!!P^vp_indOR));
         Append(~part_0, [ R!!I : I in WKICM(R_P) ]);
+        Append(~part_1, [ R!!ComplexConjugate(I) : I in WKICM(R_P) ]);
     end for;
 
-    // slope 1
-    part_1:=[];
-    for P in sing_1 do
-        R_P:=Order( ZBasis(R) cat ZBasis(O!!P^vp_indOR));
-        Append(~part_1, [ R!!I : I in WKICM(R_P) ]);
-    end for;
-  
     // ################### 
     // Global Representatives: tilde A, tilde W_R, etc . 
     // I dropped the tilde from the notation...I don't hate my life enough.
@@ -110,6 +103,8 @@
     // A: an etale algrebra over Q. isomorphic to L \otimes E
     A:=EtaleAlgebra(nfs_A_abs);
     _,embs_A,proj_A:=Components(A);
+
+    OA:=MaximalOrder(A);
 
     // pi in A
     pi_A_comps:=<  >;
@@ -145,15 +140,16 @@
     assert forall{ x : x in [ Delta_map(y) : y in ZBasis(MaximalOrder(E))] | x eq sigma(x) };
 
     // tilde W_R: order isomorphic to W \otimes R
-    gens_WR:=&cat[ [ embs_A[i](nfs_A_abs[i]!z*pi_A_comps[i]) , 
-                     embs_A[i](nfs_A_abs[i]!z*q/pi_A_comps[i]) ]
-                       : i in [1..#nfs_A], z in zb_OL ];
-    time WR:=Order( gens_WR );   
-    assert pi_A in WR;
-    assert q/pi_A in WR;
-    // TODO CHECKME:
-        CohenMacaulayType(WR); //I was expecting 1... is this right?
+    gens_WR:=&cat[ [ embs_A[i](nfs_A_abs[i]!z*pi_A_comps[i]) , //z*pi
+                     embs_A[i](nfs_A_abs[i]!z*q/pi_A_comps[i]) ] : i in [1..#nfs_A], //z*q/pi
+                     z in zb_OL ]; //OL=W
+    WR:=Order(gens_WR);
+
     // test
+    // TODO CHECKME:
+        assert pi_A in WR;
+        assert q/pi_A in WR;
+        CohenMacaulayType(WR); //I was expecting 1... is this right?
         zbOEinA:=[ Delta_map(g) : g in ZBasis(MaximalOrder(E)) ];
         gens_max:=[ embs_A[i](nfs_A_abs[i]!z*Components(g)[i]) 
                            : i in [1..#nfs_A], z in zb_OL , g in zbOEinA ];
@@ -161,30 +157,6 @@
         time _:=MaximalOrder(A);
         time _:=IsMaximal(WR);
     // end test...it looks good
-
-
-    // now we starting working on the part with slope in (0,1)
-    // Step 1: W'_R-isomorphism classes.
-    O_A:=MaximalOrder(A);
-
-//    // how do I find the primes of slope in (0,1);
-//    slope_A:=function(P)
-//    // given a prime of WR returns the slope of P
-//    // see beginning of 4.3.1, for the definition
-//    // TODO we should store the slope of P, mm and all other primes above P
-//        O:=MaximalOrder(Algebra(P));
-//        pp:=PrimesAbove(O!!P);
-//        mm:=pp[1];
-//        _,comp:=IsProductOfIdeals(mm);
-//        ind:=[ i : i in [1..#comp] | not NumberField(Order(comp[i]))!1 in comp[i] ];
-//        assert #ind eq 1;
-//        ind:=ind[1];
-//        mm:=comp[ind];
-//        pi_ind:=Components(pi_A)[ind];
-//        val_pi:=Valuation(pi_ind,mm);
-//        e_mm:=RamificationIndex(mm);
-//        return val_pi/(a*e_mm);
-//    end function;
 
     primes_of_A_above_place_of_E:=function(A,P)
     // given a maximal ideal P of OE returns the maximal ideals of OA above P
@@ -206,139 +178,25 @@
         return [ P : P in PrimesAbove(p*MaximalOrder(E)) | 0 lt sp and sp lt 1 where sp:=slope_E(P) ]; 
     end function;
 
-    // We compute the W'_R-isomorpshim classes of W'_R-ideals.
-    pp_01:=&cat[ primes_of_A_above_place_of_E(A,P) : P in places_01_E(E) ];
-    k:=Valuation(Index(O_A,WR),p);
-    part_01:=[];
-    for P in pp_01 do
-        WR_P:=Order( ZBasis(WR) cat ZBasis(O_A!!P^k));
-        time wk:=WKICM(WR_P);
-        Append(~part_01, [ WR!!I : I in wk ]);
-    end for;
-
-    //TODO 
-    // - the following 3 functions should be intrinsics. 
-    // - using the build it intrinsics for number fields is probably faster (maybe they use p-adics factorizations); 
-    // - everything should be cached as attributs.
-    inertia_degree:=function(P)
-        q:=Index(Order(P),P);
-        t,p,f:=IsPrimePower(q);
-        assert t;
-        return f;
-    end function;
-
-    valuation:=function(x,P)
-    // only for x in Order(P)
-        if not x in P then 
-            return 0;
-        end if;
-        fac:=Factorization(x*Order(P));
-        fac:=[ g[2] : g in fac | g[1] eq P ];
-        assert #fac eq 1;
-        return fac[1];
-    end function;
-
-    ramification_index:=function(P)
-        q:=Index(Order(P),P);
-        t,p:=IsPrimePower(q);
-        assert t;
-        return valuation(p,P);
-    end function;
-   
-
-
-    exponents_from_Waterhouse:=function(P)
-    // Use Proposition~\ref{prop:FVstable_OO} to compute up to $\Delta'$-isomorphism all $W'\{F,V\}$-ideals $J_1,\ldots,J_m$ having maximal multiplicator ring $\OO_{A'}$, each $J_j$ given as tuples of vectors of the form $(t_\nu^{\varepsilon_{j,\nu,1}},\ldots, t_\nu^{\varepsilon_{j,\nu,g_\nu}})_\nu$.
-    // For each place $\nu$, consider the set $\chi_\nu$ all ordered $g_\nu$-tuples
-    // \[ 0\leq n_1 \leq \ldots \leq n_{g_\nu}\leq e_\nu \]
-    // such that
-    // \[ \sum_{i=1}^{g_\nu} n_i = \frac{g_{\nu} \val_\nu(\pi_\nu)}{a}. \]
-    // For each such tuple, set $\varepsilon_1=0$ and $\varepsilon_i=\varepsilon_{i-1}+n_{i-1}$, for $i=2,\ldots,g_\nu$.
-        f_nu:=inertia_degree(P);
-        g_nu:=GCD(a,f_nu); //q=p^a
-        e_nu:=ramification_index(P);
-        exps:=[];
-        // this is naive.
-        cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu]]);
-        for tup0 in cp do
-            tup:=[ tup0[i] : i in [1..g_nu] ];
-            if forall{ i : i in [1..g_nu-1] | tup[i] le tup[i+1] } and 
-                &+tup eq Integers()!(g_nu*valuation(pi,P)/a) then
-                exp:=[ i eq 1 select 0 else $$[i-1] + tup[i-1] : i in [1..g_nu]];
-                Append(~exps,exp);
-            end if;
-        end for;
-        return exps;
-    end function;
-    //TODO test more
-
-    //TEST
-    for P in places_01_E(E) do
-        exponents_from_Waterhouse(P);
-    end for;
-         
     //////////////////
     // Units quotient
     //////////////////
-    // Let S be an order in A', containing R'. We want to compute O_A'^*/S^*\Delta'(O_E'^*)
-
-    // copied from PicardGroup.m
-    residue_class_ring_unit_subgroup_generators:=function(F)
-    // determine generators of the subgroup of (S/F)^* as elements of A=Algebra(S)
-        if not assigned F`residue_class_ring_unit_subgroup_generator then
-            S:=Order(F);
-            A:=Algebra(S);
-            O:=MaximalOrder(A);
-            Fm:=O!!F;
-            l:=Factorization(Fm);
-            l2:=[ <(S!!x[1]) meet S,x[2]>: x in l]; 
-            primes:={x[1]:x in l2};
-            primes:=[<x, Maximum([y[2]: y in l2 |y[1] eq x])>:x in primes];
-            primes_powers:=[ p[1]^p[2] : p in primes ];
-            elts:={};
-            for i->a in primes do
-                a1a2:=primes_powers[i];
-                idp:=a[1];
-                if #primes gt 1 then
-                    rest:=&*[ primes_powers[j] : j in [1..#primes] | j ne i];
-                else
-                    rest:=OneIdeal(S);
-                end if;
-                //Compute primitive elt for residue field
-                //c:=residue_class_field_primitive_element(idp);
-                c:=PrimitiveElementResidueField(idp);
-                e1:=ChineseRemainderTheorem(a1a2,rest,One(A),Zero(A));
-                e2:=ChineseRemainderTheorem(a1a2,rest,Zero(A),One(A));
-                c:=c*e1+e2;
-                //c:=ChineseRemainderTheorem(a1a2,rest,c,One(A));
-                assert2 c - ChineseRemainderTheorem(a1a2,rest,c,One(A)) in a1a2*rest;
-                Include(~elts,c);
-                b:=1;
-                while b lt a[2] do
-                    M:=ZBasis(idp);
-                    M:=[1+x:x in M];
-                    for elt in M do
-                        c:=elt*e1+e2;
-                        //c:=ChineseRemainderTheorem((a1a2),rest,elt,One(A));
-                        assert2 c - ChineseRemainderTheorem(a1a2,rest,elt,One(A)) in a1a2*rest;
-                        Include(~elts,c);
-                    end for;
-                    b:=b*2;
-                    idp:=idp^2;
-                end while;
-            end for;
-            assert2 forall{x : x in elts | x in S and not x in F};
-            F`residue_class_ring_unit_subgroup_generator:=elts;
-            vprintf AlgEtQPicardGroup, 2 :"residue_class_ring_unit_subgroup_generator:\n
-                                             elts = %o\n",PrintSeqAlgEtQElt(Setseq(elts));
-        end if;
-        return F`residue_class_ring_unit_subgroup_generator ;
-    end function;
+    // Let S be an order in A', containing R'. We want to compute OA'^*/S^*\Delta'(O_E'^*)
 
     units_quotient_P:=function(S,P)
     // Given an order S in A and a prime P of S, it computes U:=O_{A,P}^*/S_P^*,
-    // where O_A is the maximal order of A, together with map u:U->O_A
+    // where OA is the maximal order of A, together with map u:U->OA
     // This is based on Lemma ADDREF
+        assert Order(P) eq S;
+        if IsInvertible(P) then
+            // early exit: in this case S is P-maximal, that is, O_{A,P} = S_P.
+            U:=AbelianGroup([1]); //trivial groups
+            A:=Algebra(S);
+            u:=map<U->A | x:->One(A), y:->Zero(U) >; //trivial map
+            return U,u;
+        end if;
+
+
         q:=Index(S,P);
         t,p:=IsPrimePower(q);
         assert t; delete t; delete q;
@@ -349,8 +207,8 @@
         Us:=[];
         us:=[];
         for PP in pp_OA do
-            M:=Valuation(Index(PP,ffOA),p); // PP^M c ff locally at PP
-            U,u:=ResidueRingUnits(OA,ffOA+PP^M); // u: U=(O_A/ff+PP^M)^* -> O_A
+            M:=Valuation(Index(OA,ffOA),p); // PP^M c ff locally at PP
+            U,u:=ResidueRingUnits(OA,ffOA+PP^M); // u: U=(OA/ff+PP^M)^* -> OA
             Append(~Us,U);
             Append(~us,u);
         end for;
@@ -359,8 +217,10 @@
         d_OA:=map< D_OA->Algebra(OA) |  x:->&*[ us[i](projs[i](x)) : i in [1..n] ],
                                         y:->&+[ embs[i](y@@us[i]) : i in [1..n] ] >;
         
-        m:=Valuation(Index(P,ff),p); // P^m c ff locally at P
-        gens:=residue_class_ring_unit_subgroup_generators(ff+P^m);
+        m:=Valuation(Index(S,ff),p); // P^m c ff locally at P
+        ffPm:=ff+P^m;
+        assert not 1 in ffPm;
+        gens:=ResidueRingUnitsSubgroupGenerators(ffPm);
             // gens is a set of generators of (S/ff+P^m)^* = (S_P/ff_P)^* in A.
         U,u0:=quo<D_OA | [ g@@d_OA : g in gens ]>; // u0:D_OA->U
         u:=map<U->Algebra(OA) | x:->d_OA(x@@u0), y:->u0(y@@d_OA) >;
@@ -387,7 +247,9 @@
     end function;
 
     fixed_pts_sigma:=function(S,sigma)
-    // Given an order S in A, representing an order S' in A', returns U,u,F where
+    // Given an order S in A, representing an order S' in A', 
+    // which is stable by the action of sigma (eg. WR),
+    // returns U,u,F where
     // U=OA'^*/S'^*,
     // u is a map u:U->OA giving representatives 
     // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
@@ -398,37 +260,162 @@
         return U,u,F;
     end function;
 
-    units_quotient_fixed:=function(S,sigma)
+    units_quotient_fixed_sigma_WR_gens:=function(WR,sigma)
+    // only for WR
+    // returns a set of generators in A of 
+    // Q = OA'^*/W_R'^*Delta(OE'^*) 
+        U,u,F:=fixed_pts_sigma(WR,sigma);
+        Q,q0:=quo<U|F>; //q0: U->U/F=Q=OA'^*/WR'^*\Delta(OE'^*)
+        gens_inA:=[u(Q.i@@q0) : i in [1..Ngens(Q)]];
+        //TODO this should be cached, and maybe this shouldn't be a function
+        return gens_inA;
+    end function;
+
+    units_quotient_fixed_sigma:=function(S,sigma)
     // Given an order S in A, representing an order S' in A', returns Q,q where
     // Q = OA'^*/S'^*Delta(OE'^*) 
     // q is a map Q->OA giving representatives
-        U,u,F:=fixed_pts_sigma(S,sigma);
-        Q,q0:=quo<U|F>; //q0: U->U/F=Q
-        q:=map<U->Algebra(S) |  x:->u(x@@q), y:->q(y@@u) >;
+        U,u:=units_quotient_01(S); //u:U=OA'^*/S'^* -> A
+        fixed_pts_gens:=[ g@@u : g in units_quotient_fixed_sigma_WR_gens(WR,sigma)];
+        Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
+        q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
         return Q,q;
     end function;
 
     // TEST
-    /*
-    P:=places_01_E(E)[1];
-    P:=primes_of_S_above_place_of_E(WR,P)[1];
-    units_quotient_P(WR,P);
-    units_quotient_01(WR);
-    units_quotient_fixed(WR,sigma);
-    S:=WR;
-    U,u:=units_quotient_01(S); //u:U->A
-    [ u(x) : x in Generators(U) ];
-    
-
-    id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in [ u(x) : x in Generators(U)] ]>;
-    F:=Kernel(id_sigma);
-    F;
-    */
-
     oo:=OverOrders(WR);
-    for S in oo do
-        Index(MaximalOrder(A),S);
-        _:=units_quotient_fixed(S,sigma);
+    for iS->S in oo do
+        iS;
+        _:=units_quotient_fixed_sigma(S,sigma);
     end for;
 
+
+    //TODO 
+    // - the following 3 functions should be intrinsics. 
+    // - using the build it intrinsics for number fields is probably faster (maybe they use p-adics factorizations); 
+    // - everything should be cached as attributs.
+    inertia_degree:=function(P)
+        q:=Index(Order(P),P);
+        t,p,f:=IsPrimePower(q);
+        assert t;
+        return f;
+    end function;
+
+    valuation_elt:=function(x,P)
+    // only for x in Order(P) = Maximal
+        fac:=Factorization(x*Order(P));
+        pps:=[ g[1] : g in fac ];
+        ind:=Index(pps,P);
+        assert (ind ne 0) eq (x in P);
+        return fac[ind][2];
+    end function;
+    
+    valuation_idl:=function(J,P)
+    // Order(J) = Order(P) = Maximal
+        assert J subset Order(J);
+        if One(Algebra(J)) in J then 
+            return 0;
+        end if;
+        fac:=Factorization(J);
+        pps:=[ g[1] : g in fac ];
+        ind:=Index(pps,P);
+        assert (ind ne 0) eq (J subset P);
+        return fac[ind][2];
+    end function;
+
+    ramification_index:=function(P)
+        q:=Index(Order(P),P);
+        t,p:=IsPrimePower(q);
+        assert t;
+        return valuation_elt(p,P);
+    end function;
+
+    exponents_from_Waterhouse:=function(P)
+    // Use Proposition~\ref{prop:FVstable_OO} to compute up to $\Delta'$-isomorphism all $W'\{F,V\}$-ideals $J_1,\ldots,J_m$ having maximal multiplicator ring $\OO_{A'}$, each $J_j$ given as tuples of vectors of the form $(t_\nu^{\varepsilon_{j,\nu,1}},\ldots, t_\nu^{\varepsilon_{j,\nu,g_\nu}})_\nu$.
+    // For each place $\nu$, consider the set $\chi_\nu$ all ordered $g_\nu$-tuples
+    // \[ 0\leq n_1 \leq \ldots \leq n_{g_\nu}\leq e_\nu \]
+    // such that
+    // \[ \sum_{i=1}^{g_\nu} n_i = \frac{g_{\nu} \val_\nu(\pi_\nu)}{a}. \]
+    // For each such tuple, set $\varepsilon_1=0$ and $\varepsilon_i=\varepsilon_{i-1}+n_{i-1}$, for $i=2,\ldots,g_\nu$.
+        f_nu:=inertia_degree(P);
+        g_nu:=GCD(a,f_nu); //q=p^a
+        e_nu:=ramification_index(P);
+        exps:=[];
+        // this is naive.
+        cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu]]);
+        for tup0 in cp do
+            tup:=[ tup0[i] : i in [1..g_nu] ];
+            if forall{ i : i in [1..g_nu-1] | tup[i] le tup[i+1] } and 
+                &+tup eq Integers()!(g_nu*valuation_elt(pi,P)/a) then
+                exp:=[ i eq 1 select 0 else $$[i-1] + tup[i-1] : i in [1..g_nu]];
+                Append(~exps,exp);
+            end if;
+        end for;
+        return exps;
+    end function;
+    
+    // ####################
+    // Algorithm 2
+    // ####################
+
+    nice_uniformizers:=function(PPAs)
+    // given the list of maximal ideals of A, it returns a seqence of elements t_P in A such that 
+    // t_P is a uniformizer of P and a unit at every Q\neq P
+        A:=Algebra(PPAs[1]);
+        PPAs:=[ P^2 : P in PPAs ];
+        one:=One(A);
+        nice_unifs:=[];
+        for iP->P in PPAs do
+            Q,q:=Quotient(P,P^2);
+            repeat
+                t:=Random(Q);
+            until t ne Zero(Q);
+            tP:=t@@q;
+            if #PPAs gt 1 then
+                elts:=[ i eq iP select tP else one : i in [1..#PPAs] ];
+                tP:=CRT(PPAs,elts);
+            end if;
+            Append(~nice_unifs,tP);
+        end for;
+        return nice_unifs;
+    end function;
+
+    // We compute the W'_R-isomorpshim classes of W'_R-ideals.
+    exps_nus:=[];
+    pp_A_nus:=[];
+    for P in places_01_E(E) do
+        Append(~exps_nus,exponents_from_Waterhouse(P));
+        Append(~pp_A_nus,primes_of_A_above_place_of_E(A,P));
+    end for;
+    exps_nus_cc:=CartesianProduct(exps_nus);
+    exps_01:=[];
+    for cc in exps_nus_cc do
+        Append(~exps_01,&cat[ c : c in cc ]); 
+    end for;
+    pp_A_01:=&cat(pp_A_nus);
+    nice_unifs_01:=nice_uniformizers(pp_A_01);
+    k:=Valuation(Index(OA,WR),p);
+    WR_01:=Order( ZBasis(WR) cat ZBasis(OA!!&*[ P^k : P in pp_A_01 ]));
+    // this order is locally isomorphic to WR' at every place of slope 01
+    wk_01:=WKICM(WR_01);
+
+    WR_01_idls_with_ext_i_to_OA_F_V_stable:=[];
+    for I in wk_01 do
+        S:=MultiplicatorRing(I);
+        J:=OA!!I;
+        valsJ:=[ valuation_idl(J,P) : P in pp_A_01 ];
+        deltas:=[];
+        for exps in exps_01 do
+            assert #exps eq #pp_A_01; 
+            Append(~deltas,&*[nice_unifs_01[i]^(valsJ[i]-exps[i]) : i in [1..#pp_A_01]]);
+        end for;
+        // the following two lines should be cached
+        QS,qS:=units_quotient_fixed_sigma(S,sigma);
+        gammas:=[ qS(x) : x in QS ];
+
+        II:=[ d*g*I : d in deltas, g in gammas ];
+        WR_01_idls_with_ext_i_to_OA_F_V_stable cat:=II;
+    end for;
+
+    #WR_01_idls_with_ext_i_to_OA_F_V_stable;
 
