@@ -1,0 +1,129 @@
+/* vim: set syntax=magma : */
+/*
+    TODO
+    - Add references to the paper (scan for ADDREF, some might be missing)
+    - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
+        Need to implement it.
+*/
+
+    AttachSpec("~/AbVarFq/packages.spec");
+    Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
+    load "~/PolsAbVarFpCanLift/AlmOrd.m"; 
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+
+    SetVerbose("DieudonneModules",2);
+    SetVerbose("DieudonneModules_L",2);
+    SetVerbose("Algorithm_2",2);
+    SetVerbose("Algorithm_3",2);
+    SetAssertions(2);
+    SetDebugOnError(true);
+
+    PP<x>:=PolynomialRing(Integers());
+
+    all_weil_poly:=Split(Read("weil_poly_all.txt"));
+
+    h:=x^2 - 2*x + 4;
+
+    coeff:=Coefficients(h);
+    g:=Degree(h) div 2;
+    q:=Truncate(ConstantCoefficient(h)^(1/g));
+    printf "%50o = ",h;
+    t,p,a:=IsPrimePower(q);
+    assert t; delete t;
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    R:=Order([pi,q/pi]);
+    t0:=Cputime();
+    num_isom:=#IsomorphismClassesAbelianVarieties(R);
+    t1:=Cputime(t0);
+    num_test:=0;
+    if IsCoprime(coeff[g+1],q) then 
+        num_test:=#ICM(R);
+        descr:="ord"; 
+    elif p eq q then
+        num_test:=#ICM(R);
+        descr:="cs"; 
+    else
+        I:=IsogenyClass(h);
+        g:=Dimension(I);
+        is_almost_ordinary:=pRank(I) eq g-1;
+        if is_almost_ordinary then
+            oo:=FindOverOrders(R);
+            oo_max_at_ss,Lss:=overorders_maximal_at_ss(I);
+            icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];
+            if IsRamified(Lss) then
+                num_test:=icm;
+                descr:="alm ord - ram";
+            else
+                num_test:=2*icm;
+                descr:="alm ord - inert";
+            end if;
+        end if;
+    end if;
+    if num_test gt 0 then
+        if not num_isom eq num_test then
+            "failure <-------------------",t1,descr,"computed",num_isom,"expected",num_test;
+        else
+            "good",t1,descr;
+        end if;
+    else
+        "can't compare to previous data",t1;
+    end if;
+
+/*
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+
+    SetVerbose("DieudonneModules",2);
+
+    PP<x>:=PolynomialRing(Integers());
+    //h:=( 16 - 4*x + x^2 )*( 256 - 112*x + 40*x^2 - 7*x^3 + x^4 ); // 3.16.al_dg_aou, Dimension(A) = 48
+    //h:=( 4 - 2*x + x^2 )*( 16 - 4*x + 4 *x^2 - x^3 + x^4); // 3.4.ad_k_aq, Dimension(A) = 12
+    //h:=( 16 - 4*x + 4 *x^2 - x^3 + x^4); // Dimension(A) = 12
+    //h:=x^2 - 2*x + 4;
+    h:=x^4 - 2*x^3 + 4*x^2 - 8*x + 16; //slow
+    h:=x^4 + x^3 - 2*x^2 + 4*x + 16;
+
+    g:=Degree(h) div 2;
+    q:=Truncate(ConstantCoefficient(h)^(1/g));
+    t,p,a:=IsPrimePower(q);
+    assert t; delete t;
+
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    R:=Order([pi,q/pi]);
+
+    time IsomorphismClassesTateModules(R);
+    time IsomorphismClassesDieudonneModules(R);
+    time #IsomorphismClassesAbelianVarieties(R);
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

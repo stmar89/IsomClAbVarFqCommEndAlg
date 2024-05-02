@@ -16,12 +16,15 @@
 
     //SetVerbose("DieudonneModules",2);
     //SetVerbose("Algorithm_3",2);
-    //SetAssertions(2);
+    SetAssertions(2);
     SetDebugOnError(true);
 
     PP<x>:=PolynomialRing(Integers());
 
-    to_be_excluded:=[x^4 - 2*x^3 + 4*x^2 - 8*x + 16]; //cause too slow
+    to_be_excluded:=[
+        x^4 - 2*x^3 + 4*x^2 - 8*x + 16, //too slow; sometimes a relatively fast Segmentation Fault. Investigate!
+        x^4 + 2*x^3 + 4*x^2 + 8*x + 16 //too slow
+        ];
 
     all_weil_poly:=Split(Read("weil_poly_all.txt"));
 
@@ -31,8 +34,10 @@
         if IsSquarefree(h) and not h in to_be_excluded then
             g:=Degree(h) div 2;
             q:=Truncate(ConstantCoefficient(h)^(1/g));
-            if q le 7 then
-                printf "%o = ",h;
+            if q le 7 
+                and not IsCoprime(coeff[g+1],q) // exclude ordinary
+                        then
+                printf "%50o = ",h;
                 t,p,a:=IsPrimePower(q);
                 assert t; delete t;
                 E:=EtaleAlgebra(h);
@@ -43,8 +48,12 @@
                     num_isom:=#IsomorphismClassesAbelianVarieties(R);
                     t1:=Cputime(t0);
                     num_test:=0;
-                    if IsCoprime(coeff[g+1],q) or p eq q then
+                    if IsCoprime(coeff[g+1],q) then 
                         num_test:=#ICM(R);
+                        descr:="ord"; 
+                    elif p eq q then
+                        num_test:=#ICM(R);
+                        descr:="cs"; 
                     else
                         I:=IsogenyClass(h);
                         g:=Dimension(I);
@@ -53,14 +62,20 @@
                             oo:=FindOverOrders(R);
                             oo_max_at_ss,Lss:=overorders_maximal_at_ss(I);
                             icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];
-                            num_test:=IsRamified(Lss) select icm else 2*icm;
+                            if IsRamified(Lss) then
+                                num_test:=icm;
+                                descr:="alm ord - ram";
+                            else
+                                num_test:=2*icm;
+                                descr:="alm ord - inert";
+                            end if;
                         end if;
                     end if;
-                    if num_isom gt 0 then
+                    if num_test gt 0 then
                         if not num_isom eq num_test then
-                            "failure <------------------------------------",t1;
+                            "failure <-------------------",t1,descr,"computed",num_isom,"expected",num_test;
                         else
-                            "good",t1;
+                            "good",t1,descr;
                         end if;
                     else
                         "can't compare to previous data",t1;
@@ -70,6 +85,7 @@
                     e`Object;
                     e`Position;
                     "error detected";
+                    break cc;
                 end try;
             end if;
         end if;

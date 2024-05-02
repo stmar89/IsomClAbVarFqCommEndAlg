@@ -7,6 +7,7 @@
 
 declare verbose DieudonneModules,3;
 declare verbose DieudonneModules_L,3;
+declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 
 declare attributes AlgEtQIdl : DeltaEndomorphismRing;
@@ -75,6 +76,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     L<zeta>:=NumberField(hL : DoLinearExtension:=true);
     vprintf DieudonneModules_L,2 : "L = %o\n",L;
     sigma_L:=hom< L->L | [ zeta^p ] >; //does not have inverse
+    assert forall{ i : i,j in Basis(MaximalOrder(L)) | sigma_L(i+j) eq sigma_L(i)+sigma_L(j) };
     OL:=MaximalOrder(L);
     zb_OL:=Basis(OL);
     // tests
@@ -88,8 +90,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // end tests
 
     fac_h_L:=Factorization( PolynomialRing(L) ! h );
-    assert forall{ g : g in fac_h_L| g[2] eq 1 };
-    nfs_A:=[ NumberField(g[1]) : g in fac_h_L ];
+    assert forall{ g : g in fac_h_L| g[2] eq 1 }; // h is assumed to be squarefree
+    nfs_A:=[ NumberField(g[1] : DoLinearExtension:=true ) : g in fac_h_L ];
     nfs_A_abs:=[ AbsoluteField(nf) : nf in nfs_A ];
 
     // A: an etale algrebra over Q. isomorphic to L \otimes E
@@ -105,13 +107,15 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // pi in A
     pi_A_comps:=<  >;
     for i in [1..#nfs_A] do
-        test,pi_i:=HasRoot(fac_h_L[i][1],nfs_A[i]);
-        assert test;
+        // test,pi_i:=HasRoot(fac_h_L[i][1],nfs_A[i]); // THIS SEEMS TO BE RANDOMIZED
+        // assert test;
+        pi_i:=PrimitiveElement(nfs_A[i]);
         pi_i:=nfs_A_abs[i]!pi_i;
         Append(~pi_A_comps,pi_i);
     end for;
     pi_A:=A!pi_A_comps;
     assert MinimalPolynomial(pi_A) eq h;
+    assert forall{ i : i in [1..#nfs_A] | Evaluate(fac_h_L[i][1],pi_A_comps[i]) eq 0 };
     pows_pi_A:=[ pi_A^i : i in [0..Dimension(E)-1 ]];
 
     // #######################
@@ -155,6 +159,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // TEST
     assert forall{ z : z in ZBasis(MaximalOrder(E)) | z eq (Delta_map(z))@@Delta_map }; 
     assert forall{ z : z in ZBasis(R) | z eq (Delta_map(z))@@Delta_map }; 
+    assert forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i+j) eq Delta_map(i)+Delta_map(j) };
+    assert forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i*j) eq Delta_map(i)*Delta_map(j) };
 
     // #######################
     // tilde W_R: order isomorphic to W \otimes R
@@ -179,22 +185,53 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // tilde sigma: acts as zeta:->zeta^q on L-coefficients on each compoenent of A
     // #######################
 
-    sigma_image:=function(x)
-        x_comp:=Components(x);
-        N:=#x_comp;
-//        img:=<>;
+//  OLD and WRONG
+//    sigma_image:=function(x)
+//    // x in A
+//        x_comp:=Components(x);
+//        N:=#x_comp;
+//        img:=< nfs_A_abs[i]!nfs_A[i]![sigma_L(c) : c in Eltseq(nfs_A[i]!x_comp[i])] : i in [1..N] > ;
+//        // test
+//        img_test:=<>;
 //        for i in [1..N] do
 //            BL:=nfs_A[i]; // nf over L
 //            BQ:=nfs_A_abs[i]; // nf over Q
+//            assert x_comp[i] eq BQ!(BL!x_comp[i]);
 //            assert x_comp[i] eq BQ!(BL!Eltseq(BL!x_comp[i]));
 //            img_i:=BQ!(BL![ sigma_L(c) : c in Eltseq(BL!x_comp[i])]);
-//            Append(~img,img_i);
+//            Append(~img_test,img_i);
 //        end for;
-//        //the next line deos the same.
-        img:=< nfs_A_abs[i]!nfs_A[i]![sigma_L(c) : c in Eltseq(nfs_A[i]!x_comp[i])] : i in [1..N] > ;
-        return A!img;
+//        assert img_test eq img;
+//        // end test
+//        return A!img;
+//    end function;
+
+    // Write A = prod_i L[x]/(h_i(x)). sigma is NOT induced by sigma_L with this presentation over L.
+    // We need to compute an L-isomorphism L + pi*L + ... +pi^deg(h)L -> A.
+    Vs:=[];
+    vs:=<>;
+    for i in [1..#nfs_A] do
+        V,v:=VectorSpace(nfs_A[i],L); // v:nfs_A[i]->V
+        Append(~Vs,V);
+        Append(~vs,v);
+    end for;
+    D,embs,projs:=DirectSum(Vs); // mAD: A -> D isom
+    mAD:=map<A->D |  x :-> &+[ embs[i](vs[i](nfs_A[i]!Components(x)[i])) : i in [1..#nfs_A] ] ,
+                     y :-> A!< nfs_A_abs[i]!(projs[i](y))@@vs[i] : i in [1..#nfs_A] > >;
+    // we compute the image of pows_pi_A in D 
+    pows_pi_D:=[ mAD(x) : x in pows_pi_A ];
+    W:=KSpace(L,Degree(h));
+    isom:=iso< W->D | pows_pi_D >;
+    mAW:=map< A->W | x:->mAD(x)@@isom, y:-> isom(y)@@mAD >;
+    sigma_image:=function(x)
+        // x in A
+        return (W![sigma_L(c) : c in Eltseq(mAW(x))])@@mAW;
     end function;
+
     sigma:=map< A-> A | x:->sigma_image(x) >; //does not have inverse
+    assert forall{ i : i,j in ZBasis(MaximalOrder(A)) | sigma(i+j) eq sigma(i)+sigma(j) };
+    assert forall{ i : i,j in ZBasis(MaximalOrder(A)) | sigma(i*j) eq sigma(i)*sigma(j) };
+    assert x eq sigma(x) where x := Delta_map(pi);
     assert forall{ x : x in [ Delta_map(y) : y in ZBasis(MaximalOrder(E))] | x eq sigma(x) };
 
     // #######################
@@ -322,11 +359,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         prod:=&*([ primes_01_S_above_ff[i]^ks[i] : i in [1..#primes_01_S_above_ff]]);
         ff_prod:=ff+prod;
         assert not 1 in ff_prod;
+        assert OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
+       
         R,r:=ResidueRingUnits(OA!!(ff_prod));
         gens:=ResidueRingUnitsSubgroupGenerators(ff_prod);
         U,u0:=quo<R | [ g@@r : g in gens]>;
         u:=map<U->Algebra(S) |  x:-> r(x@@u0), y:->u0(y@@r) >;
-        assert forall{ g : g in Generators(U) | (u(g))@@u eq g};
         return U,u;
     end function;
 
@@ -339,6 +377,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
         U,u:=units_quotient_01(S); //u:U->A
         Ugens_inA:=[ u(U.i) : i in [1..Ngens(U)] ];
+        vprintf Algorithm_2,2 : "Computed OA'^*/S^* ...\n";
+        vprintf Algorithm_2,2 : "... which has generators in tilde{OA} : %o\n", PrintSeqAlgEtQElt( Ugens_inA );
         id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in Ugens_inA ]>;
         F:=Kernel(id_sigma);
         return U,u,F;
@@ -346,7 +386,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
     // only for WR: F = Delta(OE')^*W'R^*/W'R^* inside OA'^*/W'R^*
     U,u,F:=fixed_pts_sigma(WR,sigma);
+    vprintf Algorithm_2,2 : "Computed OA'^*/W'_R^* ...\n";
     units_quotient_fixed_sigma_WR_gens:=[u(F.i) : i in [1..Ngens(F)]];
+    vprintf Algorithm_2,2 : "Generators of Delta(OE^*)W'_R^* in U : %o\n", PrintSeqAlgEtQElt( units_quotient_fixed_sigma_WR_gens);
     delete U,u,F;
 
     units_quotient_fixed_sigma:=function(S,sigma)
@@ -368,6 +410,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         UE,uE:=UnitGroup(MaximalOrder(E));
         assert forall{ x : x in [ Delta_map(uE(y)) : y in Generators(UE)] | x eq sigma(x) };
     end for;
+    vprintf Algorithm_2,2 : "units_quotient_fixed_sigma finished\n";
 
 
     //TODO 
@@ -441,14 +484,15 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // ####################
 
     nice_uniformizers:=function(PPAs)
-    // given the list of maximal ideals of A, it returns a seqence of elements t_P in A such that 
+    // given the list of maximal ideals of A, it returns a sequence of elements t_P in A such that 
     // t_P is a uniformizer of P and a unit at every Q\neq P
+        assert forall{ P : P in PPAs | IsPrime(P) };
         A:=Algebra(PPAs[1]);
-        PPAs:=[ P^2 : P in PPAs ];
         one:=One(A);
         nice_unifs:=[];
+        PPAs2:=[ P^2 : P in PPAs];
         for iP->P in PPAs do
-            P2:=P^2;
+            P2:=PPAs2[iP];
             Q,q:=Quotient(P,P2);
             repeat
                 t:=Random(Q);
@@ -457,10 +501,15 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             while IsZeroDivisor(tP) do
                 tP +:=Random(P2);
             end while;
-            if #PPAs gt 1 then
+            assert tP in P and not tP in P2;
+            //if #PPAs gt 1 then
                 elts:=[ i eq iP select tP else one : i in [1..#PPAs] ];
-                tP:=CRT(PPAs,elts);
-            end if;
+                tP:=CRT(PPAs2,elts);
+            //end if;
+            assert tP in P and not tP in P2;
+            assert tP in OA;
+            assert forall{ Q : Q in [ Q : Q in PPAs | Q ne P ] | not tP in Q };
+            assert Seqset(PrimesAbove(tP*OA)) meet Seqset(PPAs) eq {P};
             assert not IsZeroDivisor(tP);
             Append(~nice_unifs,tP);
         end for;
@@ -479,14 +528,17 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     for cc in exps_nus_cc do
         Append(~exps_01,&cat[ c : c in cc ]); 
     end for;
+    vprintf Algorithm_2,2 : "number of F-V stable O_A' ideals = %o \n",#exps_01;
     pp_A_01:=&cat(pp_A_nus);
     nice_unifs_01:=nice_uniformizers(pp_A_01);
+    vprintf Algorithm_2,2 : "nice_unifs_01 = %o\n", PrintSeqAlgEtQElt(nice_unifs_01);
 
     // We compute the W'_R-isomorpshim classes of W'_R-ideals.
     k:=Valuation(Index(OA,WR),p);
     WR_01:=Order( ZBasis(WR) cat ZBasis(OA!!&*[ P^k : P in pp_A_01 ]));
     // TODO CHECKME this order is locally isomorphic to WR' at every place of slope 01
     wk_01:=[ SmallRepresentative(WR!!I) : I in WKICM(WR_01)];
+    vprintf Algorithm_2,2 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
 
     WR_01_idls_with_ext_i_to_OA_F_V_stable:=[];
     for I in wk_01 do
@@ -495,21 +547,21 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         valsJ:=[ valuation_idl(J,P) : P in pp_A_01 ];
         deltas:=[];
         for exps in exps_01 do
-            vprintf DieudonneModules,2 : "#exps = %o #pp_A_01 =%o\n",#exps,#pp_A_01;
             assert #exps eq #pp_A_01; 
             Append(~deltas,&*[nice_unifs_01[i]^(valsJ[i]-exps[i]) : i in [1..#pp_A_01]]);
         end for;
         // the following two lines should be cached
         QS,qS:=units_quotient_fixed_sigma(S,sigma);
         gammas:=[ qS(x) : x in QS ];
-
+        vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
+        vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
         assert forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert forall{ g : g in gammas | not IsZeroDivisor(g) };
         II:=[ d*g*I : d in deltas, g in gammas ];
         WR_01_idls_with_ext_i_to_OA_F_V_stable cat:=II;
     end for;
 
-    //printf "number of WR'-isomorphism classes %o\n",#WR_01_idls_with_ext_i_to_OA_F_V_stable;
+    vprintf Algorithm_2,2 : "number of Delta'-isomorphism classes with FV-stable extension to O_A' = %o\n",#WR_01_idls_with_ext_i_to_OA_F_V_stable;
    
     // ####################
     // Delta_inverse_ideal
@@ -543,18 +595,33 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     for i in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[i];
         x:=ShortElement(Delta_inverse_ideal(ColonIdeal(J,I)));
-        WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=Delta_map(x)*I;
+        I:=Delta_map(x)*I;
+        assert I subset J;
+        WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
     end for;
 
-    // FIXME the next lines seem to give the wrong answers
-    //m0:=Maximum([ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ] cat
-    //            [ valuation_elt( pi, P ) : P in pl_01_E ]);
-    
-    m0:=Maximum([ ramification_index(P)*Valuation(Exponent(Quotient(J,I)),p) : 
-                    I in WR_01_idls_with_ext_i_to_OA_F_V_stable , P in pl_01_E ] cat
-                [ valuation_elt( pi, P ) : P in pl_01_E ]);
-    
-    //"WARNING: m0 is forced now"; m0:=10; //to force it bigger
+    m:=Maximum([ ramification_index(P)*Valuation(Exponent(Quotient(J,I)),p) : 
+                    I in WR_01_idls_with_ext_i_to_OA_F_V_stable , P in pl_01_E ]);
+    m_nu_s:=[];
+    for inu->nu in pl_01_E do
+        f_nu:=inertia_degree(nu);
+        g_nu:=GCD(a,f_nu); //q=p^a
+        e_nu:=ramification_index(nu);
+        k_nu:=valuation_elt(pi,nu)*g_nu/a;
+        if m le k_nu and e_nu-k_nu ge m then
+            m_nu:=0;
+        elif k_nu lt m then
+            m_nu:=m;
+        elif k_nu ge m and k_nu gt e_nu-m then
+            m_nu:=k_nu+1;
+        else
+            error "this should not happend";
+        end if;
+        Append(~m_nu_s,m_nu);
+    end for;
+    m0:=Max(m_nu_s);
+
+    //m1:=m0+5; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
     
     vprintf Algorithm_3 : "vp(Nk)'s = %o\n",[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ];
     vprintf Algorithm_3 : "v_nu(pi) for all nu's = %o\n",[ valuation_elt( pi, P ) : P in pl_01_E ];
@@ -579,7 +646,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         rs_nu:=<>;
         PPs_nu_m0_1:=[];
         for PP in PPs_nu do
-            PP_m0_1:=PP^(m0+1);
+            PP_m0_1:=PP^(ramification_index(PP)*(m0+1));
             Append(~PPs_nu_m0_1,PP_m0_1);
             R,r:=ResidueRing(OA,PP_m0_1);
             Append(~Rs_nu,R);
@@ -624,40 +691,64 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     end for;
     vprintf Algorithm_3,2 : "all alpha_Q's are computed\n";
 
-    // FIXME Qm0_1 = does not have 0 and 1 components!, while Qm0 below does
-    Qm0_1,embs,projs:=DirectSum(QQs);
-    preimage_qm0_1:=function(y)
-        if #QQs eq 1 then
-            return projs[1](y)@@qqs[1];
-        else
-            return CRT(PPs_nus_prod_powers,[projs[i](y)@@qqs[i] : i in [1..#pl_01_E]]);
-        end if;
-    end function;
+//    20240416 commented out
+//    // FIXME Qm0_1 = does not have 0 and 1 components!, while Qm0 below does
+//    Qm0_1,embs,projs:=DirectSum(QQs);
+//    preimage_qm0_1:=function(y)
+//        if #QQs eq 1 then
+//            return projs[1](y)@@qqs[1];
+//        else
+//            return CRT(PPs_nus_prod_powers,[projs[i](y)@@qqs[i] : i in [1..#pl_01_E]]);
+//        end if;
+//    end function;
+//
+//    qm0_1:=map<Algebra(J)->Qm0_1 |   x:->&+[ embs[i](qqs[i](x)) : i in [1..#pl_01_E] ],
+//                                     //y:->&+[ (projs[i](y))@@qqs[i] : i in [1..#pl_01_E] ]>; //need to use CRT
+//                                     y:->preimage_qm0_1(y)>;
+//
+//    assert forall{ x : x in Generators(Qm0_1) | qm0_1(x@@qm0_1) eq x};
+//    // qm0_1: J->J/p^(m0_1)*J = Qm0_1 
+//    
+//    //FQm0_1:=hom< Qm0_1->Qm0_1 | [ &+[embs[i](qqs[i](alpha_Q_inAs[i]*sigma((projs[i](Qm0_1.j))@@qqs[i]))) : i in [1..#pl_01_E]] : j in [1..Ngens(Qm0_1)]] >; //maybe I need to use a CRT here? as below
+//    image_FQm0_1:=function(x)
+//        if #QQs eq 1 then
+//            return embs[1](qqs[1](alpha_Q_inAs[1]*sigma(projs[1](x)@@qqs[1])));
+//        else
+//            return qm0_1(CRT(PPs_nus_prod_powers,[(alpha_Q_inAs[i]*sigma(projs[i](x)@@qqs[i])) : i in [1..#pl_01_E]]));
+//        end if;
+//    end function;
+//    FQm0_1:=hom< Qm0_1->Qm0_1 | [ image_FQm0_1(Qm0_1.j) : j in [1..Ngens(Qm0_1)]] >;
+//    
+//    Qm0,qm0:=Quotient(J,p^(m0)*J);
+//    assert forall{ x : x in Generators(Qm0) | qm0(x@@qm0) eq x};
+//    pr:=map< Qm0_1->Qm0 | x:->qm0(x@@qm0_1), y:->qm0_1(y@@qm0) >;
+//    assert forall{ x : x in Generators(Qm0_1) | x eq pr(x)@@pr};
+//
+//    //FQm0:=hom<Qm0->Qm0 | x:-> pr(FQm0_1(x@@pr)) >;
+//    FQm0:=hom<Qm0->Qm0 | [  pr(FQm0_1(Qm0.i@@pr)) : i in [1..Ngens(Qm0)] ] >;
+//    assert forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
 
-    qm0_1:=map<Algebra(J)->Qm0_1 |   x:->&+[ embs[i](qqs[i](x)) : i in [1..#pl_01_E] ],
-                                     //y:->&+[ (projs[i](y))@@qqs[i] : i in [1..#pl_01_E] ]>; //need to use CRT
-                                     y:->preimage_qm0_1(y)>;
-
-    assert forall{ x : x in Generators(Qm0_1) | qm0_1(x@@qm0_1) eq x};
-    // qm0_1: J->J/p^(m0_1)*J = Qm0_1 
-    
-    //FQm0_1:=hom< Qm0_1->Qm0_1 | [ &+[embs[i](qqs[i](alpha_Q_inAs[i]*sigma((projs[i](Qm0_1.j))@@qqs[i]))) : i in [1..#pl_01_E]] : j in [1..Ngens(Qm0_1)]] >; //maybe I need to use a CRT here? as below
-    image_FQm0_1:=function(x)
-        if #QQs eq 1 then
-            return embs[1](qqs[1](alpha_Q_inAs[1]*sigma(projs[1](x)@@qqs[1])));
-        else
-            return qm0_1(CRT(PPs_nus_prod_powers,[(alpha_Q_inAs[i]*sigma(projs[i](x)@@qqs[i])) : i in [1..#pl_01_E]]));
-        end if;
-    end function;
-    FQm0_1:=hom< Qm0_1->Qm0_1 | [ image_FQm0_1(Qm0_1.j) : j in [1..Ngens(Qm0_1)]] >;
-    
+// 20240416 new version
+    Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J);
     Qm0,qm0:=Quotient(J,p^(m0)*J);
-    assert forall{ x : x in Generators(Qm0) | qm0(x@@qm0) eq x};
     pr:=map< Qm0_1->Qm0 | x:->qm0(x@@qm0_1), y:->qm0_1(y@@qm0) >;
-    assert forall{ x : x in Generators(Qm0_1) | x eq pr(x)@@pr};
+    assert forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
+    pl_E_0_and_1:=[ P : P in PrimesAbove(p*MaximalOrder(E)) | sp in [0,1] where sp:=slope_E(P) ];
 
-    //FQm0:=hom<Qm0->Qm0 | x:-> pr(FQm0_1(x@@pr)) >;
-    FQm0:=hom<Qm0->Qm0 | [  pr(FQm0_1(Qm0.i@@pr)) : i in [1..Ngens(Qm0)] ] >;
+    if #pl_E_0_and_1 gt 0 then
+        PPs_0_and_1_prod_powers:= [ &*(&cat[ primes_of_A_above_place_of_E(A,nu) : nu in pl_E_0_and_1 ])^(m0+1) ];
+                                  // \prod_P P^m0+1 where P runs over the prime of OA 
+                                  // above places of E of slope 0 and slope 1.
+        alpha:=CRT( PPs_nus_prod_powers cat PPs_0_and_1_prod_powers, alpha_Q_inAs cat [One(A)]);
+                // we force alpha_P=1 at slopes 0 and 1, since we can ignore those local components.
+    //elif #PPs_nus_prod_powers eq 1 then
+    //    alpha:=alpha_Q_inAs[1];
+    else
+        alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
+    end if;
+            
+    FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*sigma(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+    FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*sigma(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
     assert forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
 
     mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
@@ -691,11 +782,14 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // FIXME I need to make sure that I_P = O_{A,P} for every prime P of slope = 0 or = 1
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
         if is_F_V_stable(I) then
+            vprint Algorithm_3,2 : "...it is F-V stable\n";
             assert Order(I) eq WR;
             II:=Delta_inverse_ideal(I);
             S:=MultiplicatorRing(II);
             I`DeltaEndomorphismRing:=S;
             Append(~Delta_isom_classes_WR_F_V,I);
+        else
+            vprint Algorithm_3,2 : "...it is not F-V stable\n";
         end if;
     end for;
 
