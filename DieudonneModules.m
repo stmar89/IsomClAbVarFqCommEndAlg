@@ -252,8 +252,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         oneS:=OneIdeal(S);
         A:=Algebra(S);
         pp:=primes_of_A_above_place_of_E(A,P);
-        pp:=[ oneS meet (S!!P) : P in pp ];
-        return Setseq(Seqset(&cat[PrimesAbove(P) : P in pp ]));
+        pp:=Setseq({ oneS meet (S!!P) : P in pp });
+        assert forall{P : P in pp | IsPrime(P)};
+        return pp;
     end function;
 
     //////////////////
@@ -440,19 +441,39 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     
     valuation_idl:=function(J,P)
     // Order(J) = Order(P) = Maximal
-        assert J subset Order(J);
-        if One(Algebra(J)) in J then 
-            return 0;
+        q:=Index(Order(P),P);
+        t,p:=IsPrimePower(q);
+        assert t;
+        eP:=valuation_elt(p,P);
+        JJ,d:=MakeIntegral(J);
+        k:=Valuation(d,p);
+
+        if One(Algebra(J)) in JJ then 
+            return -k*eP;
         end if;
-        fac:=Factorization(J);
+        fac:=Factorization(JJ);
         pps:=[ g[1] : g in fac ];
         ind:=Index(pps,P);
-        assert (ind ne 0) eq (J subset P);
+        assert (ind ne 0) eq (JJ subset P);
         if ind eq 0 then
             return 0;
         else
-            return fac[ind][2];
+            return fac[ind][2]-k*eP;
         end if;
+// 20240506: replaced by the above which works also for non proper ideals
+//        assert J subset Order(J);
+//        if One(Algebra(J)) in J then 
+//            return 0;
+//        end if;
+//        fac:=Factorization(J);
+//        pps:=[ g[1] : g in fac ];
+//        ind:=Index(pps,P);
+//        assert (ind ne 0) eq (J subset P);
+//        if ind eq 0 then
+//            return 0;
+//        else
+//            return fac[ind][2];
+//        end if;
     end function;
 
     ramification_index:=function(P)
@@ -467,7 +488,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         g_nu:=GCD(a,f_nu); //q=p^a
         e_nu:=ramification_index(P);
         exps:=[];
-        // this is naive.
         cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu]]);
         for tup0 in cp do
             tup:=[ tup0[i] : i in [1..g_nu] ];
@@ -502,10 +522,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
                 tP +:=Random(P2);
             end while;
             assert tP in P and not tP in P2;
-            //if #PPAs gt 1 then
-                elts:=[ i eq iP select tP else one : i in [1..#PPAs] ];
-                tP:=CRT(PPAs2,elts);
-            //end if;
+            elts:=[ i eq iP select tP else one : i in [1..#PPAs] ];
+            tP:=CRT(PPAs2,elts);
             assert tP in P and not tP in P2;
             assert tP in OA;
             assert forall{ Q : Q in [ Q : Q in PPAs | Q ne P ] | not tP in Q };
@@ -528,16 +546,18 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     for cc in exps_nus_cc do
         Append(~exps_01,&cat[ c : c in cc ]); 
     end for;
-    vprintf Algorithm_2,2 : "number of F-V stable O_A' ideals = %o \n",#exps_01;
+    vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",exps_01;
     pp_A_01:=&cat(pp_A_nus);
     nice_unifs_01:=nice_uniformizers(pp_A_01);
     vprintf Algorithm_2,2 : "nice_unifs_01 = %o\n", PrintSeqAlgEtQElt(nice_unifs_01);
 
     // We compute the W'_R-isomorpshim classes of W'_R-ideals.
     k:=Valuation(Index(OA,WR),p);
-    WR_01:=Order( ZBasis(WR) cat ZBasis(OA!!&*[ P^k : P in pp_A_01 ]));
-    // TODO CHECKME this order is locally isomorphic to WR' at every place of slope 01
+    WR_01:=Order( ZBasis(WR) cat ZBasis(OA!!&*[ P^(k*ramification_index(P)) : P in pp_A_01 ]));
+    // WR_01 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     wk_01:=[ SmallRepresentative(WR!!I) : I in WKICM(WR_01)];
+    vprintf Algorithm_2,2 : "[OA:WR] = %o\n",Index(OA,WR);
+    vprintf Algorithm_2,2 : "[OA:WR_01] = %o\n",Index(OA,WR_01);
     vprintf Algorithm_2,2 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
 
     WR_01_idls_with_ext_i_to_OA_F_V_stable:=[];
@@ -553,11 +573,15 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         // the following two lines should be cached
         QS,qS:=units_quotient_fixed_sigma(S,sigma);
         gammas:=[ qS(x) : x in QS ];
+        vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
         vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
         vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
         assert forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert forall{ g : g in gammas | not IsZeroDivisor(g) };
-        II:=[ d*g*I : d in deltas, g in gammas ];
+        //II:=[ d*g*I : d in deltas, g in gammas ]; TODO 20240506 I think this is not correct. the next one should be the right one
+        II:=[ (d^-1)*g*I : d in deltas, g in gammas ];
+        vprintf Algorithm_2,2 : "valuations of the of extensions O_A' of the ideals in II = %o\n",
+            [ [ valuation_idl(OA!!ii,P) : P in pp_A_01 ] : ii in II ];
         WR_01_idls_with_ext_i_to_OA_F_V_stable cat:=II;
     end for;
 
@@ -589,6 +613,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
  
     exps:=exps_01[1];
     J:=WR !! Ideal(OA,&*[nice_unifs_01[i]^exps[i] : i in [1..#pp_A_01]]);
+    vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J = %o\n",[ valuation_idl(OA!!J,P) : P in pp_A_01 ];
 
     // We scale the ideals I by elements of E so that they are in J
     // We want to keep J/xI small
@@ -641,16 +666,67 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         f_nu:=inertia_degree(nu);
         g_nu:=GCD(a,f_nu); //q=p^a
         assert #PPs_nu eq g_nu;
-      
+     
+// 20240506 replaced with unit argument
+//         Rs_nu:=[];
+//         rs_nu:=<>;
+//         PPs_nu_m0_1:=[];
+//         for PP in PPs_nu do
+//             PP_m0_1:=PP^(ramification_index(PP)*(m0+1));
+//             Append(~PPs_nu_m0_1,PP_m0_1);
+//             R,r:=ResidueRing(OA,PP_m0_1);
+//             Append(~Rs_nu,R);
+//             Append(~rs_nu,r);
+//         end for;
+//         Append(~PPs_nus_prod_powers,&*PPs_nu_m0_1);
+// 
+//         Q,embs,projs:=DirectSum(Rs_nu);
+//         preimage_pr:=function(y)
+//             if g_nu eq 1 then
+//                 return projs[1](y)@@rs_nu[1];
+//             else
+//                 return CRT( PPs_nu_m0_1 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]]);    
+//             end if;
+//         end function;
+//         pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
+//                                    //y:->&+[ projs[i](y)@@rs_nu[i] : i in [1..g_nu] ]>; //this is wrong
+//                                    y:->preimage_pr(y)>;
+//         assert forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
+//         pi_Q:=pr(pi_A);
+//         vprintf Algorithm_3,2 : "looping over a set of size = %o\n",#Rs_nu[g_nu];
+// 
+//         tot:=#Rs_nu[g_nu];
+//         counter:=0; perc:=0;
+//         for u in Rs_nu[g_nu] do
+//             counter+:=1; if Truncate(100*counter/tot) gt perc then perc+:=1; vprintf Algorithm_3,2 : "%o%%, ",perc; end if; 
+//             alpha_Q:=&+[i lt g_nu select embs[i](rs_nu[i](One(A))) else embs[i](u) : i in [1..g_nu]]; 
+//             alpha_Q_inA:=alpha_Q@@pr;    
+//             norm:=alpha_Q_inA;
+//             sigma_alpha_Q:=alpha_Q_inA;
+//             for i in [1..a-1] do
+//                 sigma_alpha_Q:=sigma(sigma_alpha_Q);
+//                 norm *:= sigma_alpha_Q;
+//             end for;
+//             if pr(norm) eq pi_Q then
+//                 break u;
+//             end if;
+//         end for;
+
+// 20240506 new version        
         Rs_nu:=[];
         rs_nu:=<>;
+        Us_nu:=[];
+        us_nu:=<>;
         PPs_nu_m0_1:=[];
         for PP in PPs_nu do
             PP_m0_1:=PP^(ramification_index(PP)*(m0+1));
             Append(~PPs_nu_m0_1,PP_m0_1);
             R,r:=ResidueRing(OA,PP_m0_1);
+            U,u:=ResidueRingUnits(OA,PP_m0_1);
             Append(~Rs_nu,R);
             Append(~rs_nu,r);
+            Append(~Us_nu,U);
+            Append(~us_nu,u);
         end for;
         Append(~PPs_nus_prod_powers,&*PPs_nu_m0_1);
 
@@ -663,31 +739,33 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             end if;
         end function;
         pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-                                   //y:->&+[ projs[i](y)@@rs_nu[i] : i in [1..g_nu] ]>; //this is wrong
                                    y:->preimage_pr(y)>;
         assert forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
         pi_Q:=pr(pi_A);
-        vprintf Algorithm_3,2 : "looping over a set of size = %o\n",#Rs_nu[g_nu];
 
-        tot:=#Rs_nu[g_nu];
-        counter:=0; perc:=0;
-        for u in Rs_nu[g_nu] do
-            counter+:=1; if Truncate(100*counter/tot) gt perc then perc+:=1; vprintf Algorithm_3,2 : "%o%%, ",perc; end if; 
-            alpha_Q:=&+[i lt g_nu select embs[i](rs_nu[i](One(A))) else embs[i](u) : i in [1..g_nu]]; 
-            alpha_Q_inA:=alpha_Q@@pr;    
-            norm:=alpha_Q_inA;
-            sigma_alpha_Q:=alpha_Q_inA;
+        U,U_embs,U_projs:=DirectSum(Us_nu);
+        preimage_U_pr:=function(y)
+            return CRT( PPs_nu_m0_1 ,[U_projs[i](y)@@us_nu[i] : i in [1..g_nu]]);    
+        end function;
+        U_pr:=map<Algebra(OA) -> Q | x:->&+[U_embs[i](us_nu[i](x)) : i in [1..g_nu]], 
+                                     y:->preimage_U_pr(y)>;
+        assert forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+        image_phi:=function(gamma)
+            beta:=&+[i lt g_nu select U_embs[i](us_nu[i](One(A))) else U_embs[i](gamma) : i in [1..g_nu]]; 
+            beta_inA:=beta@U_pr;    
+            sigma_beta_inA:=beta_inA;
             for i in [1..a-1] do
-                sigma_alpha_Q:=sigma(sigma_alpha_Q);
-                norm *:= sigma_alpha_Q;
+                sigma_beta:=sigma(sigma_beta);
             end for;
-            if pr(norm) eq pi_Q then
-                break u;
-            end if;
-        end for;
+        end function;
+        phi:=hom<Us_nu[g_nu]->U | x:->image_phi(x) >;
+        // TODO define u_nu as a uniformizer. I think I just need to take u_nu = nice_uniformizer of ...
+        // TODO define w by pi_E = u_nu^val_nu(pi_E_nu) * w
+        gamma:=w@@phi;
+        // TODO alpha:= see the notes (1,...,1,gamma)*(1,....,1,u_nu^?), has to be in A so apply @pr
         Append(~QQs,Q);
         Append(~qqs,pr);
-        Append(~alpha_Q_inAs,alpha_Q_inA);
+        Append(~alpha_Q_inAs,alpha);
     end for;
     vprintf Algorithm_3,2 : "all alpha_Q's are computed\n";
 
@@ -770,16 +848,18 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
     is_F_V_stable:=function(I)
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
-        return I_Qm0 eq I_Qm0 + 
+        IFV_Qm0:=I_Qm0 + 
                         sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +
                         sub<Qm0 | [VQm0(z) : z in Generators(I_Qm0)] >;
+        //vprintf Algorithm_3,2 : "size of I_Q+F_Q(I_Q)+V_Q(I_Q)/I_Q = %o\n",Index(IFV_Qm0,I_Qm0);
+        return I_Qm0 eq IFV_Qm0;
     end function;
 
     Delta_isom_classes_WR_F_V:=[ ];
     vprintf Algorithm_3,2 : "Started checking for F-V stability for the ...\n";
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         vprintf Algorithm_3,2 : "%oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable...\n",iI;
-    // FIXME I need to make sure that I_P = O_{A,P} for every prime P of slope = 0 or = 1
+    // FIXME Do I need to make sure that I_P = O_{A,P} for every prime P of slope = 0 or = 1 ?
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
         if is_F_V_stable(I) then
             vprint Algorithm_3,2 : "...it is F-V stable\n";
