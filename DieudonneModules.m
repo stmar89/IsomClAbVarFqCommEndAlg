@@ -520,14 +520,17 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             tP:=t@@q;
             while IsZeroDivisor(tP) do
                 tP +:=Random(P2);
+                printf ".";
             end while;
+            printf "\n";
             assert tP in P and not tP in P2;
             elts:=[ i eq iP select tP else one : i in [1..#PPAs] ];
             tP:=CRT(PPAs2,elts);
+            "crt is done";
             assert tP in P and not tP in P2;
-            assert tP in OA;
+            assert tP in MaximalOrder(A);
             assert forall{ Q : Q in [ Q : Q in PPAs | Q ne P ] | not tP in Q };
-            assert Seqset(PrimesAbove(tP*OA)) meet Seqset(PPAs) eq {P};
+            assert Seqset(PrimesAbove(tP*MaximalOrder(A))) meet Seqset(PPAs) eq {P};
             assert not IsZeroDivisor(tP);
             Append(~nice_unifs,tP);
         end for;
@@ -646,7 +649,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     end for;
     m0:=Max(m_nu_s);
 
-    //m1:=m0+5; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
+    m1:=m0+55; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
     
     vprintf Algorithm_3 : "vp(Nk)'s = %o\n",[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ];
     vprintf Algorithm_3 : "v_nu(pi) for all nu's = %o\n",[ valuation_elt( pi, P ) : P in pl_01_E ];
@@ -722,7 +725,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             PP_m0_1:=PP^(ramification_index(PP)*(m0+1));
             Append(~PPs_nu_m0_1,PP_m0_1);
             R,r:=ResidueRing(OA,PP_m0_1);
+            vprintf Algorithm_3,2 : "R,r computed\n";
             U,u:=ResidueRingUnits(OA,PP_m0_1);
+            vprintf Algorithm_3,2 : "U,u computed\n";
             Append(~Rs_nu,R);
             Append(~rs_nu,r);
             Append(~Us_nu,U);
@@ -731,43 +736,47 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         Append(~PPs_nus_prod_powers,&*PPs_nu_m0_1);
 
         Q,embs,projs:=DirectSum(Rs_nu);
-        preimage_pr:=function(y)
-            if g_nu eq 1 then
-                return projs[1](y)@@rs_nu[1];
-            else
-                return CRT( PPs_nu_m0_1 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]]);    
-            end if;
-        end function;
         pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-                                   y:->preimage_pr(y)>;
+                                   y:->CRT( PPs_nu_m0_1 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
         assert forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
         pi_Q:=pr(pi_A);
 
         U,U_embs,U_projs:=DirectSum(Us_nu);
-        preimage_U_pr:=function(y)
-            return CRT( PPs_nu_m0_1 ,[U_projs[i](y)@@us_nu[i] : i in [1..g_nu]]);    
-        end function;
-        U_pr:=map<Algebra(OA) -> Q | x:->&+[U_embs[i](us_nu[i](x)) : i in [1..g_nu]], 
-                                     y:->preimage_U_pr(y)>;
+        U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
+                                     y:->CRT( PPs_nu_m0_1 ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
         assert forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+
+        vprintf Algorithm_3,2 : "Q and U are computed\n";
+
         image_phi:=function(gamma)
-            beta:=&+[i lt g_nu select U_embs[i](us_nu[i](One(A))) else U_embs[i](gamma) : i in [1..g_nu]]; 
-            beta_inA:=beta@U_pr;    
-            sigma_beta_inA:=beta_inA;
-            for i in [1..a-1] do
-                sigma_beta:=sigma(sigma_beta);
-            end for;
+            beta:=&+[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma) : i in [1..g_nu]]; 
+            beta_inA:=beta@@U_pr;    
+            img:=(&*[ i eq 1 select beta_inA else sigma(Self(i-1)) : i in [1..a] ]);
+            vprintf Algorithm_3,2 : "img = %o , sigma(img) = %o\n",img,sigma(img);
+            assert sigma(img) eq img;
+            img:=U_pr(img);
+            return img;
         end function;
-        phi:=hom<Us_nu[g_nu]->U | x:->image_phi(x) >;
-        // TODO define u_nu as a uniformizer. I think I just need to take u_nu = nice_uniformizer of ...
-        // TODO define w by pi_E = u_nu^val_nu(pi_E_nu) * w
-        gamma:=w@@phi;
-        // TODO alpha:= see the notes (1,...,1,gamma)*(1,....,1,u_nu^?), has to be in A so apply @pr
+        //phi:=hom<Us_nu[g_nu]->U | x:->image_phi(x) >;
+        phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
+        
+        u_nu:=nice_uniformizers([nu])[1]; // in E
+        val_nu:=valuation_elt(pi,nu); // in E
+        w_nu:=pi/(u_nu^val_nu); // in E
+        w:=U_pr(Delta_map(w_nu)); // in E->A->U
+        gamma_Ugnu:=w@@phi;
+        gamma_A:=(&+[i lt g_nu select U_embs[i](One(A)@@us_nu[i]) else U_embs[i](gamma_Ugnu) : i in [1..g_nu]])@@U_pr; // in A
+        beta_Q:=&+[i lt g_nu select embs[i](rs_nu[i](One(A))) else embs[i](rs_nu[i](Delta_map(u_nu^(Integers()!(val_nu*g_nu/a))))) : i in [1..g_nu]]; 
+        alpha_A:=gamma_A*(beta_Q@@pr);
+
+        assert pr(&*[ i eq 1 select alpha_A else sigma(Self(i-1)) : i in [1..a] ]) eq pi_Q;
+        
         Append(~QQs,Q);
         Append(~qqs,pr);
-        Append(~alpha_Q_inAs,alpha);
+        Append(~alpha_Q_inAs,alpha_A);
     end for;
     vprintf Algorithm_3,2 : "all alpha_Q's are computed\n";
+// end of unit argument
 
 //    20240416 commented out
 //    // FIXME Qm0_1 = does not have 0 and 1 components!, while Qm0 below does
@@ -851,7 +860,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         IFV_Qm0:=I_Qm0 + 
                         sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +
                         sub<Qm0 | [VQm0(z) : z in Generators(I_Qm0)] >;
-        //vprintf Algorithm_3,2 : "size of I_Q+F_Q(I_Q)+V_Q(I_Q)/I_Q = %o\n",Index(IFV_Qm0,I_Qm0);
+        vprintf Algorithm_3,2 : "size of I_Q+F_Q(I_Q)+V_Q(I_Q)/I_Q = %o\n",Index(IFV_Qm0,sub<IFV_Qm0|I_Qm0>);
         return I_Qm0 eq IFV_Qm0;
     end function;
 

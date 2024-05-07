@@ -26,6 +26,8 @@
     all_weil_poly:=Split(Read("weil_poly_all.txt"));
 
     h:=x^2 - 2*x + 4;
+    h:=x^6 - 7*x^5 + 27*x^4 - 66*x^3 + 108*x^2 - 112*x + 64; //expected 2
+    h:=x^6 + 3*x^5 + 7*x^4 + 10*x^3 + 28*x^2 + 48*x + 64; // expected 20
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
