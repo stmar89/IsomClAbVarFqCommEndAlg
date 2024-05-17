@@ -11,6 +11,7 @@
     load "~/PolsAbVarFpCanLift/AlmOrd.m"; 
 
     AttachSpec("~/AlgEt/spec");
+    Attach("PrimesAttributes.m");
     Attach("DieudonneModules.m");
     Attach("IsomorphismClasses.m");
 
@@ -18,7 +19,10 @@
     SetVerbose("DieudonneModules_L",2);
     SetVerbose("Algorithm_2",2);
     SetVerbose("Algorithm_3",2);
-    SetAssertions(2);
+    SetVerbose("nice_unif",2);
+    SetVerbose("sigma",2);
+    SetVerbose("ResidueRingUnits",2);
+    //SetAssertions(2);
     SetDebugOnError(true);
 
     PP<x>:=PolynomialRing(Integers());
@@ -26,8 +30,12 @@
     all_weil_poly:=Split(Read("weil_poly_all.txt"));
 
     h:=x^2 - 2*x + 4;
+    h:=x^2 - 4*x + 16;
+    h:=x^2 - 11*x + 121;
     h:=x^6 - 7*x^5 + 27*x^4 - 66*x^3 + 108*x^2 - 112*x + 64; //expected 2
     h:=x^6 + 3*x^5 + 7*x^4 + 10*x^3 + 28*x^2 + 48*x + 64; // expected 20
+    h:=x^4 - 9*x^3 + 36*x^2 - 72*x + 64;
+    h:=x^4 - 7*x^3 + 24*x^2 - 56*x + 64;
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
