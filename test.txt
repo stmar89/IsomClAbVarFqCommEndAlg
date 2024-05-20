@@ -35,7 +35,7 @@
         if IsSquarefree(h) and not h in to_be_excluded then
             g:=Degree(h) div 2;
             q:=Truncate(ConstantCoefficient(h)^(1/g));
-            if q le 50
+            if q le 11
                 and not IsCoprime(coeff[g+1],q) // exclude ordinary
                         then
                 printf "%50o = ",h;

@@ -1,0 +1,24 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+
+    PP<x>:=PolynomialRing(Integers());
+    all:=Split(Read("~/IsomClassesAbVarFqComEnd/weil_poly_all.txt"));
+    tot:=#all;
+    perc:=0;
+    for icc->cc in all do
+        if Truncate(icc/tot)*100 gt perc then perc+:=1; printf "%%o ",perc; end if;
+        coeff:=eval(cc);
+        h:=PP!coeff;
+        if IsSquarefree(h) then
+            g:=Degree(h) div 2;
+            q:=Truncate(ConstantCoefficient(h)^(1/g));
+            if q le 128
+                and not IsCoprime(coeff[g+1],q) // exclude ordinary
+                        then
+                fprintf "~/IsomClassesAbVarFqComEnd/20240520_parallel_test/input.txt","%o\n",cc;
+            end if;
+        end if;
+    end for;
+
