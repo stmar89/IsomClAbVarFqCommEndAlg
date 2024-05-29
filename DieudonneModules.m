@@ -11,8 +11,37 @@ declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 declare verbose sigma,3;
 
-declare attributes AlgEtQIdl : DeltaEndomorphismRing;
-declare attributes AlgEtQIdl : SlopeE;
+declare attributes AlgEtQ    : sigma_fin_prec;
+declare attributes AlgEtQOrd : units_quotient_fixed_sigma;
+declare attributes AlgEtQIdl : DeltaEndomorphismRing,
+                               SlopeE;
+
+is_ring_hom_quotient_NF:=function(f,R,I)
+// given an order R in some number field, I an ideal of R and f a map L->L
+// it returns wheter f:R/I->R/I is a ring homomorphism
+    L:=NumberField(R);
+    Q,mQ:=quo<R|I>;
+    //gs:=[ L!(g@@mQ) : g in Generators(Q)];
+    gs:=[ L!b : b in Basis(R) ];
+    fs:=[ R!f(i) : i in gs ]; 
+    fsQ:=[ mQ(R!f(i)) : i in gs ]; 
+    test_add:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
+    test_mult:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
+    return test_add and test_mult;
+end function;
+
+is_ring_hom_quotient_AlgEt:=function(f,R,I)
+// given an order R in some AlgEt L, I an ideal of R and f a map L->L
+// it returns wheter f:R/I->R/I is a ring homomorphism
+    L:=Algebra(R);
+    Q,mQ:=ResidueRing(R,I);
+    gs:=[ L!(g@@mQ) : g in Generators(Q)];
+    fs:=[ f(i) : i in gs ]; 
+    fsQ:=[ mQ(f(i)) : i in gs ]; 
+    test_add:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
+    test_mult:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
+    return test_add and test_mult;
+end function;
 
 intrinsic SlopeE(P::AlgEtQIdl)->RngIntElt
 {Given a maximal ideal P of the maximal order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_P(pi)/(a*e_P) where val_P(pi) is the valuation of pi at P and e_P is the ramification index of P.}
@@ -74,29 +103,32 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // Global Representatives: tilde A, tilde W_R, etc . 
     // I dropped the tilde from the notation...I don't hate my life enough.
     // ###################
+   
+    // ################### 
+    // Global Representatives: L
+    // ###################
+
+    // OLD version 1
+    // //  the following construction gives hL with very large coefficients sometimes (eg q=121)
+    // //  also it requires an input parameter prec. How do we guarantuee that this is big enough.
+    // prec:=20;
+    // LL<zetaLL>:=CyclotomicUnramifiedExtension(pAdicField(p,prec),a);
+    // assert zetaLL^(q-1) eq 1;
+    // hL:=Parent(h)!DefiningPolynomial(LL);
+
+    // OLD version 2
+    // // the following gives a very small polynomial hL, but the root might not be a root of unity.
+    // Fp:=GF(p);
+    // Fpy<y>:=PolynomialRing(Fp);
+    // Fq:=GF(q);
+    // U,u:=MultiplicativeGroup(Fq);
+    // fac_prim:=[ g[1] : g in Factorization(y^(q-1)-1) | Degree(g[1]) eq a and Order(zeta_q@@u) eq #U where _,zeta_q:=HasRoot(g[1],Fq)];
+    // c:=fac_prim[1];
+    // hL:=Parent(h)!c;
+    // // the above gives a polynomial with coefficients bounded by p.
+    // // with x^2-11*x+121 the resulting sigma does not sent OA to OA
     
-    /*
-    //  the following construction gives hL with very large coefficients sometimes (eg q=121)
-    //  also it requires an input parameter prec. How do we guarantuee that this is big enough.
-    prec:=20;
-    LL<zetaLL>:=CyclotomicUnramifiedExtension(pAdicField(p,prec),a);
-    assert zetaLL^(q-1) eq 1;
-    hL:=Parent(h)!DefiningPolynomial(LL);
-    */ 
-    /*
-    // the following gives a very small polynomial hL, but the root might not be a root of unity.
-    Fp:=GF(p);
-    Fpy<y>:=PolynomialRing(Fp);
-    Fq:=GF(q);
-    U,u:=MultiplicativeGroup(Fq);
-    fac_prim:=[ g[1] : g in Factorization(y^(q-1)-1) | Degree(g[1]) eq a and Order(zeta_q@@u) eq #U where _,zeta_q:=HasRoot(g[1],Fq)];
-    c:=fac_prim[1];
-    hL:=Parent(h)!c;
-    // the above gives a polynomial with coefficients bounded by p.
-    // with x^2-11*x+121 the resulting sigma does not sent OA to OA
-    */
-    
-    // the following gives a very small polynomial hL, but the root might not be a root of unity.
+    // the following gives a very small polynomial hL
     if a eq 1 then
         hFq:=[0,1]; // I force L to be Q[x]/(x) so that A = E
     else
@@ -104,43 +136,54 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     end if;
     hL:=Parent(h) ! hFq; 
     L<zeta>:=NumberField(hL : DoLinearExtension:=true);
-    bd:=3;
-    while not IsNormal(L) do
-        hL:=Parent(h) ! ([ p*Random([-bd..bd]) + hFq[i] : i in [1..a] ] cat [1]);
-        vprintf DieudonneModules_L,2 : "Degree of hL = %o,%o\n",Degree(hL),hL;
-        L<zeta>:=NumberField(hL : DoLinearExtension:=true);
-        vprintf DieudonneModules_L,2 : "L = %o\n",L;
-    end while;
-    printf "(hL %o) ",hL;
-    // sigma_L:=hom< L->L | [ zeta^p ] >; // this is just a function, non an automorphism of L
-    // sigma_L:=map<L->L | x:->&+[Eltseq(x)[i]*(zeta^((i-1)*p)) : i in [1..Degree(L)]] >; // this works if zeta is a root of 1.
-    if IsNormal(L) then
-        G,_,tau:=AutomorphismGroup(L);
-        D:=Decomposition(L,p);
-        assert #D eq 1 and D[1,2] eq 1; //L is unramified at p
-        D:=DecompositionGroup(D[1,1]);
-        assert IsCyclic(D);
-        sigma_L:=tau(D.1);
-    else
-    L,"L is not normal";
-        LL,roots:=SplittingField(L);
-        G,_,tau:=AutomorphismGroup(LL);
-        D:=Decomposition(LL,p);
-        //assert #D eq 1 and D[1,2] eq 1; //L is unramified at p
-        D:=DecompositionGroup(D[1,1]);
-        assert IsCyclic(D);
-        emb:=hom<L->LL | [ roots[1] ]>;
-        sigma_LL_img:=tau(D.1)(roots[1]);
-        t,sigma_L_img:=HasPreimage(sigma_LL_img,emb);
-        assert t;
-        sigma_LL:=hom<L->L | [sigma_L_img]>;
-    end if;
-
-
-    
+    // OLD an attempt to compute sigma_L, by raplacing L with a normal number field 
+    // with irreducible reduction mod p of degree a.
+    // If found, then sigma_L is a generator of the decomposition group.
+    // Unfortunately, such a 'tweak' of L does not seem always easy to find. It might not even alwasy exists.
+    // For this reason this approach has been abandoned.
+    //
+    // bd:=3;
+    // while not IsNormal(L) do
+    //     hL:=Parent(h) ! ([ p*Random([-bd..bd]) + hFq[i] : i in [1..a] ] cat [1]);
+    //     vprintf DieudonneModules_L,2 : "Degree of hL = %o,%o\n",Degree(hL),hL;
+    //     L<zeta>:=NumberField(hL : DoLinearExtension:=true);
+    //     vprintf DieudonneModules_L,2 : "L = %o\n",L;
+    // end while;
+    // printf "(hL %o) ",hL;
+    // // sigma_L:=hom< L->L | [ zeta^p ] >; // this is just a function, non an automorphism of L
+    // // sigma_L:=map<L->L | x:->&+[Eltseq(x)[i]*(zeta^((i-1)*p)) : i in [1..Degree(L)]] >; // this works if zeta is a root of 1.
+    // if IsNormal(L) then
+    //     G,_,tau:=AutomorphismGroup(L);
+    //     D:=Decomposition(L,p);
+    //     assert #D eq 1 and D[1,2] eq 1; //L is unramified at p
+    //     D:=DecompositionGroup(D[1,1]);
+    //     assert IsCyclic(D);
+    //     sigma_L:=tau(D.1);
+    // else
+    // L,"L is not normal";
+    //     LL,roots:=SplittingField(L);
+    //     G,_,tau:=AutomorphismGroup(LL);
+    //     D:=Decomposition(LL,p);
+    //     //assert #D eq 1 and D[1,2] eq 1; //L is unramified at p
+    //     D:=DecompositionGroup(D[1,1]);
+    //     assert IsCyclic(D);
+    //     emb:=hom<L->LL | [ roots[1] ]>;
+    //     sigma_LL_img:=tau(D.1)(roots[1]);
+    //     t,sigma_L_img:=HasPreimage(sigma_LL_img,emb);
+    //     assert t;
+    //     sigma_LL:=hom<L->L | [sigma_L_img]>;
+    // end if;
 
     OL:=MaximalOrder(L);
     zb_OL:=Basis(OL);
+    PL:=Factorization(p*OL);
+    assert #PL eq 1 and PL[1,2] eq 1; // L has a unique prime above p, which is unramified.
+    PL:=PL[1,1];
+    normPL:=Index(OL,PL);
+    
+    // ################### 
+    // Global Representatives: A
+    // ###################
 
     fac_h_L:=Factorization( PolynomialRing(L) ! h );
     assert forall{ g : g in fac_h_L| g[2] eq 1 }; // h is assumed to be squarefree
@@ -228,11 +271,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // end test
 
     // #######################
-    // tilde sigma: acts as zeta:->zeta^q on L-coefficients when A is written as L + pi*L + ... +pi^deg(h)L
+    // tilde sigma: acts as the L-Forbenius on L-coefficients when A is written as L + pi*L + ... +pi^deg(h)L
     // #######################
 
-    // Write A = prod_i L[x]/(h_i(x)). sigma is NOT induced by sigma_L with this presentation over L.
-    // We need to compute an L-isomorphism A->W:=L + pi*L + ... +pi^deg(h)L.
+    // We have defined A = prod_i L[x]/(h_i(x)).
+    // In order to compute sigma, we need to understand the action of the Frobenius sigma_L of L.
+    // To do so, we need to represent A as W:=L + pi*L + ... +pi^(deg(h)-1)L and compute L-isomorphism mAW:A->W.
     Vs:=[];
     vs:=<>;
     for i in [1..#nfs_A] do
@@ -248,28 +292,72 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     W:=KSpace(L,Degree(h));
     isom:=iso< W->D | pows_pi_D >;
     mAW:=map< A->W | x:->mAD(x)@@isom, y:-> isom(y)@@mAD >;
-    sigma_image:=function(x)
-        // x in A
-        return (W![sigma_L(c) : c in Eltseq(mAW(x))])@@mAW;
+
+    // In order to compute sigma on A, we need first to compute the L-Frobenius sigma_L.
+    // If L is normal, we could define sigma_L as any generator of the Decomposition group 
+    // of the unique prime PL (computed above) of L above p.
+    // If L is not normal, we have an issue.
+    // Rather than trying to use a splitting field of L (which might have very big degree), 
+    // we observe that we need to compute sigma only on finite quotients of OA, annihilated by some power of PL.
+    // So, firstly, we produce a function that computes sigma_L on OL/PL^m, for a given m.
+    sigma_L_mod_PLm:=function(m)
+    // Given a non-negative integer m returns a map L:->L which 
+    // induces the a ring homomorphism on OL/PL^m
+    // representing the Frobenius automorphism of L \otimes Qp.
+    // If m = 0 then it just returns the identity.
+    //
+    //
+    // TODO this function could be an good application of ReconstructionEnviroment
+        if m eq 0 then
+            return map<L->L | x:->x >;
+        end if;
+        Lp:=ext<pAdicField(p,m) | hL>;
+        sigma_Lp:=FrobeniusAutomorphism(Lp);
+        sigma_Lp_coeffs:=Eltseq(sigma_Lp(Lp.1)); //coeffs of sigma_L of the root of hL in Lp
+        sigma_L_L1:=L!sigma_Lp_coeffs;
+        sigma_L:=map< L-> L | x:-> &+[ Eltseq(L!x)[i]*sigma_L_L1^(i-1) : i in [1..Degree(L)] ]>;
+        assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
+        return sigma_L;
     end function;
 
-    sigma:=map< A-> A | x:->sigma_image(x) >; // this is not a ring homomorphism.
-                                              // but it becomes one if we tensor with Qp
+    sigma_A_mod_I:=function(I)
+    // Given an ideal I of OA such that OA/I is an OL/PL^m-module for some m, 
+    // returns a map A:->A that induces sigma on OA/I, together with the precision m.
+    // The returned map does not depend on I, but only on m.
+    // The map and m are cahed in an attribute.
+        A:=Algebra(I);
+        assert Order(I) eq OA;
+        // If OA/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
+        // It follows that m is the length of OA/I as an OL-module, which can be computed using the formula
+        // |OL/PL|^m = |OA/I|
+        normI:=Index(OA,I);
+        t,m:=IsPowerOf(normI,normPL);
+        assert t;
 
-    vprintf sigma,2 : "sigma: asserts"; 
-    assert x eq sigma(x) where x := Delta_map(pi);
-    vprintf sigma,2 : "."; 
-    assert forall{ x : x in [ Delta_map(y) : y in ZBasis(MaximalOrder(E))] | x eq sigma(x) };
-    vprintf sigma,2 : "."; 
-    assert forall{ x : x in ZBasis(OA) | sigma(x) in OA };
-    vprintf sigma,2 : "."; 
-    // test: sigma is a ring hom on OA/q*OA
-    Q,mQ:=ResidueRing(OA,q*OA);
-    gensQinA:=[ g@@mQ : g in Generators(Q) ];
-    assert forall{i : i,j in gensQinA | mQ(sigma(i+j)) eq mQ(sigma(i)) + mQ(sigma(j)) };
-    vprintf sigma,2 : "."; 
-    assert forall{i : i,j in gensQinA | mQ(sigma(i*j)) eq mQ(sigma(i)*sigma(j)) };
-    vprintf sigma,2 : "dome\n"; 
+        if not assigned A`sigma_fin_prec or A`sigma_fin_prec[2] lt m then
+            sigma_L:=sigma_L_mod_PLm(m);
+            sigma:=map< A-> A | x:-> (W![sigma_L(c) : c in Eltseq(mAW(x))])@@mAW >;
+            assert is_ring_hom_quotient_AlgEt(sigma,OA,I);
+            A`sigma_fin_prec:=<sigma,m>;
+        end if;
+        return Explode(A`sigma_fin_prec);
+    end function;
+    
+    // OLD TEST: probably, they don't make sense when applied to something only defined on finite quotients
+    // vprintf sigma,2 : "sigma: asserts"; 
+    // assert x eq sigma(x) where x := Delta_map(pi);
+    // vprintf sigma,2 : "."; 
+    // assert forall{ x : x in [ Delta_map(y) : y in ZBasis(MaximalOrder(E))] | x eq sigma(x) };
+    // vprintf sigma,2 : "."; 
+    // assert forall{ x : x in ZBasis(OA) | sigma(x) in OA };
+    // vprintf sigma,2 : "."; 
+    // // test: sigma is a ring hom on OA/q*OA
+    // Q,mQ:=ResidueRing(OA,q*OA);
+    // gensQinA:=[ g@@mQ : g in Generators(Q) ];
+    // assert forall{i : i,j in gensQinA | mQ(sigma(i+j)) eq mQ(sigma(i)) + mQ(sigma(j)) };
+    // vprintf sigma,2 : "."; 
+    // assert forall{i : i,j in gensQinA | mQ(sigma(i*j)) eq mQ(sigma(i)*sigma(j)) };
+    // vprintf sigma,2 : "dome\n"; 
 
     // #######################
     // primes of orders in A above places
@@ -299,9 +387,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     //////////////////
     // Let S be an order in A', containing R'. We want to compute OA'^*/S^*\Delta'(O_E'^*)
 
-
     units_quotient_01:=function(S)
-    // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA
+    // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA,
+    // together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).
         primes_01_S:=&cat[ primes_of_S_above_place_of_E(S,P) : P in pl_01_E];
         ff:=Conductor(S);
         primes_01_S_above_ff:=[ P : P in primes_01_S | ff subset P];
@@ -316,7 +404,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             u:=map<U->Algebra(S) | x:->One(S), y:->trivial_preimage(y)>;
             // without test
             //u:=map<U->Algebra(S) | x:->One(S), y:->Zero(U)>;
-            return U,u;
+            return U,u,OneIdeal(OA);
         end if;
         indff:=Index(S,ff);
         assert forall{P : P in primes_01_S_above_ff | indff mod Index(S,P) eq 0 };
@@ -325,56 +413,55 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         ff_prod:=ff+prod;
         assert not 1 in ff_prod;
         assert OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
-       
-        R,r:=ResidueRingUnits(OA!!(ff_prod));
+      
+        I:=OA!!(ff_prod);
+        R,r:=ResidueRingUnits(I);
         gens:=ResidueRingUnitsSubgroupGenerators(ff_prod);
         U,u0:=quo<R | [ g@@r : g in gens]>;
         u:=map<U->Algebra(S) |  x:-> r(x@@u0), y:->u0(y@@r) >;
-        return U,u;
+        return U,u,I;
     end function;
 
-    fixed_pts_sigma:=function(S,sigma)
+    fixed_pts_sigma:=function(S)
     // Given an order S in A, representing an order S' in A', 
     // which is stable by the action of sigma (eg. WR),
-    // returns U,u,F where
-    // U=OA'^*/S'^*,
-    // u is a map u:U->OA giving representatives 
-    // F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
-        U,u:=units_quotient_01(S); //u:U->A
+    // returns U,u,F,m where
+    // - U=OA'^*/S'^*,
+    // - u is a map u:U->OA giving representatives 
+    // - F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
+        U,u,I:=units_quotient_01(S); //u:U->A
         Ugens_inA:=[ u(U.i) : i in [1..Ngens(U)] ];
         vprintf Algorithm_2,2 : "Computed OA'^*/S^* ...\n";
         vprintf Algorithm_2,2 : "... which has generators in tilde{OA} : %o\n", PrintSeqAlgEtQElt( Ugens_inA );
+        sigma:=sigma_A_mod_I(I);
+        // Question: sigma is defined only mod I. Can it send a unit to a zero-div? 
+        // Is so it will create troubles in the next line
         id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in Ugens_inA ]>;
         F:=Kernel(id_sigma);
         return U,u,F;
     end function;
 
     // only for WR: F = Delta(OE')^*W'R^*/W'R^* inside OA'^*/W'R^*
-    U,u,F:=fixed_pts_sigma(WR,sigma);
+    U,u,F:=fixed_pts_sigma(WR);
     vprintf Algorithm_2,2 : "Computed OA'^*/W'_R^* ...\n";
     units_quotient_fixed_sigma_WR_gens:=[u(F.i) : i in [1..Ngens(F)]];
     vprintf Algorithm_2,2 : "Generators of Delta(OE^*)W'_R^* in U : %o\n", PrintSeqAlgEtQElt( units_quotient_fixed_sigma_WR_gens);
     delete U,u,F;
 
-    units_quotient_fixed_sigma:=function(S,sigma)
+    units_quotient_fixed_sigma:=function(S)
     // Given an order S in A, representing an order S' in A', returns Q,q where
     // Q = OA'^*/S'^*Delta(OE'^*) 
     // q is a map Q->OA giving representatives
-        U,u:=units_quotient_01(S); //u:U=OA'^*/S'^* -> A
-        fixed_pts_gens:=[ g@@u : g in units_quotient_fixed_sigma_WR_gens];
-        Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
-        q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
-        return Q,q;
+        if not assigned S`units_quotient_fixed_sigma then
+            U,u:=units_quotient_01(S); //u:U=OA'^*/S'^* -> A
+            fixed_pts_gens:=[ g@@u : g in units_quotient_fixed_sigma_WR_gens];
+            Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
+            q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
+            S`units_quotient_fixed_sigma:=<Q,q>;
+        end if;
+        return Explode(S`units_quotient_fixed_sigma);
     end function;
 
-    // TEST : FIXME this test is time consuming and I am computing stuff for orders that 
-    // might not be useful later
-    oo:=OverOrders(WR);
-    for iS->S in oo do
-        U,u:=units_quotient_fixed_sigma(S,sigma);
-        UE,uE:=UnitGroup(MaximalOrder(E));
-        assert forall{ x : x in [ Delta_map(uE(y)) : y in Generators(UE)] | x eq sigma(x) };
-    end for;
     vprintf Algorithm_2,2 : "units_quotient_fixed_sigma finished\n";
 
     exponents_from_Waterhouse:=function(P)
@@ -435,8 +522,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             assert #exps eq #pp_A_01; 
             Append(~deltas,&*[nice_unifs_01[i]^(valsJ[i]-exps[i]) : i in [1..#pp_A_01]]);
         end for;
-        // TODO the following two lines should be cached
-        QS,qS:=units_quotient_fixed_sigma(S,sigma);
+        QS,qS:=units_quotient_fixed_sigma(S); // this is now cached in an attributed
         gammas:=[ qS(x) : x in QS ];
         vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
         vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
@@ -497,6 +583,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
     //m1:=m0+52; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
     
+    // We defind sigma so that will induce a ring hom on Q = OA/PPs_nu_m0_1_prod
+    sigma:=sigma_A_mod_I(p^(m0+1)*OA); // Here, we might be asking for a higher precision than 
+                                       // what we need later since we are also considering primes
+                                       // of slope 0 and 1. 
+                                       // I don't think it will slow down the code in a noticable way.
+
     vprintf Algorithm_3 : "m0 = %o\n",m0;
     vprintf Algorithm_3 : "vp(Nk)'s = %o\n",vpNks;
     vprintf Algorithm_3 : "v_nu(pi) for all nu's = %o\n",[ Valuation( pi, P ) : P in pl_01_E ];
@@ -533,7 +625,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             Append(~Us_nu,U);
             Append(~us_nu,u);
         end for;
-        Append(~PPs_nus_prod_powers,&*PPs_nu_m0_1);
+        PPs_nu_m0_1_prod:=&*PPs_nu_m0_1;
+        Append(~PPs_nus_prod_powers,PPs_nu_m0_1_prod);
 
         Q,embs,projs:=DirectSum(Rs_nu);
         pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
@@ -544,11 +637,10 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         vprintf Algorithm_3,2 : "asserts for Q";
         assert forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
         vprintf Algorithm_3,2 : ".";
-        //we test that sigma induceds a ring homomorphism on Q
-        assert forall{ i : i,j in Generators(Q) | pr(sigma((i+j)@@pr)) eq  pr(sigma(i@@pr)+sigma(j@@pr))};
-        vprintf Algorithm_3,2 : ".";
-        assert forall{ i : i,j in Generators(Q) | pr(sigma((i@@pr)*(j@@pr))) eq  pr(sigma(i@@pr)*sigma(j@@pr))};
+        assert is_ring_hom_quotient_AlgEt(sigma,OA,PPs_nu_m0_1_prod);
         vprintf Algorithm_3,2 : ".done\n";
+
+
 
         U,U_embs,U_projs:=DirectSum(Us_nu);
         U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
@@ -609,6 +701,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
             
     vprintf Algorithm_3,2 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
+    // CHECKME : I think that sigma in the next line is alreadu computed to the right precision.
     FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*sigma(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
     FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*sigma(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
     assert forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
