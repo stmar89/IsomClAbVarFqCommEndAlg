@@ -1,13 +1,13 @@
 /* vim: set syntax=magma : */
 /*
-    rm ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/output.txt
-    rm ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/errors.txt
-    rm ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/joblog
-    parallel -j 10 --timeout 3600 --resume --joblog ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/joblog -a ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/input.txt magma -b cc:={} ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/script.txt 
+    rm ~/IsomClassesAbVarFqComEnd/parallel_test/output.txt
+    rm ~/IsomClassesAbVarFqComEnd/parallel_test/errors.txt
+    rm ~/IsomClassesAbVarFqComEnd/parallel_test/joblog
+    parallel -j 10 --timeout 3600 --resume --joblog ~/IsomClassesAbVarFqComEnd/parallel_test/joblog -a ~/IsomClassesAbVarFqComEnd/parallel_test/input.txt magma -b cc:={} ~/IsomClassesAbVarFqComEnd/parallel_test/script.txt 
 */
 
-    file_out:="~/IsomClassesAbVarFqComEnd/20240520_parallel_test/output.txt";
-    file_err:="~/IsomClassesAbVarFqComEnd/20240520_parallel_test/errors.txt";
+    file_out:="~/IsomClassesAbVarFqComEnd/parallel_test/output.txt";
+    file_err:="~/IsomClassesAbVarFqComEnd/parallel_test/errors.txt";
 
     AttachSpec("~/AbVarFq/packages.spec");
     Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
