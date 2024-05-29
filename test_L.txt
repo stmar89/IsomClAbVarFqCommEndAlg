@@ -1,0 +1,53 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+    bd:=10^5; //upper bound
+    bd_rnd:=2; // twisting coeffs
+
+
+    Zx<x>:=PolynomialRing(Integers());
+    qs:=[ x : x in [2..bd] | IsPrimePower(x) ];
+    "#qs = ",#qs;
+    for q in qs do
+        _,p,a:=IsPrimePower(q);
+        if a gt 1 then
+            printf "%o %o %o ...",q,p,a;
+            t0:=Cputime();
+            Fpy<y>:=PolynomialRing(GF(p));
+            poly:=[ g[1] : g in Factorization(y^q-y) | Degree(g[1]) eq a ];
+            lifts:=[];
+            i:=1;
+            repeat
+                g:=poly[i];
+                h:=Zx!g;
+                Append(~lifts,h);
+                L:=NumberField(h);
+                is_nrm:=IsNormal(L);
+                i+:=1;
+            until i eq #poly + 1 or is_nrm;
+            if is_nrm then
+                t1:=Cputime(t0);
+                printf "%o\n",t1;
+            else
+                rnd:=CartesianProduct([[-bd_rnd..bd_rnd] : i in [1..a]]);
+                for h in lifts do
+                    hc:=Coefficients(h);
+                    for r in rnd do
+                        hL:=Zx ! ([ p*r[i] + hc[i] : i in [1..a] ] cat [1]);
+                        L:=NumberField(hL);
+                        is_nrm:=IsNormal(L);
+                        if is_nrm then
+                            t1:=Cputime(t0);
+                            printf "%o\n",t1;
+                            break h;
+                        end if;
+                    end for;
+               end for;
+            end if;
+            if not is_nrm then
+                printf " failure <------------\n";
+            end if;
+        end if;
+    end for;
+
