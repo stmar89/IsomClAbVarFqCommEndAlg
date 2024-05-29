@@ -1,0 +1,12 @@
+                 x^4 - 3*x^3 + 45*x^2 - 75*x + 625 = debug me! Runtime error: Bad argument types
+Argument types given: RngPadElt, RngLocAElt
+
+                 x^4 + 3*x^3 + 45*x^2 + 75*x + 625 = debug me! Runtime error: Bad argument types
+Argument types given: RngPadElt, RngLocAElt
+
+              x^4 - 11*x^3 + 91*x^2 - 539*x + 2401 = debug me! Runtime error: Bad argument types
+Argument types given: RngPadElt, RngLocAElt
+
+              x^4 + 11*x^3 + 91*x^2 + 539*x + 2401 = debug me! Runtime error: Bad argument types
+Argument types given: RngPadElt, RngLocAElt
+

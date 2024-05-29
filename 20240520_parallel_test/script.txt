@@ -1,0 +1,83 @@
+/* vim: set syntax=magma : */
+/*
+    rm ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/output.txt
+    rm ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/errors.txt
+    rm ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/joblog
+    parallel -j 10 --timeout 3600 --resume --joblog ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/joblog -a ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/input.txt magma -b cc:={} ~/IsomClassesAbVarFqComEnd/20240520_parallel_test/script.txt 
+*/
+
+    file_out:="~/IsomClassesAbVarFqComEnd/20240520_parallel_test/output.txt";
+    file_err:="~/IsomClassesAbVarFqComEnd/20240520_parallel_test/errors.txt";
+
+    AttachSpec("~/AbVarFq/packages.spec");
+    Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
+    load "~/PolsAbVarFpCanLift/AlmOrd.m"; 
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+
+    //SetVerbose("DieudonneModules",2);
+    SetAssertions(2);
+    SetDebugOnError(false);
+
+    PP<x>:=PolynomialRing(Integers());
+
+    coeff:=eval(cc);
+    h:=PP!coeff;
+    if IsSquarefree(h) then
+        g:=Degree(h) div 2;
+        q:=Truncate(ConstantCoefficient(h)^(1/g));
+        t,p,a:=IsPrimePower(q);
+        assert t; delete t;
+        E:=EtaleAlgebra(h);
+        pi:=PrimitiveElement(E);
+        R:=Order([pi,q/pi]);
+        try
+            t0:=Cputime();
+            num_isom:=#IsomorphismClassesAbelianVarieties(R);
+            t1:=Cputime(t0);
+            num_test:=0;
+            if IsCoprime(coeff[g+1],q) then 
+                num_test:=#ICM(R);
+                descr:="ord"; 
+            elif p eq q then
+                num_test:=#ICM(R);
+                descr:="cs"; 
+            else
+                I:=IsogenyClass(h);
+                g:=Dimension(I);
+                is_almost_ordinary:=pRank(I) eq g-1;
+                if is_almost_ordinary then
+                    oo:=FindOverOrders(R);
+                    oo_max_at_ss,Lss:=overorders_maximal_at_ss(I);
+                    icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];
+                    if IsRamified(Lss) then
+                        num_test:=icm;
+                        descr:="alm ord - ram";
+                    else
+                        num_test:=2*icm;
+                        descr:="alm ord - inert";
+                    end if;
+                end if;
+            end if;
+            if num_test gt 0 then
+                if not num_isom eq num_test then
+                    fprintf file_err,"%50o = failure <------------------- %o %o computed %o expected %o \n",h,t1,descr,num_isom,num_test;
+                else
+                    fprintf file_out,"%50o = good %o %o\n",h,t1,descr;
+                end if;
+            else
+                fprintf file_out,"%50o = can't compare to previous data %o\n",h,t1;
+            end if;
+            printf "%50o = %o",h,t1;
+        catch
+            e;
+            e`Object;
+            e`Position;
+            fprintf file_err,"%50o = debug me! %o\n",h,e`Object;
+            //break cc;
+        end try;
+    end if;
+
