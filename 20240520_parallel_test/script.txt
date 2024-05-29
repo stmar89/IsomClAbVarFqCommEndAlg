@@ -64,19 +64,19 @@
             end if;
             if num_test gt 0 then
                 if not num_isom eq num_test then
-                    fprintf file_err,"%30o = failure <------------------- %o %o computed %o expected %o \n",h,t1,descr,num_isom,num_test;
+                    fprintf file_err,"%50o = failure <------------------- %o %o computed %o expected %o \n",h,t1,descr,num_isom,num_test;
                 else
-                    fprintf file_out,"%30o = good %o %o\n",h,t1,descr;
+                    fprintf file_out,"%50o = good %o %o\n",h,t1,descr;
                 end if;
             else
-                fprintf file_out,"%30o = can't compare to previous data %o\n",h,t1;
+                fprintf file_out,"%50o = can't compare to previous data %o\n",h,t1;
             end if;
             printf "%50o = %o",h,t1;
         catch
             e;
             e`Object;
             e`Position;
-            fprintf file_err,"%30o = debug me! %o\n",h,e`Object;
+            fprintf file_err,"%50o = debug me! %o\n",h,e`Object;
             //break cc;
         end try;
     end if;
