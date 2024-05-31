@@ -23,6 +23,8 @@ is_ring_hom_quotient_NF:=function(f,R,I)
     Q,mQ:=quo<R|I>;
     //gs:=[ L!(g@@mQ) : g in Generators(Q)];
     gs:=[ L!b : b in Basis(R) ];
+    vprintf sigma,2 : "gs = %o\n",gs;
+    vprintf sigma,2 : "fs = %o\n",[ f(i) : i in gs ];
     fs:=[ R!f(i) : i in gs ]; 
     fsQ:=[ mQ(R!f(i)) : i in gs ]; 
     test_add:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
@@ -305,17 +307,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // induces the a ring homomorphism on OL/PL^m
     // representing the Frobenius automorphism of L \otimes Qp.
     // If m = 0 then it just returns the identity.
-    //
-    //
-    // TODO this function could be an good application of ReconstructionEnviroment
         if m eq 0 then
             return map<L->L | x:->x >;
         end if;
-        Lp:=ext<pAdicField(p,m) | hL>;
+        Lp,mLp:=Completion(L,PL:Precision:=m);
         sigma_Lp:=FrobeniusAutomorphism(Lp);
-        sigma_Lp_coeffs:=Eltseq(sigma_Lp(Lp.1)); //coeffs of sigma_L of the root of hL in Lp
-        sigma_L_L1:=L!sigma_Lp_coeffs;
-        sigma_L:=map< L-> L | x:-> &+[ Eltseq(L!x)[i]*sigma_L_L1^(i-1) : i in [1..Degree(L)] ]>;
+        sigma_L:=map< L->L | x:->x@mLp@sigma_Lp@@mLp >;
         assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
         return sigma_L;
     end function;
@@ -324,7 +321,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // Given an ideal I of OA such that OA/I is an OL/PL^m-module for some m, 
     // returns a map A:->A that induces sigma on OA/I, together with the precision m.
     // The returned map does not depend on I, but only on m.
-    // The map and m are cahed in an attribute.
+    // The map and m are cached in an attribute.
         A:=Algebra(I);
         assert Order(I) eq OA;
         // If OA/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
@@ -332,11 +329,15 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         // |OL/PL|^m = |OA/I|
         normI:=Index(OA,I);
         t,m:=IsPowerOf(normI,normPL);
+
+        m:=2*m; printf "Warning doubling the precision\n";
+
         assert t;
 
         if not assigned A`sigma_fin_prec or A`sigma_fin_prec[2] lt m then
             sigma_L:=sigma_L_mod_PLm(m);
             sigma:=map< A-> A | x:-> (W![sigma_L(c) : c in Eltseq(mAW(x))])@@mAW >;
+            assert forall{ g : g in ZBasis(OA) | sigma(g) in OA };
             assert is_ring_hom_quotient_AlgEt(sigma,OA,I);
             A`sigma_fin_prec:=<sigma,m>;
         end if;

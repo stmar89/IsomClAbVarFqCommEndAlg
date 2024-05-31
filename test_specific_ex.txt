@@ -8,7 +8,6 @@
 
     AttachSpec("~/AbVarFq/packages.spec");
     Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
-    load "~/PolsAbVarFpCanLift/AlmOrd.m"; 
 
     AttachSpec("~/AlgEt/spec");
     Attach("PrimesAttributes.m");
@@ -25,16 +24,36 @@
     //SetAssertions(2);
     SetDebugOnError(true);
 
+    overorders_maximal_at_ss:=function(R)
+    // R = Z[F,V] of an almost ord isogney clas
+        K:=Algebra(R);
+        q:=Truncate(ConstantCoefficient(DefiningPolynomial(K))^(2/Dimension(K)));
+        pi:=PrimitiveElement(K);
+        pp:=[ P : P in PrimesAbove(q*R) | pi in P and q/pi in P];
+        assert #pp eq 1;
+        P:=pp[1];
+        OO:=MaximalOrder(K);
+        OO1:=R!!OneIdeal(OO);
+        OOP:=OO!!P;
+        ROP:=R!!(OOP);
+        oo:=OverOrders(R);
+        output:=[ S : S in oo | OO1 eq ( (R!!OneIdeal(S))+ROP ) ];
+
+        OOP:=PrimesAbove(OOP);
+        assert #OOP eq 1;
+        OOP:=OOP[1];
+        ram:=RamificationIndex(OOP);
+        assert ram in {1,2};
+        return output,ram;
+    end function;
+
     PP<x>:=PolynomialRing(Integers());
 
     all_weil_poly:=Split(Read("weil_poly_all.txt"));
 
     // to be debugged
+    h:=x^4 - 9*x^3 + 36*x^2 - 72*x + 64;
     h:=x^4 - 5*x^3 + 20*x^2 - 40*x + 64;
-    h:=x^4 - 3*x^3 + 45*x^2 - 75*x + 625;
-    h:=x^4 + 3*x^3 + 45*x^2 + 75*x + 625;
-    h:=x^4 - 11*x^3 + 91*x^2 - 539*x + 2401;
-    h:=x^4 + 11*x^3 + 91*x^2 + 539*x + 2401;
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
@@ -60,10 +79,9 @@
         g:=Dimension(I);
         is_almost_ordinary:=pRank(I) eq g-1;
         if is_almost_ordinary then
-            oo:=FindOverOrders(R);
-            oo_max_at_ss,Lss:=overorders_maximal_at_ss(I);
+            oo_max_at_ss,ram:=overorders_maximal_at_ss(R);
             icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];
-            if IsRamified(Lss) then
+            if ram eq 2 then //ramified
                 num_test:=icm;
                 descr:="alm ord - ram";
             else
