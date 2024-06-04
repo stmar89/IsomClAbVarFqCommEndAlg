@@ -9,6 +9,11 @@
     ps:=[ 2,3,5,7 ];
     a_max:=4;
 
+    all_input:=AssociativeArray();
+    for p in ps, a in [1..a_max] do
+        all_input[<p,a>]:={};
+    end for;
+
     perc:=0;
     for icc->cc in all do
         if Truncate(100*icc/tot) gt perc then perc+:=1; printf "%o%% ",perc; end if;
@@ -21,8 +26,22 @@
             if p in ps and a le a_max
                 and not IsCoprime(coeff[g+1],q) // exclude ordinary
                         then
-                fprintf "~/IsomClassesAbVarFqComEnd/20240520_parallel_test/input.txt","%o\n",cc;
+                Include(~all_input[<p,a>],cc);
             end if;
         end if;
+    end for;
+
+    input:=[];
+    for k in Keys(all_input) do
+        if #all_input[k] le 30 then
+            input cat:=Setseq(all_input[k]);
+        else
+            input cat:=Setseq(RandomSubset(all_input[k],30));
+        end if;
+    end for;
+    input:=RandomOrder(input);
+
+    for cc in input do
+        fprintf "~/IsomClassesAbVarFqComEnd/parallel_test/input.txt","%o\n",cc;
     end for;
 

@@ -133,10 +133,17 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // the following gives a very small polynomial hL
     if a eq 1 then
         hFq:=[0,1]; // I force L to be Q[x]/(x) so that A = E
+        hL:=Parent(h) ! hFq; 
     else
-        hFq:=Coefficients(Parent(h)!DefiningPolynomial(GF(q)));
+        //hFq:=Coefficients(Parent(h)!DefiningPolynomial(GF(q)));
+        Fp:=GF(p);
+        Fpy<y>:=PolynomialRing(Fp);
+        Fq:=GF(q);
+        U,u:=MultiplicativeGroup(Fq);
+        fac_prim:=[ g[1] : g in Factorization(y^(q-1)-1) | Degree(g[1]) eq a and Order(zeta_q@@u) eq #U where _,zeta_q:=HasRoot(g[1],Fq)];
+        c:=fac_prim[1];
+        hL:=Parent(h)!c;
     end if;
-    hL:=Parent(h) ! hFq; 
     L<zeta>:=NumberField(hL : DoLinearExtension:=true);
     // OLD an attempt to compute sigma_L, by raplacing L with a normal number field 
     // with irreducible reduction mod p of degree a.
@@ -307,12 +314,23 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // induces the a ring homomorphism on OL/PL^m
     // representing the Frobenius automorphism of L \otimes Qp.
     // If m = 0 then it just returns the identity.
-        if m eq 0 then
-            return map<L->L | x:->x >;
-        end if;
-        Lp,mLp:=Completion(L,PL:Precision:=m);
-        sigma_Lp:=FrobeniusAutomorphism(Lp);
-        sigma_L:=map< L->L | x:->x@mLp@sigma_Lp@@mLp >;
+        //if m eq 0 then
+        //    return map<L->L | x:->x >;
+        //end if;
+        //Lp,mLp:=Completion(L,PL:Precision:=m);
+        //sigma_Lp:=FrobeniusAutomorphism(Lp);
+        //sigma_L:=map< L->L | x:->x@mLp@sigma_Lp@@mLp >;
+        Q,mQ:=quo<OL|PL^m>; 
+        frob:=mQ(zeta);
+        repeat
+            old:=frob;
+            frob:=frob^q;
+        until frob eq old;
+        frob:=frob@@mQ;
+        LL<zz>:=NumberField(MinimalPolynomial(frob));
+        ll:=iso<LL->L | [frob] >;
+        sigma_LL:=hom< LL->LL | [zz^p]>;
+        sigma_L:=map<L->L | x:->ll(sigma_LL(x@@ll))>;
         assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
         return sigma_L;
     end function;
@@ -330,7 +348,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         normI:=Index(OA,I);
         t,m:=IsPowerOf(normI,normPL);
 
-        m:=2*m; printf "Warning doubling the precision\n";
+        m:=30*m; printf "Warning increasing the precision\n";
 
         assert t;
 
