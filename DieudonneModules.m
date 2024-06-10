@@ -21,7 +21,6 @@ is_ring_hom_quotient_NF:=function(f,R,I)
 // it returns wheter f:R/I->R/I is a ring homomorphism
     L:=NumberField(R);
     Q,mQ:=quo<R|I>;
-    //gs:=[ L!(g@@mQ) : g in Generators(Q)];
     gs:=[ L!b : b in Basis(R) ];
     vprintf sigma,2 : "gs = %o\n",gs;
     vprintf sigma,2 : "fs = %o\n",[ f(i) : i in gs ];
@@ -135,7 +134,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         hFq:=[0,1]; // I force L to be Q[x]/(x) so that A = E
         hL:=Parent(h) ! hFq; 
     else
-        //hFq:=Coefficients(Parent(h)!DefiningPolynomial(GF(q)));
         Fp:=GF(p);
         Fpy<y>:=PolynomialRing(Fp);
         Fq:=GF(q);
@@ -184,6 +182,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // end if;
 
     OL:=MaximalOrder(L);
+    assert zeta in OL;
     zb_OL:=Basis(OL);
     PL:=Factorization(p*OL);
     assert #PL eq 1 and PL[1,2] eq 1; // L has a unique prime above p, which is unramified.
@@ -320,22 +319,41 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         //Lp,mLp:=Completion(L,PL:Precision:=m);
         //sigma_Lp:=FrobeniusAutomorphism(Lp);
         //sigma_L:=map< L->L | x:->x@mLp@sigma_Lp@@mLp >;
-        Q,mQ:=quo<OL|PL^m>; 
+        //Q,mQ:=quo<OL|PL^m>; 
+        EL:=EquationOrder(L);
+        PEL:=p*EL; // OL/PL^m is isomorphic to EL/PEL^m for every m
+        Q,mQ:=quo<EL|PEL^m>;
         frob:=mQ(zeta);
         repeat
             old:=frob;
             frob:=frob^q;
+            old,frob;
         until frob eq old;
         frob:=frob@@mQ;
         LL<zz>:=NumberField(MinimalPolynomial(frob));
+        //assert zz^(q-1) -1 in p*MaximalOrder(LL);
+        //assert forall{ i : i in [1..1000] | x eq &+[Eltseq(LL!x)[i]*zz^(i-1) : i in [1..Degree(LL)]] where x:=Random(OLL,3) } where OLL:=MaximalOrder(LL);
         ll:=iso<LL->L | [frob] >;
-        sigma_LL:=hom< LL->LL | [zz^p]>;
+        //assert forall{ i : i in [0..Degree(LL)] | (zeta^i)@@ll eq (zeta@@ll)^i };
+        //assert forall{ i : i in [0..Degree(LL)] | (zeta@@ll)^i in OLL } where OLL:=MaximalOrder(LL);
+        //assert ll(zz^2) eq frob^2;
+        //assert frob in OL;
+        //assert ll((zeta)@@ll) eq zeta;
+        zzp:=zz^p;
+        sigma_LL:=map< LL->LL | x:->&+[ Eltseq(x)[i]*zzp^(i-1) : i in [1..Degree(LL)]] >;
+        //assert forall{ i : i in [0..Degree(LL)] | sigma_LL(zz^i) in OLL } where OLL:=MaximalOrder(LL) ;
+        //assert sigma_LL(zeta@@ll) in MaximalOrder(LL);
+        //assert is_ring_hom_quotient_NF(sigma_LL,OLL,p^m*OLL) where OLL:=MaximalOrder(LL);
         sigma_L:=map<L->L | x:->ll(sigma_LL(x@@ll))>;
-        assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
+        //assert is_ring_hom_quotient_NF(sigma_L,EL,PEL^m);
         return sigma_L;
     end function;
 
     sigma_A_mod_I:=function(I)
+    // FIXME: OL/PL^m simeq Z[zz]/p^mZ[zz]. I construct sigma_L using the second presentation.
+    // So I think that I cannot use OA/I directly, but I should find an iso with R/I'R with R = OE \otimes Z[zz]...
+    //
+    //
     // Given an ideal I of OA such that OA/I is an OL/PL^m-module for some m, 
     // returns a map A:->A that induces sigma on OA/I, together with the precision m.
     // The returned map does not depend on I, but only on m.
