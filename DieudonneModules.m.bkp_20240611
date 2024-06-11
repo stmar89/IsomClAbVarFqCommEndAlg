@@ -108,6 +108,26 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // ################### 
     // Global Representatives: L and sigma_L
     // ###################
+
+    // OLD version 1
+    // //  the following construction gives hL with very large coefficients sometimes (eg q=121)
+    // //  also it requires an input parameter prec. How do we guarantuee that this is big enough.
+    // prec:=20;
+    // LL<zetaLL>:=CyclotomicUnramifiedExtension(pAdicField(p,prec),a);
+    // assert zetaLL^(q-1) eq 1;
+    // hL:=Parent(h)!DefiningPolynomial(LL);
+
+    // OLD version 2
+    // // the following gives a very small polynomial hL, but the root might not be a root of unity.
+    // Fp:=GF(p);
+    // Fpy<y>:=PolynomialRing(Fp);
+    // Fq:=GF(q);
+    // U,u:=MultiplicativeGroup(Fq);
+    // fac_prim:=[ g[1] : g in Factorization(y^(q-1)-1) | Degree(g[1]) eq a and Order(zeta_q@@u) eq #U where _,zeta_q:=HasRoot(g[1],Fq)];
+    // c:=fac_prim[1];
+    // hL:=Parent(h)!c;
+    // // the above gives a polynomial with coefficients bounded by p.
+    // // with x^2-11*x+121 the resulting sigma does not sent OA to OA
     
     // the following gives a very small polynomial hL
     if a eq 1 then
@@ -122,6 +142,44 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         assert Degree(hL) eq a;
     end if;
     L:=NumberField(hL : DoLinearExtension:=true);
+    // OLD an attempt to compute sigma_L, by raplacing L with a normal number field 
+    // with irreducible reduction mod p of degree a.
+    // If found, then sigma_L is a generator of the decomposition group.
+    // Unfortunately, such a 'tweak' of L does not seem always easy to find. It might not even alwasy exists.
+    // For this reason this approach has been abandoned.
+    //
+    // bd:=3;
+    // while not IsNormal(L) do
+    //     hL:=Parent(h) ! ([ p*Random([-bd..bd]) + hFq[i] : i in [1..a] ] cat [1]);
+    //     vprintf DieudonneModules_L,2 : "Degree of hL = %o,%o\n",Degree(hL),hL;
+    //     L<zeta>:=NumberField(hL : DoLinearExtension:=true);
+    //     vprintf DieudonneModules_L,2 : "L = %o\n",L;
+    // end while;
+    // printf "(hL %o) ",hL;
+    // // sigma_L:=hom< L->L | [ zeta^p ] >; // this is just a function, non an automorphism of L
+    // // sigma_L:=map<L->L | x:->&+[Eltseq(x)[i]*(zeta^((i-1)*p)) : i in [1..Degree(L)]] >; // this works if zeta is a root of 1.
+    // if IsNormal(L) then
+    //     G,_,tau:=AutomorphismGroup(L);
+    //     D:=Decomposition(L,p);
+    //     assert #D eq 1 and D[1,2] eq 1; //L is unramified at p
+    //     D:=DecompositionGroup(D[1,1]);
+    //     assert IsCyclic(D);
+    //     sigma_L:=tau(D.1);
+    // else
+    // L,"L is not normal";
+    //     LL,roots:=SplittingField(L);
+    //     G,_,tau:=AutomorphismGroup(LL);
+    //     D:=Decomposition(LL,p);
+    //     //assert #D eq 1 and D[1,2] eq 1; //L is unramified at p
+    //     D:=DecompositionGroup(D[1,1]);
+    //     assert IsCyclic(D);
+    //     emb:=hom<L->LL | [ roots[1] ]>;
+    //     sigma_LL_img:=tau(D.1)(roots[1]);
+    //     t,sigma_L_img:=HasPreimage(sigma_LL_img,emb);
+    //     assert t;
+    //     sigma_LL:=hom<L->L | [sigma_L_img]>;
+    // end if;
+
     OL:=MaximalOrder(L);
     zb_OL:=Basis(OL);
     PL:=Factorization(p*OL);
@@ -134,6 +192,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // induces the a ring homomorphism on OL/PL^m
     // representing the Frobenius automorphism of L \otimes Qp.
     // If m = 0 then it just returns the identity.
+
         /*
         // The following code seems to work correctly if we increase a bit 'by hand' the precision m.
         // This is probably caused by the call FrobeniusAutomorphism. My guess is that it computes a root of
@@ -157,30 +216,15 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             frob:=frob^q;
         until frob eq old;
         zeta:=frob@@mQ; // zeta is congruent to an inertial element mod m
-        /*
-        LL<zz>:=NumberField(MinimalPolynomial(zeta));
-        sigma_LL:=map<LL->LL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
+        LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true );
         isom:=iso<LL->L|[zeta]>;
+        sigma_LL:=map<LL->LL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
         sigma_L:=map<L->L|x:->x@@isom@sigma_LL@isom>;
         assert MinimalPolynomial(zeta) eq MinimalPolynomial(zz);
         assert MinimalPolynomial(L.1) eq MinimalPolynomial(L.1@@isom);
+        EL:=sub<OL|[zeta]>;
         assert is_ring_hom_quotient_NF(sigma_L,EL,p^m*EL);
-        */
-        // Let E=Z[zeta]. I need to buind an explicit isomorphism E/p^m*E -> OL/p^mOL
-        LL<zz>:=NumberField(MinimalPolynomial(zeta));
-        isom:=iso<LL->L|[zeta]>;
-        ELL:=EquationOrder(LL);
-        sigma_ELL:=map<ELL->ELL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
-        F:=FreeAbelianGroup(Degree(L));
-        mOL1:=map<OL->F | x:->F!Eltseq(x), y:->OL!Eltseq(y)>;
-        QOL,mOL2:=quo<F | [ mOL1(b) : b in Basis(p^m*OL) ]>;
-        mOL:=mOL1*mOL2;
-        mELL1:=map<ELL->F | x:->F!Eltseq(x), y:->ELL!Eltseq(y)>;
-        QELL,mELL2:=quo<F | [ mELL1(b) : b in Basis(p^m*ELL) ]>;
-        mELL:=mELL1*mELL2;
-        isomQ:=iso<QELL->QOL | [ QELL.i@@mELL@isom@mOL : i in [1..Ngens(QELL)]] >;
-        sigma_L:=map<OL->OL | x:-> x@mOL@@isomQ@@mELL@sigma_ELL@mELL@isomQ@@mOL >;
-        assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
+        //assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
         return sigma_L;
     end function;
 
@@ -319,7 +363,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
         if not assigned A`sigma_fin_prec or A`sigma_fin_prec[2] lt m then
             sigma_L:=sigma_L_mod_PLm(m);
-            sigma:=map< A-> A | x:-> (W![sigma_L(OL!c) : c in Eltseq(mAW(x))])@@mAW >;
+            sigma:=map< A-> A | x:-> (W![sigma_L(c) : c in Eltseq(mAW(x))])@@mAW >;
             assert forall{ g : g in ZBasis(OA) | sigma(g) in OA };
             assert is_ring_hom_quotient_AlgEt(sigma,OA,I);
             A`sigma_fin_prec:=<sigma,m>;

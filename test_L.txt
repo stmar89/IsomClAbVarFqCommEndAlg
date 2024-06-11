@@ -1,6 +1,92 @@
 /* vim: set syntax=magma : */
 /*
+
 */
+
+is_ring_hom_quotient_NF:=function(f,R,I)
+// given an order R in some number field, I an ideal of R and f a map L->L
+// it returns wheter f:R/I->R/I is a ring homomorphism
+    L:=NumberField(R);
+    Q,mQ:=quo<R|I>;
+    gs:=[ L!b : b in Basis(R) ];
+    //vprintf sigma,2 : "gs = %o\n",gs;
+    //vprintf sigma,2 : "fs = %o\n",[ f(i) : i in gs ];
+    fs:=[ R!f(i) : i in gs ]; 
+    fsQ:=[ mQ(i) : i in fs ]; 
+    test_add:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
+    test_mult:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
+    return test_add and test_mult;
+end function;
+
+bd:=10^5; //upper bound
+Zx<x>:=PolynomialRing(Integers());
+qs:=[ x : x in [2..bd] | IsPrimePower(x) ];
+"#qs = ",#qs;
+m:=30;
+for q in qs do
+    _,p,a:=IsPrimePower(q);
+    if a gt 1 then
+        printf "%o %o %o ...\n",q,p,a;
+        if a eq 1 then
+            hFq:=[0,1]; // I force L to be Q[x]/(x) so that A = E
+            hL:=Zx ! hFq; 
+        else
+            Fp:=GF(p);
+            Fpy<y>:=PolynomialRing(Fp);
+            Fq:=GF(q);
+            U,u:=MultiplicativeGroup(Fq);
+            //fac_prim:=[ g[1] : g in Factorization(y^(q-1)-1) | Degree(g[1]) eq a and Order(zeta_q@@u) eq #U where _,zeta_q:=HasRoot(g[1],Fq)];
+            //c:=fac_prim[1];
+            //hL:=Zx!c;
+            hL:=Zx!MinimalPolynomial(u(U.1));
+            assert Degree(hL) eq a;
+        end if;
+        L:=NumberField(hL : DoLinearExtension:=true);
+        OL:=MaximalOrder(L);
+        zb_OL:=Basis(OL);
+        PL:=Factorization(p*OL);
+        assert #PL eq 1 and PL[1,2] eq 1; // L has a unique prime above p, which is unramified.
+        PL:=PL[1,1];
+        normPL:=Index(OL,PL);
+        Q,mQ:=quo<OL|PL^m>;
+        frob:=mQ(L.1); // L.1 generates F_q = (OL/pOL)^*
+        repeat
+            old:=frob;
+            frob:=frob^q;
+        until frob eq old;
+        zeta:=frob@@mQ; // zeta is congruent to an inertial element mod m
+        /*
+        LL<zz>:=NumberField(MinimalPolynomial(zeta));
+        sigma_LL:=map<LL->LL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
+        isom:=iso<LL->L|[zeta]>;
+        sigma_L:=map<L->L|x:->x@@isom@sigma_LL@isom>;
+        assert MinimalPolynomial(zeta) eq MinimalPolynomial(zz);
+        assert MinimalPolynomial(L.1) eq MinimalPolynomial(L.1@@isom);
+        assert is_ring_hom_quotient_NF(sigma_L,EL,p^m*EL);
+        */
+        // Let E=Z[zeta]. I need to buind an explicit isomorphism E/p^m*E -> OL/p^mOL
+        LL<zz>:=NumberField(MinimalPolynomial(zeta));
+        isom:=iso<LL->L|[zeta]>;
+        ELL:=EquationOrder(LL);
+        sigma_ELL:=map<ELL->ELL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
+        F:=FreeAbelianGroup(Degree(L));
+        mOL1:=map<OL->F | x:->F!Eltseq(x), y:->OL!Eltseq(y)>;
+        QOL,mOL2:=quo<F | [ mOL1(b) : b in Basis(p^m*OL) ]>;
+        mOL:=mOL1*mOL2;
+        mELL1:=map<ELL->F | x:->F!Eltseq(x), y:->ELL!Eltseq(y)>;
+        QELL,mELL2:=quo<F | [ mELL1(b) : b in Basis(p^m*ELL) ]>;
+        mELL:=mELL1*mELL2;
+        isomQ:=iso<QELL->QOL | [ QELL.i@@mELL@isom@mOL : i in [1..Ngens(QELL)]] >;
+        sigma_L:=map<OL->OL | x:-> x@mOL@@isomQ@@mELL@sigma_ELL@mELL@isomQ@@mOL >;
+        assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
+    end if;
+end for;
+
+/*
+// We are testing if among the irreducible polynomials of degree a over Fp[x], 
+// there is one with a lift to Z[x] (with small coefficients) which generates a normal number field.
+// This search seems to be less successful when a goes up, and in fact does not terminate for a = 5 (or so).
+// Bad news :-(
 
     bd:=10^5; //upper bound
     bd_rnd:=2; // twisting coeffs
@@ -50,4 +136,4 @@
             end if;
         end if;
     end for;
-
+*/
