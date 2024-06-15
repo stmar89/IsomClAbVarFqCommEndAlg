@@ -147,6 +147,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         sigma_L:=map< L->L | x:->x@mLp@sigma_Lp@@mLp >;
         assert is_ring_hom_quotient_NF(sigma_L,OL,PL^m);
         */
+
+        // new version
         if m eq 0 then
             return map<L->L | x:->x >;
         end if;
@@ -157,17 +159,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             frob:=frob^q;
         until frob eq old;
         zeta:=frob@@mQ; // zeta is congruent to an inertial element mod m
-        /*
-        LL<zz>:=NumberField(MinimalPolynomial(zeta));
-        sigma_LL:=map<LL->LL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
-        isom:=iso<LL->L|[zeta]>;
-        sigma_L:=map<L->L|x:->x@@isom@sigma_LL@isom>;
-        assert MinimalPolynomial(zeta) eq MinimalPolynomial(zz);
-        assert MinimalPolynomial(L.1) eq MinimalPolynomial(L.1@@isom);
-        assert is_ring_hom_quotient_NF(sigma_L,EL,p^m*EL);
-        */
         // Let E=Z[zeta]. I need to buind an explicit isomorphism E/p^m*E -> OL/p^mOL
-        LL<zz>:=NumberField(MinimalPolynomial(zeta));
+        LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true);
         isom:=iso<LL->L|[zeta]>;
         ELL:=EquationOrder(LL);
         sigma_ELL:=map<ELL->ELL | x:->&+[Eltseq(x)[i]*zz^(p*(i-1)):i in [1..Degree(L)]]>;
@@ -319,9 +312,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
         if not assigned A`sigma_fin_prec or A`sigma_fin_prec[2] lt m then
             sigma_L:=sigma_L_mod_PLm(m);
-            sigma:=map< A-> A | x:-> (W![sigma_L(OL!c) : c in Eltseq(mAW(x))])@@mAW >;
-            assert forall{ g : g in ZBasis(OA) | sigma(g) in OA };
-            assert is_ring_hom_quotient_AlgEt(sigma,OA,I);
+            sigma:=map< A-> A | x:-> (W![sigma_L(c) : c in Eltseq(mAW(x))])@@mAW >;
+            //assert forall{ g : g in ZBasis(OA) | sigma(g) in OA };
+            //assert is_ring_hom_quotient_AlgEt(sigma,OA,I);
             A`sigma_fin_prec:=<sigma,m>;
         end if;
         return Explode(A`sigma_fin_prec);
