@@ -3,7 +3,7 @@
     rm ~/IsomClassesAbVarFqComEnd/parallel_test/output.txt
     rm ~/IsomClassesAbVarFqComEnd/parallel_test/errors.txt
     rm ~/IsomClassesAbVarFqComEnd/parallel_test/joblog
-    parallel -j 10 --timeout 3600 --resume --joblog ~/IsomClassesAbVarFqComEnd/parallel_test/joblog -a ~/IsomClassesAbVarFqComEnd/parallel_test/input.txt magma -b cc:={} ~/IsomClassesAbVarFqComEnd/parallel_test/script.txt 
+    parallel -j 10 --timeout 36000 --resume --joblog ~/IsomClassesAbVarFqComEnd/parallel_test/joblog -a ~/IsomClassesAbVarFqComEnd/parallel_test/input.txt magma -b cc:={} ~/IsomClassesAbVarFqComEnd/parallel_test/script.txt 
 */
 
     file_out:="~/IsomClassesAbVarFqComEnd/parallel_test/output.txt";
@@ -92,7 +92,7 @@
             else
                 fprintf file_out,"%50o = can't compare to previous data %o\n",h,t1;
             end if;
-            printf "%50o = %o",h,t1;
+            printf "%50o = %o\n",h,t1;
         catch
             e;
             e`Object;
