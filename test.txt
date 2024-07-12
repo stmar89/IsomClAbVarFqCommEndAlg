@@ -48,7 +48,8 @@
 
     to_be_excluded:=[
         x^4 - 2*x^3 + 4*x^2 - 8*x + 16, //too slow; sometimes a relatively fast Segmentation Fault. Investigate!
-        x^4 + 2*x^3 + 4*x^2 + 8*x + 16 //too slow
+        x^4 + 2*x^3 + 4*x^2 + 8*x + 16, //too slow
+        x^4+16// Terminate. Why?
         ];
 
     all_weil_poly:=Split(Read("weil_poly_all.txt"));

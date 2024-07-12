@@ -20,6 +20,7 @@
     //SetVerbose("DieudonneModules",2);
     SetAssertions(2);
     SetDebugOnError(false);
+    SetClassGroupBounds("GRH");
 
     overorders_maximal_at_ss:=function(R)
     // R = Z[F,V] of an almost ord isogney clas

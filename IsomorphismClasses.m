@@ -190,7 +190,7 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
             PS,pS:=PicardGroup(S);
             for ll in PS do
                 L:=pS(ll);
-                X:=<I,dm,L>;
+                X:=<I,dm,L,S>;
                 Append(~output,X);
             end for;
         end for;
