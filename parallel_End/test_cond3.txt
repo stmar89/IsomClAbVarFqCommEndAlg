@@ -1,0 +1,45 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+    //file_out:="~/IsomClassesAbVarFqComEnd/parallel_End/output_cond_3.txt";
+    file_err:="~/IsomClassesAbVarFqComEnd/parallel_End/errors.txt";
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+
+    //SetVerbose("DieudonneModules",2);
+    SetAssertions(2);
+    SetDebugOnError(false);
+    SetClassGroupBounds("GRH");
+
+    PP<x>:=PolynomialRing(Integers());
+
+    ll:=Split(Read("~/IsomClassesAbVarFqComEnd/parallel_End/input.txt"));
+
+    for cc in ll do
+        coeff:=eval(cc);
+        h:=PP!coeff;
+        g:=Degree(h) div 2;
+        q:=Truncate(ConstantCoefficient(h)^(1/g));
+        t,p,a:=IsPrimePower(q);
+        assert t; delete t;
+        E:=EtaleAlgebra(h);
+        pi:=PrimitiveElement(E);
+        R:=Order([pi,q/pi]);
+        try
+            P:=Setseq({@ R!!Q meet OneIdeal(R) : Q in PrimesAbove(p*MaximalOrder(E)) | not SlopeE(Q) in {0,1} @});
+            assert #P eq 1;
+            P:=P[1];
+            cond3:=IsBassAtPrime(R,P);
+            cond3,h;
+        catch
+            e;
+            e`Object;
+            e`Position;
+            fprintf file_err,"%o = debug me! %o\n",h,e`Object;
+        end try;
+    end for;
+

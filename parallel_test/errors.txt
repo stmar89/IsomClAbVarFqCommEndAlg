@@ -1,0 +1,3 @@
+x^6 + 7*x^5 + 41*x^4 + 184*x^3 + 656*x^2 + 1792*x + 4096 = debug me! Runtime error in '@@': Integer size overflow
+System error: Out of memory (too many memory blocks allocated).
+Magma cannot perform this statement.

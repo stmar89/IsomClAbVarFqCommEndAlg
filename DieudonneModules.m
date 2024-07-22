@@ -17,33 +17,33 @@ declare attributes AlgEtQOrd : units_quotient_fixed_sigma;
 declare attributes AlgEtQIdl : DeltaEndomorphismRing,
                                SlopeE;
 
-is_ring_hom_quotient_NF:=function(f,R,I)
-// given an order R in some number field, I an ideal of R and f a map L->L
-// it returns wheter f:R/I->R/I is a ring homomorphism
-    L:=NumberField(R);
-    Q,mQ:=quo<R|I>;
-    gs:=[ L!b : b in Basis(R) ];
-    vprintf sigma,2 : "gs = %o\n",gs;
-    vprintf sigma,2 : "fs = %o\n",[ f(i) : i in gs ];
-    fs:=[ R!f(i) : i in gs ]; 
-    fsQ:=[ mQ(i) : i in fs ]; 
-    test_add:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
-    test_mult:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
-    return test_add and test_mult;
-end function;
-
-is_ring_hom_quotient_AlgEt:=function(f,R,I)
-// given an order R in some AlgEt L, I an ideal of R and f a map L->L
-// it returns wheter f:R/I->R/I is a ring homomorphism
-    L:=Algebra(R);
-    Q,mQ:=ResidueRing(R,I);
-    gs:=[ L!(g@@mQ) : g in Generators(Q)];
-    fs:=[ f(i) : i in gs ]; 
-    fsQ:=[ mQ(f(i)) : i in gs ]; 
-    test_add:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
-    test_mult:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
-    return test_add and test_mult;
-end function;
+// is_ring_hom_quotient_NF:=function(f,R,I)
+// // given an order R in some number field, I an ideal of R and f a map L->L
+// // it returns wheter f:R/I->R/I is a ring homomorphism
+//     L:=NumberField(R);
+//     Q,mQ:=quo<R|I>;
+//     gs:=[ L!b : b in Basis(R) ];
+//     vprintf sigma,2 : "gs = %o\n",gs;
+//     vprintf sigma,2 : "fs = %o\n",[ f(i) : i in gs ];
+//     fs:=[ R!f(i) : i in gs ]; 
+//     fsQ:=[ mQ(i) : i in fs ]; 
+//     test_add:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
+//     test_mult:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
+//     return test_add and test_mult;
+// end function;
+// 
+// is_ring_hom_quotient_AlgEt:=function(f,R,I)
+// // given an order R in some AlgEt L, I an ideal of R and f a map L->L
+// // it returns wheter f:R/I->R/I is a ring homomorphism
+//     L:=Algebra(R);
+//     Q,mQ:=ResidueRing(R,I);
+//     gs:=[ L!(g@@mQ) : g in Generators(Q)];
+//     fs:=[ f(i) : i in gs ]; 
+//     fsQ:=[ mQ(f(i)) : i in gs ]; 
+//     test_add:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
+//     test_mult:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
+//     return test_add and test_mult;
+// end function;
 
 intrinsic SlopeE(P::AlgEtQIdl)->RngIntElt
 {Given a maximal ideal P of the maximal order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_P(pi)/(a*e_P) where val_P(pi) is the valuation of pi at P and e_P is the ramification index of P.}
@@ -177,12 +177,11 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     end function;
 
     FOA,fOA:=OrderAsFreeAbelianGroup(OA);
-
-    assert forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
+    assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
 
     Delta_image:=function(z)
         out:=SumOfProducts(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A);
-        assert MinimalPolynomial(out) eq MinimalPolynomial(z);
+        assert2 MinimalPolynomial(out) eq MinimalPolynomial(z);
         return out;
     end function;
 
@@ -200,10 +199,10 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
                            y:->Delta_preimage(y) >;
 
     // TEST
-    assert forall{ z : z in ZBasis(MaximalOrder(E)) | z eq (Delta_map(z))@@Delta_map }; 
-    assert forall{ z : z in ZBasis(R) | z eq (Delta_map(z))@@Delta_map }; 
-    assert forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i+j) eq Delta_map(i)+Delta_map(j) };
-    assert forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i*j) eq Delta_map(i)*Delta_map(j) };
+    assert2 forall{ z : z in ZBasis(MaximalOrder(E)) | z eq (Delta_map(z))@@Delta_map }; 
+    assert2 forall{ z : z in ZBasis(R) | z eq (Delta_map(z))@@Delta_map }; 
+    assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i+j) eq Delta_map(i)+Delta_map(j) };
+    assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i*j) eq Delta_map(i)*Delta_map(j) };
 
     // #######################
     // tilde W_R: order isomorphic to W \otimes R
@@ -216,7 +215,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // test
     assert pi_A in WR;
     assert q/pi_A in WR;
-    assert Index(OA,WR) ge Index(MaximalOrder(E),R);
+    assert2 Index(OA,WR) ge Index(MaximalOrder(E),R);
     // end test
 
     // #######################
@@ -249,7 +248,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     OE:=MaximalOrder(E);
     pb_OE:=[ pi^(i-1) : i in [1..AbsoluteDimension(E)] ];
     zbOE_in_OA:=[ (W!b)@@mAW : b in AbsoluteCoordinates(ZBasis(OE),pb_OE) ];
-    assert forall{i:i in [1..#ZBasis(OE)]| MinimalPolynomial(zbOE_in_OA[i]) eq MinimalPolynomial(ZBasis(OE)[i])};
+    assert2 forall{i:i in [1..#ZBasis(OE)]| MinimalPolynomial(zbOE_in_OA[i]) eq MinimalPolynomial(ZBasis(OE)[i])};
     // We now constuct an isomorphism A->L^2g using zbOE_inOA. 
     // This corresponds to write OA = OE \otimes OL (locally at p).
     // We need this description of OA to compute the action of sigma, which is trivial on the 'OE-part'.
@@ -305,7 +304,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true);
             assert Degree(LL) eq Degree(L);
             LLtoL:=iso<LL->L | [ zeta ] >;
-            assert LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
+            assert2 LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
 
             imgs_zz:=[ ChangeUniverse(Eltseq(zz^(p*(i-1))),Integers()) : i in [1..Degree(L)] ];
             F:=FreeAbelianGroup(Degree(L)); // F = ZZ[zz] as abelian group
@@ -324,13 +323,13 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             A`sigma_fin_prec:=< Fs, sigma_Fs, FstoOA, m >;
         end if;
         Fs,sigma_Fs,FstoOA,_:=Explode(A`sigma_fin_prec);
-        assert forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
+        assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
         // Now we compute a presentation of Q as a Z[zz]-algebra
         pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
         assert IsSurjective(pres);
 
         sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
-        assert forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
+        assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
                         where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
                         where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
                      }; // Is sigma_Q multiplicative ? (by construction is additive)
@@ -356,7 +355,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         A:=Algebra(S);
         pp:=primes_of_A_above_place_of_E(A,P);
         pp:=Setseq({ oneS meet (S!!P) : P in pp });
-        assert forall{P : P in pp | IsPrime(P)};
+        assert2 forall{P : P in pp | IsPrime(P)};
         return pp;
     end function;
 
@@ -371,12 +370,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         primes_01_S:=&cat[ primes_of_S_above_place_of_E(S,P) : P in pl_01_E];
         ff:=Conductor(S);
         primes_01_S_above_ff:=[ P : P in primes_01_S | ff subset P];
-        assert forall{P : P in primes_01_S_above_ff | p in P};
+        assert2 forall{P : P in primes_01_S_above_ff | p in P};
         if #primes_01_S_above_ff eq 0 then
             U:=FreeAbelianGroup(0);
             // with test
             trivial_preimage:=function(y)
-                assert forall{ P : P in primes_01_S_above_ff | not y in P };
+                assert2 forall{ P : P in primes_01_S_above_ff | not y in P };
                 return Zero(U);
             end function;
             u:=map<U->Algebra(S) | x:->One(S), y:->trivial_preimage(y)>;
@@ -385,12 +384,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             return U,u,OneIdeal(OA);
         end if;
         indff:=Index(S,ff);
-        assert forall{P : P in primes_01_S_above_ff | indff mod Index(S,P) eq 0 };
+        assert2 forall{P : P in primes_01_S_above_ff | indff mod Index(S,P) eq 0 };
         ks:=[ Valuation(indff,p) div Valuation(Index(S,P),p) : P in primes_01_S_above_ff ];
         prod:=&*([ primes_01_S_above_ff[i]^ks[i] : i in [1..#primes_01_S_above_ff]]);
         ff_prod:=ff+prod;
         assert not 1 in ff_prod;
-        assert OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
+        assert2 OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
       
         I:=OA!!(ff_prod);
         R,r:=ResidueRingUnits(I);
@@ -508,11 +507,11 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
         vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
         vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
-        assert forall{ d : d in deltas | not IsZeroDivisor(d) };
-        assert forall{ g : g in gammas | not IsZeroDivisor(g) };
+        assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
+        assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
         II:=[ (d^-1)*g*I : d in deltas, g in gammas ];
         vprintf Algorithm_2,2 : "#II = %o\n",#II;
-        vprintf Algorithm_2,2 : "valuations of the of extensions O_A' of the ideals in II = %o\n",[ [ Valuation(OA!!ii,P) : P in pp_A_01 ] : ii in II ];
+        vprintf Algorithm_2,3 : "valuations of the of extensions O_A' of the ideals in II = %o\n",[ [ Valuation(OA!!ii,P) : P in pp_A_01 ] : ii in II ];
         WR_01_idls_with_ext_i_to_OA_F_V_stable cat:=II;
     end for;
 
@@ -527,16 +526,20 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         assert Order(I) eq WR;
         dI,d:=MakeIntegral(I);
         dI_inFOA:=sub<FOA | [fOA(z) : z in ZBasis(dI) ]>;
-        gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(dI_inFOA meet imageDeltaOE_inFOA) ];
+        // the next line can be very memory consuming
+        meet_id:=dI_inFOA meet imageDeltaOE_inFOA;
+        gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
         J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
-        assert forall{z : z in ZBasis(J) | Delta_map(z) in I};
+        assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
         return J;
     end function;
 
-    //TEST Delta_inverse_ideal
-    for I in WR_01_idls_with_ext_i_to_OA_F_V_stable do
-        _:=Delta_inverse_ideal(I);
-    end for;
+    if GetAssertions() ge 2 then
+        //TEST Delta_inverse_ideal
+        for I in WR_01_idls_with_ext_i_to_OA_F_V_stable do
+            _:=Delta_inverse_ideal(I);
+        end for;
+    end if;
 
     // ####################
     // Algorithm 3
@@ -552,10 +555,14 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // We want to keep J/xI small
     for i in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[i];
-        x:=ShortElement(Delta_inverse_ideal(ColonIdeal(J,I)));
-        I:=Delta_map(x)*I;
-        assert I subset J;
-        WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
+        if not I subset J then
+            //time x:=ShortElement(Delta_inverse_ideal(ColonIdeal(J,I)));
+            // computing Delta_inverse_ideal can be very time consuming.
+            x:=Index(I,J meet I);
+            I:=Delta_map(x)*I;
+            assert I subset J;
+            WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
+        end if;
     end for;
     vprintf Algorithm_3,2 : "Ideals are now Delta-scaled in J with indices = %o\n",[Index(J,I) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable];
 
@@ -612,23 +619,14 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         Q,embs,projs:=DirectSum(Rs_nu);
         pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
                                    y:->CRT( PPs_nu_m0_1 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
-        
         pi_Q:=pr(pi_A);
-
-        vprintf Algorithm_3,2 : "asserts for Q";
-        assert forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
-        vprintf Algorithm_3,2 : ".done\n";
-
-
+        assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
 
         U,U_embs,U_projs:=DirectSum(Us_nu);
         U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
                                      y:->CRT( PPs_nu_m0_1 ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
         sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
-
-        vprintf Algorithm_3,2 : "asserts for U";
-        assert forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
-        vprintf Algorithm_3,2 : ".done\n";
+        assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
 
         vprintf Algorithm_3,2 : "Q and U are computed\n";
 
@@ -644,8 +642,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
 
             vprintf Algorithm_3,2 : "img = %o , sigma(img) = %o\n",img,sigma_U(img);
-            assert sigma_U(img) eq img;
-            //img:=U_pr(img);
+            assert2 sigma_U(img) eq img;
             return img;
         end function;
         phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
@@ -681,7 +678,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
 
     pr:=map< Qm0_1->Qm0 | x:->qm0(x@@qm0_1), y:->qm0_1(y@@qm0) >;
-    assert forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
+    assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
     alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
             
     vprintf Algorithm_3,2 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
@@ -715,7 +712,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     JtoKK:=map<A->KK | x:->JFtoKK(JtoJF(x)), y:->y@@JFtoKK@@JtoJF >;
     gg:=(&+([embs[i](vss[i].1):i in [1..#embs]]))@@JtoKK;
     assert gg in J;
-    assert (not IsZeroDivisor(gg)) and Qm0_1 eq sub<Qm0_1 | [ qm0_1(z) : z in ZBasis(gg*OA) ] >;
+    assert2 (not IsZeroDivisor(gg)) and Qm0_1 eq sub<Qm0_1 | [ qm0_1(z) : z in ZBasis(gg*OA) ] >;
     vprintf Algorithm_3,2 : "gg = %o\n",PrintSeqAlgEtQElt([gg])[1];
     // gg is the local generator of J at p over OA.
 
@@ -725,11 +722,11 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     
     FQm0:=hom<Qm0->Qm0 | [ QItoQm0(alpha(sigma(Qm0.i@@QItoQm0))) : i in [1..Ngens(Qm0)]]>;
     FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
-    assert forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
+    assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
     vprintf Algorithm_3,2 : "FQ's are computed\n";
 
     mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
-    assert mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
+    assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
     vprintf Algorithm_3,2 : "mp is computed\n";
 
     z_gamma_s:=[];
@@ -740,8 +737,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         Append(~z_gamma_s,z_gamma);
     end for;
     VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
-    assert forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
-    assert forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
+    assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
+    assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
     vprintf Algorithm_3,2 : "VQ is computed\n";
 
     is_F_V_stable:=function(I)

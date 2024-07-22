@@ -49,7 +49,7 @@
     to_be_excluded:=[
         x^4 - 2*x^3 + 4*x^2 - 8*x + 16, //too slow; sometimes a relatively fast Segmentation Fault. Investigate!
         x^4 + 2*x^3 + 4*x^2 + 8*x + 16, //too slow
-        x^4+16// Terminate. Why?
+        x^4+64// Terminate. Why?
         ];
 
     all_weil_poly:=Split(Read("weil_poly_all.txt"));
@@ -71,8 +71,16 @@
                 R:=Order([pi,q/pi]);
                 try
                     t0:=Cputime();
-                    num_isom:=#IsomorphismClassesAbelianVarieties(R);
+                    iso:=IsomorphismClassesAbelianVarieties(R);
                     t1:=Cputime(t0);
+                    num_isom:=#iso;
+                    ends:=Setseq({ I[4] : I in iso });
+                    S:=&meet(ends);
+                    unique_min_end:=S in ends; // is there a unique minimal end?
+                    str:=Sprintf("min end? %o ",unique_min_end select "Y" else "N");
+                    jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
+                    str cat:=Sprintf("jumps? %o ",jumps select "Y" else "N");
+                    printf "%o", str;
                     num_test:=0;
                     if IsCoprime(coeff[g+1],q) then 
                         num_test:=#ICM(R);
