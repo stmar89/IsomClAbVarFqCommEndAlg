@@ -551,20 +551,25 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     J:=WR !! JOA;
     vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",[ Valuation(OA!!J,P) : P in pp_A_01 ];
 
-    // We scale the ideals I by elements of E so that they are in J
-    // We want to keep J/xI small
+    // We scale the ideals I by elements of Delta(E) so that they are in J
     for i in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
+        vprintf Algorithm_3,3 : "Delta-scaling the %o-th ideal into J\n",i;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[i];
         if not I subset J then
-            //time x:=ShortElement(Delta_inverse_ideal(ColonIdeal(J,I)));
-            // computing Delta_inverse_ideal can be very time consuming.
-            x:=Index(I,J meet I);
+            // We want to keep J/xI small. 
+            // The best result is obtained by picking a small element in Delta^-1((J:I)).
+            // Computing Delta^-1 can be very expensive.
+            // Other options are taking x = I/J meet I or x = Exponent(I/J meet I).
+             
+            // x:=ShortElement(Delta_inverse_ideal(ColonIdeal(J,I)));
+            // x:=Index(I,J meet I);
+            x:=Exponent(Quotient(I,J meet I));
             I:=Delta_map(x)*I;
             assert I subset J;
             WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
         end if;
     end for;
-    vprintf Algorithm_3,2 : "Ideals are now Delta-scaled in J with indices = %o\n",[Index(J,I) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable];
+    vprintf Algorithm_3,3 : "Ideals are now Delta-scaled in J with indices = %o\n",[Index(J,I) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable];
 
     vpNks:=[ Valuation(Index(J,I),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ];
     //vpNks:=[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ]; //forming these quotients it is sometimes much more expensive then just working with a slightly larger m0
@@ -755,14 +760,16 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         vprintf Algorithm_3,2 : "%oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable...\n",iI;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
-        vprintf Algorithm_3,2 : "[J:I] = %o\n",Index(J,I);
-        vprintf Algorithm_3,2 : "[I:p^m0*J] = %o\n",Index(I,p^m0*J);
+        vprintf Algorithm_3,3 : "[J:I] = %o\n",Index(J,I);
+        vprintf Algorithm_3,3 : "[I:p^m0*J] = %o\n",Index(I,p^m0*J);
         assert IsCoprime(Denominator(Index(I,p^m0*J)),p);
         if is_F_V_stable(I) then
             vprint Algorithm_3,2 : "...it is F-V stable\n";
             assert Order(I) eq WR;
-            II:=Delta_inverse_ideal(I);
-            S:=MultiplicatorRing(II);
+            // TODO the following 2 lines seem to give the wrong answer.
+            //II:=Delta_inverse_ideal(I);
+            //S:=MultiplicatorRing(II);
+            S:=MultiplicatorRing(Delta_inverse_ideal(WR!!OneIdeal(MultiplicatorRing(I))));
             I`DeltaEndomorphismRing:=S;
             Append(~Delta_isom_classes_WR_F_V,I);
         else

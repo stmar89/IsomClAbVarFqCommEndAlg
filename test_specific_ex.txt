@@ -54,9 +54,10 @@
     // to be debugged
     h:=x^4 - 9*x^3 + 36*x^2 - 72*x + 64;
     h:=x^4 - 5*x^3 + 20*x^2 - 40*x + 64;
-    //h:=PP![ 64, 0, 0, 12, 0, 0 ,1 ];
     h:=PP![ 2401, 0, 0, 0, 1 ];
     h:=x^4 - x^3 + 4*x^2 - 4*x + 16;
+    h:=PP![ 64, 0, 0, 12, 0, 0 ,1 ];
+    h:=x^4 + 2*x^3 + 8*x^2 + 8*x + 16;
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
@@ -68,8 +69,16 @@
     pi:=PrimitiveElement(E);
     R:=Order([pi,q/pi]);
     t0:=Cputime();
-    num_isom:=#IsomorphismClassesAbelianVarieties(R);
+    iso:=IsomorphismClassesAbelianVarieties(R);
     t1:=Cputime(t0);
+    num_isom:=#iso;
+    ends:=Setseq({ I[4] : I in iso });
+    S:=&meet(ends);
+    unique_min_end:=S in ends; // is there a unique minimal end?
+    str:=Sprintf("min end? %o ",unique_min_end select "Y" else "N");
+    jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
+    str cat:=Sprintf("jumps? %o ",jumps select "Y" else "N");
+    printf "%o", str;
     num_test:=0;
     if IsCoprime(coeff[g+1],q) then 
         num_test:=#ICM(R);
@@ -106,3 +115,6 @@
     end if;
 
 
+    O:=MaximalOrder(Algebra(R));
+    [ Index(O,S) : S in OverOrders(R) ];
+    [ Index(O,S) : S in ends ];
