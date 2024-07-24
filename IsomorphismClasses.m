@@ -36,7 +36,7 @@ intrinsic IsomorphismClassesTateModules(R::AlgEtQOrd)->Any
         if IsCoprime(ind,p) then
             Append(~sing_ell,P);
         else
-            sP:=SlopeR(P);
+            sP:=Slope(P);
             if sP eq 0 then
                 Append(~sing_0,P);
                 Append(~sing_1,ComplexConjugate(P));

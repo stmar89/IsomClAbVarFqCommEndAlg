@@ -12,43 +12,34 @@ declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 declare verbose sigma,3;
 
-declare attributes AlgEtQ    : sigma_fin_prec;
-declare attributes AlgEtQOrd : units_quotient_fixed_sigma;
+declare attributes AlgEtQ    : sigma_fin_prec,
+                               PlacesAboveRationalPrime;
+
+declare attributes AlgEtQOrd : units_quotient_fixed_sigma,
+                               DieudonneAlgebra, //TODO this should be an attribute of the IsogenyClass
+                               PrimesOfSlopeIn01;
+
 declare attributes AlgEtQIdl : DeltaEndomorphismRing,
-                               SlopeE;
+                               PlacesOfAAbove,
+                               Slope;
 
-// is_ring_hom_quotient_NF:=function(f,R,I)
-// // given an order R in some number field, I an ideal of R and f a map L->L
-// // it returns wheter f:R/I->R/I is a ring homomorphism
-//     L:=NumberField(R);
-//     Q,mQ:=quo<R|I>;
-//     gs:=[ L!b : b in Basis(R) ];
-//     vprintf sigma,2 : "gs = %o\n",gs;
-//     vprintf sigma,2 : "fs = %o\n",[ f(i) : i in gs ];
-//     fs:=[ R!f(i) : i in gs ]; 
-//     fsQ:=[ mQ(i) : i in fs ]; 
-//     test_add:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
-//     test_mult:=forall{i : i,j in [1..#gs] | mQ(R!f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
-//     return test_add and test_mult;
-// end function;
-// 
-// is_ring_hom_quotient_AlgEt:=function(f,R,I)
-// // given an order R in some AlgEt L, I an ideal of R and f a map L->L
-// // it returns wheter f:R/I->R/I is a ring homomorphism
-//     L:=Algebra(R);
-//     Q,mQ:=ResidueRing(R,I);
-//     gs:=[ L!(g@@mQ) : g in Generators(Q)];
-//     fs:=[ f(i) : i in gs ]; 
-//     fsQ:=[ mQ(f(i)) : i in gs ]; 
-//     test_add:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]+gs[j])) eq (fsQ[i]+fsQ[j]) };
-//     test_mult:=forall{i : i,j in [1..#gs] | mQ(f(gs[i]*gs[j])) eq mQ(fs[i]*fs[j]) };
-//     return test_add and test_mult;
-// end function;
+intrinsic PlacesAboveRationalPrime(E::AlgEtQ,p::RngIntElt)->SeqEnum[AlgEtQIdl]
+{
+//TODO move this intrinsic to AlgEtQ
+}
+    if not assigned E`PlacesAboveRationalPrime then
+        E`PlacesAboveRationalPrime:=AssociativeArray();
+    end if;
+    if not IsDefined(E`PlacesAboveRationalPrime,p) then
+        require IsPrime(p) : "The integer p needs to be a prime number";
+        E`PlacesAboveRationalPrime:=PrimesAbove(p*MaximalOrder(E));
+    end if;
+    return E`PlacesAboveRationalPrime;
+end intrinsic;
 
-intrinsic SlopeE(P::AlgEtQIdl)->RngIntElt
-{Given a maximal ideal P of the maximal order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_P(pi)/(a*e_P) where val_P(pi) is the valuation of pi at P and e_P is the ramification index of P.}
-    if not assigned P`SlopeE then
-        require IsMaximal(Order(P)) and IsPrime(P): "The input needs to be a maximal ideal of the maximal order.";
+intrinsic Slope(P::AlgEtQIdl)->RngIntElt
+{Given a maximal ideal P of any order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_PP(pi)/(a*e_PP) where val_PP(pi) is the valuation of pi at any maximal ideal PP of the maximal order above P and e_PP is the ramification index of PP.}
+    if not assigned P`Slope then
         E:=Algebra(P);
         pi:=PrimitiveElement(E);
         h:=DefiningPolynomial(E);
@@ -56,38 +47,314 @@ intrinsic SlopeE(P::AlgEtQIdl)->RngIntElt
         q:=Truncate(ConstantCoefficient(h)^(1/g));
         t,p,a:=IsPrimePower(q);
         assert t;
-        val_pi:=Valuation(pi,P);
-        eP:=RamificationIndex(P);
-        P`SlopeE:=val_pi/(a*eP);
+        S:=Order(P);
+        if not IsMaximal(S) then
+            t:=exists(PP){ PP : PP in PlacesAboveRationalPrime(E,p) | OneIdeal(S) meet S!!PP eq P};
+            assert t;
+            P`Slope:=$$(PP);
+            assert2 forall{PP : PP in PrimesAbove(MaximalOrder(E) !! P) | $$(PP) eq P`Slope };
+        else
+            val_pi:=Valuation(pi,P);
+            eP:=RamificationIndex(P);
+            P`Slope:=val_pi/(a*eP);
+        end if;
     end if;
-    return P`SlopeE;
+    return P`Slope;
 end intrinsic;
 
-intrinsic SlopeR(P::AlgEtQIdl)->RngIntElt
-{Given a maximal ideal P of any order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_PP(pi)/(a*e_PP) where val_PP(pi) is the valuation of pi at any maximal ideal PP of the maximal order above P and e_PP is the ramification index of PP.}
-    if not assigned P`SlopeE then
-        PP:=PrimesAbove(MaximalOrder(Algebra(P))!!P)[1];
-        P`SlopeE:=SlopeE(PP);
+intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
+{This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple <p,q,a,g,places_E,L,OL,PL,normPL,A,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal> where //TODO
+}
+    //TODO 
+    // input should be of type IsogenyClass
+    if not assigned R`DieudonneAlgebra then
+        E:=Algebra(R);
+        pi:=PrimitiveElement(E);
+        h:=DefiningPolynomial(E);
+        g:=Degree(h) div 2;
+        q:=Truncate(ConstantCoefficient(h)^(1/g));
+        t,p,a:=IsPrimePower(q);
+        assert t;
+        
+        // Places of E
+        pl:=PlacesAboveRationalPrime(E,p);
+        pl_0:=[];
+        pl_01:=[];
+        pl_1:=[];
+        for P in pl do
+            sl:=Slope(P);
+            if sl eq 0 then
+                Append(~pl_0,P);
+            elif sl eq 1 then
+                Append(~pl_1,P);
+            else
+                Append(~pl_01,P);
+            end if;
+        end for;
+        places_E:=<pl_0,pl_01,pl_1>;
+
+        // ################### 
+        // Global Representatives: L and sigma_L
+        // ###################
+        
+        // the following gives a very small polynomial hL
+        if a eq 1 then
+            hFq:=[0,1]; // I force L to be Q[x]/(x) so that A = E
+            hL:=Parent(h) ! hFq; 
+        else
+            Fp:=GF(p);
+            Fpy<y>:=PolynomialRing(Fp);
+            Fq:=GF(q);
+            U,u:=MultiplicativeGroup(Fq);
+            hL:=Parent(h)!MinimalPolynomial(u(U.1));
+            assert Degree(hL) eq a;
+        end if;
+        L:=NumberField(hL : DoLinearExtension:=true);
+        OL:=MaximalOrder(L);
+        zb_OL:=Basis(OL);
+        PL:=Factorization(p*OL);
+        assert #PL eq 1 and PL[1,2] eq 1; // L has a unique prime above p, which is unramified.
+        PL:=PL[1,1];
+        normPL:=Index(OL,PL);
+        
+        // ################### 
+        // Global Representatives: A
+        // ###################
+
+        fac_h_L:=Factorization( PolynomialRing(L) ! h );
+        assert forall{ g : g in fac_h_L| g[2] eq 1 }; // h is assumed to be squarefree
+        nfs_A:=[ NumberField(g[1] : DoLinearExtension:=true ) : g in fac_h_L ];
+        nfs_A_abs:=[ AbsoluteField(nf) : nf in nfs_A ];
+
+        // A: an etale algrebra over Q. isomorphic to L \otimes E
+        A:=EtaleAlgebra(nfs_A_abs);
+        OA:=MaximalOrder(A);
+        vprintf DieudonneModules_L,2 : "A = %o\n",A;
+        _,embs_A,proj_A:=Components(A);
+
+        // inclusion L in A
+        emb_L_inA:=map< L -> A | x:->&+[ embs_A[i](nfs_A_abs[i]!x) : i in [1..#nfs_A] ]>;
+        zb_OL_inA:=[ emb_L_inA(x) : x in zb_OL ];
+
+        // pi in A
+        pi_A_comps:=<  >;
+        for i in [1..#nfs_A] do
+            pi_i:=PrimitiveElement(nfs_A[i]);
+            pi_i:=nfs_A_abs[i]!pi_i;
+            Append(~pi_A_comps,pi_i);
+        end for;
+        pi_A:=A!pi_A_comps;
+        assert MinimalPolynomial(pi_A) eq h;
+        assert forall{ i : i in [1..#nfs_A] | Evaluate(fac_h_L[i][1],pi_A_comps[i]) eq 0 };
+        pows_pi_A:=[ pi_A^i : i in [0..Dimension(E)-1 ]];
+
+        // #######################
+        // Delta: E->A, the natural embedding
+        // #######################
+
+        OrderAsFreeAbelianGroup:=function(R)
+        // Returns F,f where F is a free abelian group isomorphic to R and f is an isomorphism.
+        // It depends on the stored ZBasis(R)
+            n:=Dimension(Algebra(R));
+            F:=FreeAbelianGroup(n);
+            zb:=ZBasis(R);
+            f:=map<R->F | x:->F!AbsoluteCoordinates([x],zb),
+                          y:->SumOfProducts(Eltseq(y),zb) >;
+            return F,f;
+        end function;
+
+        FOA,fOA:=OrderAsFreeAbelianGroup(OA);
+        assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
+
+        Delta_image:=function(z)
+            out:=SumOfProducts(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A);
+            assert2 MinimalPolynomial(out) eq MinimalPolynomial(z);
+            return out;
+        end function;
+
+        imageDeltaOE_inFOA:=sub<FOA | [fOA(Delta_image(z)) : z in ZBasis(MaximalOrder(E)) ]>;
+
+        mat_pows_pi_A:=Matrix([AbsoluteCoordinates(x) : x in pows_pi_A ]);
+        Delta_preimage:=function(y)
+            // Need to write y as a linear combination of pows_pi_A
+            // Use Solution V to V*X =W
+            W:=Matrix([AbsoluteCoordinates(y)]);
+            return SumOfProducts(Eltseq(Solution(mat_pows_pi_A,W)),PowerBasis(E));
+        end function;
+
+        Delta_map:=map< E->A | z:->Delta_image(z),
+                               y:->Delta_preimage(y) >;
+
+        // TEST
+        assert2 forall{ z : z in ZBasis(MaximalOrder(E)) | z eq (Delta_map(z))@@Delta_map }; 
+        assert2 forall{ z : z in ZBasis(R) | z eq (Delta_map(z))@@Delta_map }; 
+        assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i+j) eq Delta_map(i)+Delta_map(j) };
+        assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i*j) eq Delta_map(i)*Delta_map(j) };
+
+        // #######################
+        // tilde W_R: order isomorphic to W \otimes R
+        // #######################
+      
+        pi_A_bar:=q/pi_A;
+        gens_WR:=&cat[[ z,z*pi_A,z*pi_A_bar ] : z in zb_OL_inA] cat [pi_A, pi_A_bar];
+        WR:=Order(gens_WR);
+
+        // test
+        assert pi_A in WR;
+        assert q/pi_A in WR;
+        assert2 Index(OA,WR) ge Index(MaximalOrder(E),R);
+        // end test
+
+        // #######################
+        // tilde sigma (on A): acts as the L-Forbenius on L-coeffs when A is written as L+pi*L+...+pi^(deg(h)-1)L
+        // #######################
+
+        // We have defined A = prod_i L[x]/(h_i(x)).
+        // In order to compute sigma, we need to understand the action of the Frobenius sigma_L of L.
+        // To do so, we need to represent A as W:=L + pi*L + ... +pi^(deg(h)-1)L and compute L-isomorphism mAW:A->W.
+        Vs:=[];
+        vs:=<>;
+        for i in [1..#nfs_A] do
+            V,v:=VectorSpace(nfs_A[i],L); // v:nfs_A[i]->V
+            Append(~Vs,V);
+            Append(~vs,v);
+        end for;
+        D,embs,projs:=DirectSum(Vs); // mAD: A -> D isom
+        mAD:=map<A->D |  x :-> &+[ embs[i](vs[i](nfs_A[i]!Components(x)[i])) : i in [1..#nfs_A] ] ,
+                         y :-> A!< nfs_A_abs[i]!(projs[i](y))@@vs[i] : i in [1..#nfs_A] > >;
+        // we compute the image of pows_pi_A in D 
+        pows_pi_D:=[ mAD(x) : x in pows_pi_A ];
+        W:=KSpace(L,Degree(h));
+        mWD:=iso< W->D | pows_pi_D >;
+        mAW:=map< A->W | x:->mAD(x)@@mWD, y:-> mWD(y)@@mAD >;
+
+        // Note that OA \simeq OE \otimes ZZ[zz] locally at p.
+        // We need to compute the images of a ZBasis of OE in Q.
+        // Let b be an element of OE: write it as d1 + pi*d2 + ... + pi^(2g-1)*d_{2g} for integers d_i.
+        // The the image of b in Q is mQ(W!(d1,...,d_{2g}))@@mAW).
+        OE:=MaximalOrder(E);
+        pb_OE:=[ pi^(i-1) : i in [1..AbsoluteDimension(E)] ];
+        zbOE_in_OA:=[ (W!b)@@mAW : b in AbsoluteCoordinates(ZBasis(OE),pb_OE) ];
+        assert2 forall{i:i in [1..#ZBasis(OE)]| MinimalPolynomial(zbOE_in_OA[i]) eq MinimalPolynomial(ZBasis(OE)[i])};
+        // We now constuct an isomorphism A->L^2g using zbOE_inOA. 
+        // This corresponds to write OA = OE \otimes OL (locally at p).
+        // We need this description of OA to compute the action of sigma, which is trivial on the 'OE-part'.
+        zbOE_in_D:=[ mAD(b) : b in zbOE_in_OA ];
+        mWD_zbOE:=iso<W->D | zbOE_in_D >;
+        mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
+
+        sigma_A_mod_I:=function(Q,mQ,I)
+        // Given mQ:OA->Q = OA/I, with Q being an OL/PL^m-module for some m, where PL is the only prim of OL,
+        // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
+            A:=Algebra(I);
+            assert Order(I) eq OA;
+            // If OA/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
+            // It follows that m is the length of OA/I as an OL-module, which can be computed using the formula
+            // |OL/PL|^m = |OA/I|
+            normI:=Index(OA,I);
+            t,m:=IsPowerOf(normI,normPL);
+            assert t;
+            //m:=30*m; printf "Warning increasing the precision\n";
+            if m eq 0 then
+                vprintf sigma,2 : "sigma m=0\n";
+                return hom<Q->Q | [Q.i : i in [1..Ngens(Q)]] >;
+            end if;
+
+            if not assigned A`sigma_fin_prec or A`sigma_fin_prec[4] lt m then
+                // We compute the automorphism of the finite ring OL/PL^m induced 
+                // by the Frobenius automorphism L\otimes Qp.
+                // This is done in the following way:
+                // - in OL, find an element 'zeta' congruent mod PL^m to an inertial element (=uniformizer) of OLp
+                //   by taking successive q-powers of the image 'frob' of a generator of (OL/PL)^*
+                //   until the sequence stabilizes (this approximation method seems well known 
+                //   TODO add references to Magma documentation).
+                // - We create an auxiliary number field LL<zz>, isomorphic to L via zz:->zeta.
+                // - We have an isomorphism OL/PL^m = ZZ[zz]/p^m*ZZ[zz].
+                // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient.
+                // 
+                // Now, we move back to Q:=OA/I where we want to compute the reduction sigma_Q of the 
+                // map induced by the Frobenius of Lp.
+                // We follow the following steps:
+                // - We realize ZZ[zz] as a free abelian group F and zz:->zz^p as an additive map sigma_F:F->F.
+                // - We have computed before the images b1,...,b2g of a ZBasis of OE in OA 
+                //   and an isomorphsm mAW_zbOE:A->L^2g using this basis.
+                // - We construct an algebra 'presentation' of Q over ZZ[zz] by defining a surjective ring
+                //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi 
+                
+                _,moL:=quo<OL | PL^m >;
+                frob:=moL(L.1); // L.1 generates F_q = (OL/pOL)^*
+                repeat
+                    old:=frob;
+                    frob:=frob^q;
+                until frob eq old;
+                zeta:=frob@@moL; // zeta is congruent to an inertial element mod m
+                LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true);
+                assert Degree(LL) eq Degree(L);
+                LLtoL:=iso<LL->L | [ zeta ] >;
+                assert2 LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
+
+                imgs_zz:=[ ChangeUniverse(Eltseq(zz^(p*(i-1))),Integers()) : i in [1..Degree(L)] ];
+                F:=FreeAbelianGroup(Degree(L)); // F = ZZ[zz] as abelian group
+                sigma_F:=hom<F->F | [ F!imgs_zz[i] : i in [1..Ngens(F)] ]>; //TODO check if this should be hom or map
+                Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
+                sigma_Fs:=hom<Fs->Fs|[
+                                        &+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
+                                      :j in [1..Ngens(Fs)]]>;
+                // sigma_Fs is simply sigma_F on each component
+
+                // We compute a map from Fs -> OA defined by (c1,...,c2g):->\sum_i ci*bi where 
+                // - (b1,...,b2g) is a Z-Basis of OE in OA (computed above)
+                // - each ci is in F identified with Z[zz] in L
+                FstoOA:=map<Fs->A | x:-> (W![ LLtoL(LL!Eltseq(projs[i](x))) : i in [1..#projs] ])@@mAW_zbOE >; 
+                    // Fs->LL^2g->W->D->A where the last iso is given my mAW_zbOE
+                A`sigma_fin_prec:=< Fs, sigma_Fs, FstoOA, m >;
+            end if;
+            Fs,sigma_Fs,FstoOA,_:=Explode(A`sigma_fin_prec);
+            assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
+            // Now we compute a presentation of Q as a Z[zz]-algebra
+            pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
+            assert IsSurjective(pres);
+
+            sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
+            assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
+                            where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
+                            where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
+                         }; // Is sigma_Q multiplicative ? (by construction is additive)
+            return sigma_Q;
+        end function;
+
+        // ####################
+        // Delta_inverse_ideal
+        // ####################
+
+        Delta_inverse_ideal:=function(I)
+        // given a fractional-WR ideal returns Delta^{-1}(I), which is a fractional R-ideal
+            assert Order(I) eq WR;
+            dI,d:=MakeIntegral(I);
+            dI_inFOA:=sub<FOA | [fOA(z) : z in ZBasis(dI) ]>;
+            // the next line can be very memory consuming
+            meet_id:=dI_inFOA meet imageDeltaOE_inFOA;
+            gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
+            J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
+            assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
+            return J;
+        end function;
+
+        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal>;
     end if;
-    return P`SlopeE;
+    return Explode(R`DieudonneAlgebra);
+
 end intrinsic;
 
 intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 {}
-    E:=Algebra(R);
-    pi:=PrimitiveElement(E);
-    h:=DefiningPolynomial(E);
-    g:=Degree(h) div 2;
-    q:=Truncate(ConstantCoefficient(h)^(1/g));
-    t,p,a:=IsPrimePower(q);
-    assert t;
+//TODO 
+// input should be of type IsogenyClass
+// check output Type
+//
+    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
 
-    places_01_E:=function(E)
-    // returns the places of E_p of slope in (0,1)
-        return [ P : P in PrimesAbove(p*MaximalOrder(E)) | 0 lt sp and sp lt 1 where sp:=SlopeE(P) ]; 
-    end function;
-
-    pl_01_E:=places_01_E(E);
+    _,pl_01_E,_:=Explode(places_E);
     pl_01_R:=Setseq({ OneIdeal(R) meet (R!!P) : P in pl_01_E });
     if #pl_01_E ne 0 then
         assert #pl_01_R eq 1;
@@ -101,262 +368,33 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         return [dm],pl_01_E; 
     end if;
 
-    // ################### 
-    // Global Representatives: tilde A, tilde W_R, etc . 
-    // I dropped the tilde from the notation...I don't hate my life enough.
-    // ###################
-   
-    // ################### 
-    // Global Representatives: L and sigma_L
-    // ###################
-    
-    // the following gives a very small polynomial hL
-    if a eq 1 then
-        hFq:=[0,1]; // I force L to be Q[x]/(x) so that A = E
-        hL:=Parent(h) ! hFq; 
-    else
-        Fp:=GF(p);
-        Fpy<y>:=PolynomialRing(Fp);
-        Fq:=GF(q);
-        U,u:=MultiplicativeGroup(Fq);
-        hL:=Parent(h)!MinimalPolynomial(u(U.1));
-        assert Degree(hL) eq a;
-    end if;
-    L:=NumberField(hL : DoLinearExtension:=true);
-    OL:=MaximalOrder(L);
-    zb_OL:=Basis(OL);
-    PL:=Factorization(p*OL);
-    assert #PL eq 1 and PL[1,2] eq 1; // L has a unique prime above p, which is unramified.
-    PL:=PL[1,1];
-    normPL:=Index(OL,PL);
-    
-    // ################### 
-    // Global Representatives: A
-    // ###################
-
-    fac_h_L:=Factorization( PolynomialRing(L) ! h );
-    assert forall{ g : g in fac_h_L| g[2] eq 1 }; // h is assumed to be squarefree
-    nfs_A:=[ NumberField(g[1] : DoLinearExtension:=true ) : g in fac_h_L ];
-    nfs_A_abs:=[ AbsoluteField(nf) : nf in nfs_A ];
-
-    // A: an etale algrebra over Q. isomorphic to L \otimes E
-    A:=EtaleAlgebra(nfs_A_abs);
-    OA:=MaximalOrder(A);
-    vprintf DieudonneModules_L,2 : "A = %o\n",A;
-    _,embs_A,proj_A:=Components(A);
-
-    // inclusion L in A
-    emb_L_inA:=map< L -> A | x:->&+[ embs_A[i](nfs_A_abs[i]!x) : i in [1..#nfs_A] ]>;
-    zb_OL_inA:=[ emb_L_inA(x) : x in zb_OL ];
-
-    // pi in A
-    pi_A_comps:=<  >;
-    for i in [1..#nfs_A] do
-        pi_i:=PrimitiveElement(nfs_A[i]);
-        pi_i:=nfs_A_abs[i]!pi_i;
-        Append(~pi_A_comps,pi_i);
-    end for;
-    pi_A:=A!pi_A_comps;
-    assert MinimalPolynomial(pi_A) eq h;
-    assert forall{ i : i in [1..#nfs_A] | Evaluate(fac_h_L[i][1],pi_A_comps[i]) eq 0 };
-    pows_pi_A:=[ pi_A^i : i in [0..Dimension(E)-1 ]];
-
-    // #######################
-    // Delta: E->A, the natural embedding
-    // #######################
-
-    OrderAsFreeAbelianGroup:=function(R)
-    // Returns F,f where F is a free abelian group isomorphic to R and f is an isomorphism.
-    // It depends on the stored ZBasis(R)
-        n:=Dimension(Algebra(R));
-        F:=FreeAbelianGroup(n);
-        zb:=ZBasis(R);
-        f:=map<R->F | x:->F!AbsoluteCoordinates([x],zb),
-                      y:->SumOfProducts(Eltseq(y),zb) >;
-        return F,f;
-    end function;
-
-    FOA,fOA:=OrderAsFreeAbelianGroup(OA);
-    assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
-
-    Delta_image:=function(z)
-        out:=SumOfProducts(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A);
-        assert2 MinimalPolynomial(out) eq MinimalPolynomial(z);
-        return out;
-    end function;
-
-    imageDeltaOE_inFOA:=sub<FOA | [fOA(Delta_image(z)) : z in ZBasis(MaximalOrder(E)) ]>;
-
-    mat_pows_pi_A:=Matrix([AbsoluteCoordinates(x) : x in pows_pi_A ]);
-    Delta_preimage:=function(y)
-        // Need to write y as a linear combination of pows_pi_A
-        // Use Solution V to V*X =W
-        W:=Matrix([AbsoluteCoordinates(y)]);
-        return SumOfProducts(Eltseq(Solution(mat_pows_pi_A,W)),PowerBasis(E));
-    end function;
-
-    Delta_map:=map< E->A | z:->Delta_image(z),
-                           y:->Delta_preimage(y) >;
-
-    // TEST
-    assert2 forall{ z : z in ZBasis(MaximalOrder(E)) | z eq (Delta_map(z))@@Delta_map }; 
-    assert2 forall{ z : z in ZBasis(R) | z eq (Delta_map(z))@@Delta_map }; 
-    assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i+j) eq Delta_map(i)+Delta_map(j) };
-    assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i*j) eq Delta_map(i)*Delta_map(j) };
-
-    // #######################
-    // tilde W_R: order isomorphic to W \otimes R
-    // #######################
-  
-    pi_A_bar:=q/pi_A;
-    gens_WR:=&cat[[ z,z*pi_A,z*pi_A_bar ] : z in zb_OL_inA] cat [pi_A, pi_A_bar];
-    WR:=Order(gens_WR);
-
-    // test
-    assert pi_A in WR;
-    assert q/pi_A in WR;
-    assert2 Index(OA,WR) ge Index(MaximalOrder(E),R);
-    // end test
-
-    // #######################
-    // tilde sigma (on A): acts as the L-Forbenius on L-coeffs when A is written as L+pi*L+...+pi^(deg(h)-1)L
-    // #######################
-
-    // We have defined A = prod_i L[x]/(h_i(x)).
-    // In order to compute sigma, we need to understand the action of the Frobenius sigma_L of L.
-    // To do so, we need to represent A as W:=L + pi*L + ... +pi^(deg(h)-1)L and compute L-isomorphism mAW:A->W.
-    Vs:=[];
-    vs:=<>;
-    for i in [1..#nfs_A] do
-        V,v:=VectorSpace(nfs_A[i],L); // v:nfs_A[i]->V
-        Append(~Vs,V);
-        Append(~vs,v);
-    end for;
-    D,embs,projs:=DirectSum(Vs); // mAD: A -> D isom
-    mAD:=map<A->D |  x :-> &+[ embs[i](vs[i](nfs_A[i]!Components(x)[i])) : i in [1..#nfs_A] ] ,
-                     y :-> A!< nfs_A_abs[i]!(projs[i](y))@@vs[i] : i in [1..#nfs_A] > >;
-    // we compute the image of pows_pi_A in D 
-    pows_pi_D:=[ mAD(x) : x in pows_pi_A ];
-    W:=KSpace(L,Degree(h));
-    mWD:=iso< W->D | pows_pi_D >;
-    mAW:=map< A->W | x:->mAD(x)@@mWD, y:-> mWD(y)@@mAD >;
-
-    // Note that OA \simeq OE \otimes ZZ[zz] locally at p.
-    // We need to compute the images of a ZBasis of OE in Q.
-    // Let b be an element of OE: write it as d1 + pi*d2 + ... + pi^(2g-1)*d_{2g} for integers d_i.
-    // The the image of b in Q is mQ(W!(d1,...,d_{2g}))@@mAW).
-    OE:=MaximalOrder(E);
-    pb_OE:=[ pi^(i-1) : i in [1..AbsoluteDimension(E)] ];
-    zbOE_in_OA:=[ (W!b)@@mAW : b in AbsoluteCoordinates(ZBasis(OE),pb_OE) ];
-    assert2 forall{i:i in [1..#ZBasis(OE)]| MinimalPolynomial(zbOE_in_OA[i]) eq MinimalPolynomial(ZBasis(OE)[i])};
-    // We now constuct an isomorphism A->L^2g using zbOE_inOA. 
-    // This corresponds to write OA = OE \otimes OL (locally at p).
-    // We need this description of OA to compute the action of sigma, which is trivial on the 'OE-part'.
-    zbOE_in_D:=[ mAD(b) : b in zbOE_in_OA ];
-    mWD_zbOE:=iso<W->D | zbOE_in_D >;
-    mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
-
-    sigma_A_mod_I:=function(Q,mQ,I)
-    // Given mQ:OA->Q = OA/I, with Q being an OL/PL^m-module for some m, where PL is the only prim of OL,
-    // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
-        A:=Algebra(I);
-        assert Order(I) eq OA;
-        // If OA/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
-        // It follows that m is the length of OA/I as an OL-module, which can be computed using the formula
-        // |OL/PL|^m = |OA/I|
-        normI:=Index(OA,I);
-        t,m:=IsPowerOf(normI,normPL);
-        assert t;
-        //m:=30*m; printf "Warning increasing the precision\n";
-        if m eq 0 then
-            vprintf sigma,2 : "sigma m=0\n";
-            return hom<Q->Q | [Q.i : i in [1..Ngens(Q)]] >;
-        end if;
-
-        if not assigned A`sigma_fin_prec or A`sigma_fin_prec[4] lt m then
-            // We compute the automorphism of the finite ring OL/PL^m induced 
-            // by the Frobenius automorphism L\otimes Qp.
-            // This is done in the following way:
-            // - in OL, find an element 'zeta' congruent mod PL^m to an inertial element (=uniformizer) of OLp
-            //   by taking successive q-powers of the image 'frob' of a generator of (OL/PL)^*
-            //   until the sequence stabilizes (this approximation method seems well known 
-            //   TODO add references to Magma documentation).
-            // - We create an auxiliary number field LL<zz>, isomorphic to L via zz:->zeta.
-            // - We have an isomorphism OL/PL^m = ZZ[zz]/p^m*ZZ[zz].
-            // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient.
-            // 
-            // Now, we move back to Q:=OA/I where we want to compute the reduction sigma_Q of the 
-            // map induced by the Frobenius of Lp.
-            // We follow the following steps:
-            // - We realize ZZ[zz] as a free abelian group F and zz:->zz^p as an additive map sigma_F:F->F.
-            // - We have computed before the images b1,...,b2g of a ZBasis of OE in OA 
-            //   and an isomorphsm mAW_zbOE:A->L^2g using this basis.
-            // - We construct an algebra 'presentation' of Q over ZZ[zz] by defining a surjective ring
-            //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi 
-            
-            _,moL:=quo<OL | PL^m >;
-            frob:=moL(L.1); // L.1 generates F_q = (OL/pOL)^*
-            repeat
-                old:=frob;
-                frob:=frob^q;
-            until frob eq old;
-            zeta:=frob@@moL; // zeta is congruent to an inertial element mod m
-            LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true);
-            assert Degree(LL) eq Degree(L);
-            LLtoL:=iso<LL->L | [ zeta ] >;
-            assert2 LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
-
-            imgs_zz:=[ ChangeUniverse(Eltseq(zz^(p*(i-1))),Integers()) : i in [1..Degree(L)] ];
-            F:=FreeAbelianGroup(Degree(L)); // F = ZZ[zz] as abelian group
-            sigma_F:=hom<F->F | [ F!imgs_zz[i] : i in [1..Ngens(F)] ]>; //TODO check if this should be hom or map
-            Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
-            sigma_Fs:=hom<Fs->Fs|[
-                                    &+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
-                                  :j in [1..Ngens(Fs)]]>;
-            // sigma_Fs is simply sigma_F on each component
-
-            // We compute a map from Fs -> OA defined by (c1,...,c2g):->\sum_i ci*bi where 
-            // - (b1,...,b2g) is a Z-Basis of OE in OA (computed above)
-            // - each ci is in F identified with Z[zz] in L
-            FstoOA:=map<Fs->A | x:-> (W![ LLtoL(LL!Eltseq(projs[i](x))) : i in [1..#projs] ])@@mAW_zbOE >; 
-                // Fs->LL^2g->W->D->A where the last iso is given my mAW_zbOE
-            A`sigma_fin_prec:=< Fs, sigma_Fs, FstoOA, m >;
-        end if;
-        Fs,sigma_Fs,FstoOA,_:=Explode(A`sigma_fin_prec);
-        assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
-        // Now we compute a presentation of Q as a Z[zz]-algebra
-        pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
-        assert IsSurjective(pres);
-
-        sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
-        assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
-                        where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
-                        where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
-                     }; // Is sigma_Q multiplicative ? (by construction is additive)
-        return sigma_Q;
-    end function;
 
     // #######################
     // primes of orders in A above places
     // #######################
-    // TODO I should make a new type Place_E, or an array or record for each place of E in which I store 
-    // the slope, the primes of OA above E, and maybe? the primes of each overorder S above E
-    // Then there should be a record of Places_R which points to Places_E
 
     primes_of_A_above_place_of_E:=function(A,P)
     // given a maximal ideal P of OE returns the maximal ideals of OA above P
-        OA:=MaximalOrder(A);
-        return PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+        if not assigned P`PlacesOfAAbove then
+            OA:=MaximalOrder(A);
+            P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+        end if;
+        return P`PlacesOfAAbove;
     end function;
-    
-    primes_of_S_above_place_of_E:=function(S,P)
-    // given a maximal ideal P of OE and an order S of A returns the maximal ideals of S above P
-        oneS:=OneIdeal(S);
-        A:=Algebra(S);
-        pp:=primes_of_A_above_place_of_E(A,P);
-        pp:=Setseq({ oneS meet (S!!P) : P in pp });
-        assert2 forall{P : P in pp | IsPrime(P)};
-        return pp;
+   
+    primes_of_S_of_slope_in_01:=function(S)
+        if not assigned S`PrimesOfSlopeIn01 then
+            pp:=[];
+            oneS:=OneIdeal(S);
+            A:=Algebra(S);
+            for P in pl_01_E do
+                pp_P:=Setseq({ oneS meet (S!!Q) : Q in primes_of_A_above_place_of_E(A,P) });
+                pp cat:= pp_P;
+                assert2 forall{P : P in pp | IsPrime(P)};
+            end for;
+            S`PrimesOfSlopeIn01:=pp;
+        end if;
+        return S`PrimesOfSlopeIn01;
     end function;
 
     //////////////////
@@ -367,7 +405,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     units_quotient_01:=function(S)
     // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA,
     // together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).
-        primes_01_S:=&cat[ primes_of_S_above_place_of_E(S,P) : P in pl_01_E];
+        primes_01_S:=primes_of_S_of_slope_in_01(S);
         ff:=Conductor(S);
         primes_01_S_above_ff:=[ P : P in primes_01_S | ff subset P];
         assert2 forall{P : P in primes_01_S_above_ff | p in P};
@@ -517,25 +555,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
     vprintf Algorithm_2,2 : "number of Delta'-isomorphism classes with FV-stable extension to O_A' = %o\n",#WR_01_idls_with_ext_i_to_OA_F_V_stable;
    
-    // ####################
-    // Delta_inverse_ideal
-    // ####################
-
-    Delta_inverse_ideal:=function(I)
-    // given a fractional-WR ideal returns Delta^{-1}(I), which is a fractional R-ideal
-        assert Order(I) eq WR;
-        dI,d:=MakeIntegral(I);
-        dI_inFOA:=sub<FOA | [fOA(z) : z in ZBasis(dI) ]>;
-        // the next line can be very memory consuming
-        meet_id:=dI_inFOA meet imageDeltaOE_inFOA;
-        gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
-        J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
-        assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
-        return J;
-    end function;
-
+    //TEST Delta_inverse_ideal: this test is expensive
     if GetAssertions() ge 2 then
-        //TEST Delta_inverse_ideal
         for I in WR_01_idls_with_ext_i_to_OA_F_V_stable do
             _:=Delta_inverse_ideal(I);
         end for;
@@ -669,7 +690,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_3,2 : "all alpha_Q's are computed\n";
     // end of unit argument
 
-    primes_01_WR:=Setseq(Seqset( &cat[primes_of_S_above_place_of_E(WR,P) : P in pl_01_E]));
+    primes_01_WR:=primes_of_S_of_slope_in_01(WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
     // By looking at the composition series, one deduces that any 
     // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.
@@ -698,7 +719,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // by alpha:QI->QI.
     // The same construction is applied to Qm0_1.
     
-    pp_OAp:=PrimesAbove(p*OA);
+    pp_OAp:=PlacesAboveRationalPrime(A,p);
     vss:=[];
     maps:=[* *];
     for P in pp_OAp do

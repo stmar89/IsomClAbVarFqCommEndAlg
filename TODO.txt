@@ -1,18 +1,11 @@
 - clean up
 - input should be of Type IsogenyClass
-- slopes of primes should be stored in attributes
+- Move PlacesAboveRationalPrime to AlgEtQ. Now in DieudonneModules.m
 - ramification index, inertia degree, valuation and maybe nice_uniformizer should be intrinsics in AlgEtQ
-- add verbose printing
-- move some assert to assert2
+  Now they are in PrimesAttributes.m
 - Add references to the paper (scan for ADDREF, some might be missing)
 - Add duality in DieudonneModules.m
 
 
 FIX
-h:=x^2+5
-one place of slope nu in (0 1)
-g_nu=1
-L=Cyclotomic Field of order 4 and degree 2
-A:=Number Field with defining polynomial x^4 + 12*x^2 + 16 over the Rational Field
-A has 2 primes above nu
 
