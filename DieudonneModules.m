@@ -575,7 +575,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     //vpNks:=[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ]; //forming these quotients it is sometimes much more expensive then just working with a slightly larger m0
     m0:=Maximum(vpNks);
 
-    //m1:=m0+52; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
+    //m1:=m0+32; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
     
     // ###################################
     // Action of the Frobenius on QI=OA/p^(,0+1)*OA

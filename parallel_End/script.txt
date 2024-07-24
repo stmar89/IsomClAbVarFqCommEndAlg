@@ -15,11 +15,20 @@
     Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
 
     //SetVerbose("DieudonneModules",2);
-    SetAssertions(2);
+    //SetAssertions(2);
     SetDebugOnError(false);
     SetClassGroupBounds("GRH");
 
     PP<x>:=PolynomialRing(Integers());
+
+    pretty_fac:=function(h)
+        fac:=Factorization(h);
+        str:="";
+        for g in fac do
+            str cat:="(" cat &cat(Split(Sprint(g[1])," ")) cat ")";
+        end for;
+        return str;
+    end function;
 
     coeff:=eval(cc);
     h:=PP!coeff;
@@ -36,7 +45,7 @@
         ends:=Setseq({ I[4] : I in iso });
         S:=&meet(ends);
         unique_min_end:=S in ends; // is there a unique minimal end?
-        str:=Sprintf("\n\n%o\n",h);
+        str:=Sprintf("\n\n%o=%o\n",h,pretty_fac(h));
         str cat:=Sprintf("is there a unique minimal end? %o\n",unique_min_end);
         jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
         str cat:=Sprintf("jumps in the lattice of ends? %o\n",jumps);

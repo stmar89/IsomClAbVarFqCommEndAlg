@@ -6,21 +6,28 @@
     AttachSpec("~/AbVarFq/packages.spec");
     PP<x>:=PolynomialRing(Integers());
     all:=Split(Read("~/IsomClassesAbVarFqComEnd/weil_poly_all.txt"));
-    tot:=#all; perc:=0;
+    
+    exlude_list:=[<3,25>]; // list of <g,q> that I want to exclude. 
+                           // For example, for each class in <3,25> the WKICM of WR' seems to big. 
+                           // It will cause a lot of timeouts.
+                           // Better to leave them for a future run.
 
+    tot:=#all; perc:=0;
     input:=[];
     sort_key:=[];
     for icc->cc in all do
         if Truncate(icc/tot*100) gt perc then perc+:=1; printf "%o%% ",perc; end if;
         coeff:=eval(cc);
-        h:=PP!coeff;
-        g:=Degree(h) div 2;
-        if g gt 1 and IsSquarefree(h) then
-            q:=Truncate(ConstantCoefficient(h)^(1/g));
-            t,p,a:=IsPrimePower(q);
-            if a gt 1 and pRank(IsogenyClass(h : Check:=false)) lt g-1 then
-                Append(~input,cc);
-                Append(~sort_key,[g,a,p]);
+        g:=(#coeff-1) div 2;
+        q:=Truncate(coeff[1]^(1/g));
+        if not <g,q> in exlude_list then
+            h:=PP!coeff;
+            if g gt 1 and IsSquarefree(h) then
+                t,p,a:=IsPrimePower(q);
+                if a gt 1 and pRank(IsogenyClass(h : Check:=false)) lt g-1 then
+                    Append(~input,cc);
+                    Append(~sort_key,[g,a,p]);
+                end if;
             end if;
         end if;
     end for;

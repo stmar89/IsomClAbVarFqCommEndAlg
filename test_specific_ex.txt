@@ -58,6 +58,7 @@
     h:=x^4 - x^3 + 4*x^2 - 4*x + 16;
     h:=PP![ 64, 0, 0, 12, 0, 0 ,1 ];
     h:=x^4 + 2*x^3 + 8*x^2 + 8*x + 16;
+    h:=x^4 + 4*x^2 + 16;
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
