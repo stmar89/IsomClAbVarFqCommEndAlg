@@ -49,9 +49,9 @@
         str cat:=Sprintf("is there a unique minimal end? %o\n",unique_min_end);
         jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
         str cat:=Sprintf("jumps in the lattice of ends? %o\n",jumps);
-        pp:=[ P : P in PrimesAbove(p*MaximalOrder(E)) | not SlopeE(P) in {0,1} ];
+        pp:=[ P : P in PrimesAbove(p*MaximalOrder(E)) | not Slope(P) in {0,1} ];
         cond1:=forall{ P : P in pp | RamificationIndex(P) eq 1 and (a mod InertiaDegree(P) eq 0) };
-        cond2:=forall{ P : P in pp | SlopeE(P) in {1/nP,1-1/nP} where nP:=RamificationIndex(P)*InertiaDegree(P)};
+        cond2:=forall{ P : P in pp | Slope(P) in {1/nP,1-1/nP} where nP:=RamificationIndex(P)*InertiaDegree(P)};
         str cat:=Sprintf("cond1,cond2=%o, %o\n",cond1,cond2);
         fprintf file_out,"%o",str;
     catch
