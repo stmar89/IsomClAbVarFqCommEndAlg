@@ -63,7 +63,9 @@ intrinsic Slope(P::AlgEtQIdl)->RngIntElt
 end intrinsic;
 
 intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
-{This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple <p,q,a,g,places_E,L,OL,PL,normPL,A,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal> where //TODO
+{This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple
+<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal>
+where //TODO
 }
     //TODO 
     // input should be of type IsogenyClass

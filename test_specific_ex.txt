@@ -119,3 +119,22 @@
     O:=MaximalOrder(Algebra(R));
     [ Index(O,S) : S in OverOrders(R) ];
     [ Index(O,S) : S in ends ];
+    pp:=[ P : P in PrimesAbove(p*MaximalOrder(E)) | not Slope(P) in {0,1} ];
+    cond1:=forall{ P : P in pp | RamificationIndex(P) eq 1 and (a mod InertiaDegree(P) eq 0) };
+    cond2:=forall{ P : P in pp | Slope(P) in {1/nP,1-1/nP} where nP:=RamificationIndex(P)*InertiaDegree(P)};
+    cond1; cond2;
+
+    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
+
+    oo:=OverOrders(R);
+    oo_zb:=[ ZBasis(S) : S in oo ];
+    oo_Delta:=[ [ Delta_map(z) : z in ZBasis(S) ] : S in oo ];
+
+    for I in iso do
+        tt,dm,ends:=Explode(I);
+        assert forall{ iS : iS in [1..#oo_Delta] | 
+                        forall{ x : x in oo_Delta[iS], g in ZBasis(dm) | x*g in dm } eq (oo[iS] subset ends)
+                     };
+    end for;
+
+
