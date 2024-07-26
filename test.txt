@@ -49,6 +49,7 @@
     to_be_excluded:=[
         x^4 - 2*x^3 + 4*x^2 - 8*x + 16, //too slow; sometimes a relatively fast Segmentation Fault. Investigate!
         x^4 + 2*x^3 + 4*x^2 + 8*x + 16, //too slow
+        x^4 + 4*x^3 + 16*x^2 + 32*x + 64, // too slow (funnily, its twist is not that slow)
         x^4+64// Terminate. Why?
         ];
 
@@ -61,7 +62,7 @@
             g:=Degree(h) div 2;
             q:=Truncate(ConstantCoefficient(h)^(1/g));
             if q le 11
-                and not IsCoprime(coeff[g+1],q) // exclude ordinary
+                //and not IsCoprime(coeff[g+1],q) // exclude ordinary
                         then
                 printf "%50o = ",h;
                 t,p,a:=IsPrimePower(q);

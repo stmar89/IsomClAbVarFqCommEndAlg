@@ -1,0 +1,74 @@
+/* vim: set syntax=magma : */
+/*
+    Weil polys, twist of each others, have very different timings. Even if the correspoding A's are equal. 
+    Investigating why
+*/
+
+    AttachSpec("~/AbVarFq/packages.spec");
+    Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("PrimesAttributes.m");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+
+    SetVerbose("DieudonneModules",2);
+    SetVerbose("DieudonneModules_L",2);
+    SetVerbose("Algorithm_2",2);
+    SetVerbose("Algorithm_3",2);
+    SetVerbose("nice_unif",2);
+    SetVerbose("sigma",2);
+    //SetVerbose("ResidueRingUnits",2);
+    //SetAssertions(2);
+    SetDebugOnError(true);
+
+    overorders_maximal_at_ss:=function(R)
+    // R = Z[F,V] of an almost ord isogney clas
+        K:=Algebra(R);
+        q:=Truncate(ConstantCoefficient(DefiningPolynomial(K))^(2/Dimension(K)));
+        pi:=PrimitiveElement(K);
+        pp:=[ P : P in PrimesAbove(q*R) | pi in P and q/pi in P];
+        assert #pp eq 1;
+        P:=pp[1];
+        OO:=MaximalOrder(K);
+        OO1:=R!!OneIdeal(OO);
+        OOP:=OO!!P;
+        ROP:=R!!(OOP);
+        oo:=OverOrders(R);
+        output:=[ S : S in oo | OO1 eq ( (R!!OneIdeal(S))+ROP ) ];
+
+        OOP:=PrimesAbove(OOP);
+        assert #OOP eq 1;
+        OOP:=OOP[1];
+        ram:=RamificationIndex(OOP);
+        assert ram in {1,2};
+        return output,ram;
+    end function;
+
+    PP<x>:=PolynomialRing(Integers());
+
+    all_weil_poly:=Split(Read("weil_poly_all.txt"));
+
+    // to be debugged
+    hh:=x^4 + 4*x^3 + 16*x^2 + 32*x + 64;
+    h:=x^4 - 4*x^3 + 16*x^2 - 32*x + 64;
+    q:=8;
+
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    R:=Order([pi,q/pi]);
+    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
+    Index(OA,WR);
+
+
+
+    EE:=EtaleAlgebra(h);
+    pii:=PrimitiveElement(E);
+    RR:=Order([pii,q/pii]);
+    _,_,_,_,_,_,_,LL,_,_,_,AA,pii_AA,OAA,DDelta_map,WRR,_,_:=DieudonneAlgebra(R);
+    Index(OAA,WRR);
+
+    time iso:=IsomorphismClassesAbelianVarieties(R);
+    time isoo:=IsomorphismClassesAbelianVarieties(RR);
+    assert #iso eq #isoo;
+
