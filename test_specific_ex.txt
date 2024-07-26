@@ -58,7 +58,8 @@
     h:=x^4 - x^3 + 4*x^2 - 4*x + 16;
     h:=PP![ 64, 0, 0, 12, 0, 0 ,1 ];
     h:=x^4 + 2*x^3 + 8*x^2 + 8*x + 16;
-    h:=x^4 + 4*x^2 + 16;
+    h:=x^4 + 4*x^2 + 16; // contradiction with Cor 4.22. non simple: prod of a ssEC and its twist
+    h:=x^4+81; //contradiction with Cor 4.22. simple.
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
@@ -119,7 +120,7 @@
     O:=MaximalOrder(Algebra(R));
     [ Index(O,S) : S in OverOrders(R) ];
     [ Index(O,S) : S in ends ];
-    pp:=[ P : P in PrimesAbove(p*MaximalOrder(E)) | not Slope(P) in {0,1} ];
+    pp:=[ P : P in PlacesAboveRationalPrime(E,p) | not Slope(P) in {0,1} ];
     cond1:=forall{ P : P in pp | RamificationIndex(P) eq 1 and (a mod InertiaDegree(P) eq 0) };
     cond2:=forall{ P : P in pp | Slope(P) in {1/nP,1-1/nP} where nP:=RamificationIndex(P)*InertiaDegree(P)};
     cond1; cond2;
@@ -131,10 +132,19 @@
     oo_Delta:=[ [ Delta_map(z) : z in ZBasis(S) ] : S in oo ];
 
     for I in iso do
-        tt,dm,ends:=Explode(I);
-        assert forall{ iS : iS in [1..#oo_Delta] | 
-                        forall{ x : x in oo_Delta[iS], g in ZBasis(dm) | x*g in dm } eq (oo[iS] subset ends)
-                     };
+        tt,dm,inv,endo:=Explode(I);
+        for iS in [1..#oo_Delta] do
+             if (
+                 forall{ x : x in oo_Delta[iS], g in ZBasis(dm) | x*g in dm } //test on dm
+                 and
+                 forall{ x : x in oo_zb[iS], g in ZBasis(tt) | x*g in tt } //test on tt
+                 and
+                 forall{ x : x in oo_zb[iS], g in ZBasis(inv) | x*g in inv } //test on inv
+                 ) then
+                 assert (oo[iS] subset endo);
+             end if;
+        end for;
+        assert Order(inv) eq endo;
     end for;
 
 

@@ -7,7 +7,6 @@ intrinsic IsomorphismClassesTateModules(R::AlgEtQOrd)->Any
     // ################### 
     // we compute the isomorphism classes of the part at ell\neq p, slope 0 and slope 1;
     // recall that these 3 parts can be done using R ideals: no need to extend;
-    // ell-Tate-Modules
     
     // we separate the singular primes of R into 4 sets:
     // above ell\neq p; slope 0; slope in (0,1); slope 1.
@@ -181,7 +180,9 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
         dm_orders:=[ dm_order : P in places_01 ];
         for I in isom_away_01 do
             ell_01_orders:=[ MultiplicatorRing(I) : P in places_away_01 ];
+            orders:=ell_01_orders cat dm_orders;
             primes:=places_away_01 cat places_01;
+            assert #orders eq #primes;
             if #primes eq 0 then
                 S:=R;
             else
@@ -195,6 +196,9 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
             end for;
         end for;
     end for;
+
+    //TODO add tests! see test_specific_ex.txt for some good tests
+
     return output;
 end intrinsic;
 
