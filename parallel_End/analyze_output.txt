@@ -13,6 +13,7 @@
         fprintf file_new_out,"%o\n",l;
     end for;
 
+
     AttachSpec("~/AlgEt/spec");
     Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
     Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
@@ -67,6 +68,94 @@
         oneR:=OneIdeal(R);
         assert #{ oneR meet R!!P : P in pp } eq 1; 
     end for;
+
+    for l in lines do
+        h:=eval(Split(l,"=")[1]);
+        E:=EtaleAlgebra(h);
+        pi:=PrimitiveElement(E);
+        g:=Degree(h) div 2;
+        q:=Round(ConstantCoefficient(h)^(1/g));
+        _,p,a:=IsPrimePower(q);
+        //pp:=PlacesAboveRationalPrime(E,p); 
+        pp:=[ P : P in PlacesAboveRationalPrime(E,p) | not Slope(P) in {0,1} ]; 
+        sl:={ Slope(P) : P in pp };
+        if 
+            forall{ P : P in pp | Slope(P) in {1/n,1-1/n} where n:=(RamificationIndex(P)*InertiaDegree(P)) } 
+            and 
+            forall{s : s in sl | #[ P : P in pp | Slope(P) eq s ] eq 1 }
+                then
+            assert "end? true" in l;
+        end if;
+    end for;
+
+    lines:=Split(Read(file_new_out));
+    for il->l in lines do
+        if "end? false" in l and "ends? true" in l and ")(" notin l then
+            PP<x>:=PolynomialRing(Integers());
+            h:=eval(Split(l,"=")[1]);
+            E:=EtaleAlgebra(h);
+            pi:=PrimitiveElement(E);
+            g:=Degree(h) div 2;
+            q:=Round(ConstantCoefficient(h)^(1/g));
+            _,p,a:=IsPrimePower(q);
+            R:=Order([pi,q/pi]);
+            il,#OverOrders(R),#SingularPrimes(R),h;
+        end if;
+    end for;
+
+
+    // EXAMPLE 1 : simple
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+    _<x>:=PolynomialRing(Integers());
+    h:=x^8 + x^7 + x^6 + 4*x^5 - 4*x^4 + 16*x^3 + 16*x^2 + 64*x + 256;
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    g:=Degree(h) div 2;
+    q:=Round(ConstantCoefficient(h)^(1/g));
+    _,p,a:=IsPrimePower(q);
+    R:=Order([pi,q/pi]);
+    O:=MaximalOrder(E);
+    oo:=OverOrders(R);
+    time DM:=IsomorphismClassesDieudonneModules(R);
+    time iso:=IsomorphismClassesAbelianVarieties(R);
+    for S in oo do
+        invS:=#PicardGroup(S);
+        DMS:=#[ D : D in DM | D`DeltaEndomorphismRing eq S];
+        isoS:=#[ I : I in iso | I[4] eq S ];
+        assert isoS eq DMS*invS;
+        Index(O,S),#MinimalOverOrders(S),DMS,invS;
+    end for;
+
+
+    // EXAMPLE 2 : non-simple
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+    _<x>:=PolynomialRing(Integers());
+    h:=x^4 + 4*x^2 + 16;
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    g:=Degree(h) div 2;
+    q:=Round(ConstantCoefficient(h)^(1/g));
+    _,p,a:=IsPrimePower(q);
+    R:=Order([pi,q/pi]);
+    O:=MaximalOrder(E);
+    oo:=OverOrders(R);
+    time DM:=IsomorphismClassesDieudonneModules(R);
+    time iso:=IsomorphismClassesAbelianVarieties(R);
+    for iS->S in oo do
+        invS:=#PicardGroup(S);
+        DMS:=#[ D : D in DM | D`DeltaEndomorphismRing eq S];
+        isoS:=#[ I : I in iso | I[4] eq S ];
+        assert isoS eq DMS*invS;
+        printf "%o,%o,%o,%o,%o,%o\n",iS,Index(O,S),[ Index(oo,T) : T in MinimalOverOrders(S)],DMS,invS,IsProductOfOrders(S);
+    end for;
+
+
 
 /*
 // isogeny classes when cond1 is true and there is no minimum End
