@@ -1,0 +1,78 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+// magma script to great the database
+
+    file_out:="~/IsomClassesAbVarFqComEnd/parallel_End/output.txt";
+    file_new_out:="~/IsomClassesAbVarFqComEnd/parallel_End/output_lines.txt";
+    Pipe("rm " cat file_new_out,"");
+    data:=Split(Read(file_out),"\n");
+    lines:=[&cat[ data[4*i+j] cat "\t" : j in [1..4] ] : i in [0..(#data div 4)-1] ];
+    for l in lines do
+        fprintf file_new_out,"%o\n",l;
+    end for;
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+    PP<x>:=PolynomialRing(Integers());
+
+    cex_con2:=[ l : l in lines | "minimal end? f" in l and 
+                        ("cond1,cond2=true, true" in l or "cond1,cond2=false, true" in l) ];
+    cex_con2:=[ eval(Split(l,"=")[1]) : l in cex_con2 ];
+    for h in cex_con2 do
+        E:=EtaleAlgebra(h);
+        g:=Degree(h) div 2;
+        q:=Round(ConstantCoefficient(h)^(1/g));
+        _,p,a:=IsPrimePower(q);
+        pp:=PlacesAboveRationalPrime(E,p); 
+        sl:=[ Slope(P) : P in pp ];
+        assert exists{s : s in sl | #[ss : ss in sl | ss eq s] gt 1 }; //more than one place with same slope
+
+        sl:=Seqset([ s : s in sl | s ne 1 and s ne 0]);
+        sl,h;
+        for s in sl do
+            pp_s:=[ P : P in pp | Slope(P) eq s ];
+            if #pp_s gt 1 then
+                s,[ IsConjugateStable(P) : P in pp ];
+            end if;
+        end for;
+    end for;
+
+    for l in lines do
+        h:=eval(Split(l,"=")[1]);
+        E:=EtaleAlgebra(h);
+        g:=Degree(h) div 2;
+        q:=Round(ConstantCoefficient(h)^(1/g));
+        _,p,a:=IsPrimePower(q);
+        pp:=PlacesAboveRationalPrime(E,p); 
+        sl:=[ Slope(P) : P in pp ];
+        sl:=[ s : s in sl | not s in {0,1,1/2} ];
+        if #sl gt 0 then
+            sl,h;
+        end if;
+    end for;
+
+    for l in lines do
+        h:=eval(Split(l,"=")[1]);
+        E:=EtaleAlgebra(h);
+        pi:=PrimitiveElement(E);
+        g:=Degree(h) div 2;
+        q:=Round(ConstantCoefficient(h)^(1/g));
+        _,p,a:=IsPrimePower(q);
+        pp:=[ P : P in PlacesAboveRationalPrime(E,p) | not Slope(P) in {0,1} ]; 
+        R:=Order([pi,q/pi]);
+        oneR:=OneIdeal(R);
+        assert #{ oneR meet R!!P : P in pp } eq 1; 
+    end for;
+
+/*
+// isogeny classes when cond1 is true and there is no minimum End
+    grep -E 'minimal end\? f' output_lines.txt | grep -E 'cond1,cond2=true'
+// isogeny classes when cond2 is true and there is no minimum End
+    grep -E 'minimal end\? f' output_lines.txt | grep -E "'cond1,cond2=true, true'|'cond1,cond2=false, true'"
+*/
+
+
