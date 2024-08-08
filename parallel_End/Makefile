@@ -11,3 +11,4 @@ all:
 	rm ${fld}joblog || true
 	@echo "Starting new parallel"
 	parallel -j 15 --timeout 3600 --resume --joblog ${fld}joblog -a ${fld}input.txt magma -b cc:={} ${fld}script.txt 
+
