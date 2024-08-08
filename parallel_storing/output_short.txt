@@ -1,0 +1,20 @@
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? f, h = x^4 - 4*x^2 + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), h = x^4 + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (2), h = x^4 + 2*x^3 + 8*x^2 + 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (2), h = x^4 - 2*x^3 + 8*x^2 - 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), h = x^4 - 2*x^3 + 4*x^2 - 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), h = x^4 + 2*x^3 + 4*x^2 + 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? f, time = 13.430 sec, h = x^4 - 4*x^2 + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 14.940 sec, h = x^4 + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 15.030 sec, h = x^4 + 2*x^3 + 8*x^2 + 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 15.510 sec, h = x^4 - 2*x^3 + 8*x^2 - 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 19.200 sec, h = x^4 + 2*x^3 + 4*x^2 + 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 24.680 sec, h = x^4 - 2*x^3 + 4*x^2 - 8*x + 16
+p^a =     2^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? f, time = 65.300 sec, h = x^4 + 4*x^2 + 16
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? f, time = 887.050 sec, h = x^4 + 81
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 892.630 sec, h = x^4 + 9*x^2 + 81
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (3), time = 909.980 sec, h = x^4 - 3*x^3 + 18*x^2 - 27*x + 81
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? f, time = 910.060 sec, h = x^4 - 9*x^2 + 81
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (3), time = 920.670 sec, h = x^4 + 3*x^3 + 18*x^2 + 27*x + 81
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (3), time = 1062.940 sec, h = x^4 + 3*x^3 + 9*x^2 + 27*x + 81
+p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (3), time = 1075.700 sec, h = x^4 - 3*x^3 + 9*x^2 - 27*x + 81

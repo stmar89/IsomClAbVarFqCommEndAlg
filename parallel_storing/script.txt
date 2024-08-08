@@ -1,0 +1,115 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+    AttachSpec("~/AbVarFq/packages.spec");
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+    Attach("~/IsomClassesAbVarFqComEnd/SaveLoad.m");
+
+    file_short_out:="~/IsomClassesAbVarFqComEnd/parallel_storing/output_short.txt";
+
+    //SetVerbose("DieudonneModules",2);
+    SetAssertions(2);
+    SetColumns(0);
+    SetDebugOnError(false);
+    SetClassGroupBounds("GRH");
+
+
+    PP<x>:=PolynomialRing(Integers());
+
+    pretty_fac:=function(h)
+        fac:=Factorization(h);
+        str:="";
+        for g in fac do
+            str cat:="(" cat &cat(Split(Sprint(g[1])," ")) cat ")";
+        end for;
+        return str;
+    end function;
+
+    function Base26Encode(n)
+            alphabet := "abcdefghijklmnopqrstuvwxyz";
+            s := alphabet[1 + n mod 26]; n := ExactQuotient(n-(n mod 26),26);
+            while n gt 0 do
+                    s := alphabet[1 + n mod 26] cat s; n := ExactQuotient(n-(n mod 26),26);
+            end while;
+            return s;
+    end function;
+
+    function IsogenyLabel(f)
+        g:=Degree(f) div 2;
+        q:=Integers() ! (Coefficients(f)[1]^(2/Degree(f)));
+        str1:=Reverse(Prune(Coefficients(f)))[1..g];
+        str2:="";
+        for a in str1 do
+            if a lt 0 then
+                str2:=str2 cat "a" cat Base26Encode(-a) cat "_";
+                else
+                str2:=str2 cat Base26Encode(a) cat "_";
+            end if;
+        end for;
+        str2:=Prune(str2);
+        isog_label:=Sprintf("%o.%o.",g,q) cat str2;
+        return isog_label;
+    end function;
+
+    coeff:=eval(cc);
+    h:=PP!coeff;
+
+    file_out:=fld_out cat IsogenyLabel(h);
+
+    g:=Degree(h) div 2;
+    q:=Truncate(ConstantCoefficient(h)^(1/g));
+    t,p,a:=IsPrimePower(q);
+    assert t; delete t;
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    R:=Order([pi,q/pi]);
+    try
+        t0:=Cputime();
+        oo:=OverOrders(R);
+        iso:=IsomorphismClassesAbelianVarieties(R);
+        t1:=Cputime(t0);
+        str:=save_isom_classes(iso);
+        fprintf file_out,str;
+
+        //test loading
+            iso_test:=load_isom_classes(Read(file_out));
+            assert #iso eq #iso_test;
+            for i in [1..#iso_test] do
+                cl:=iso[i];
+                cl_test:=iso_test[i];
+
+                I:=cl[1]; _:=I eq 2*I; //to assign the Hash
+                I_test:=cl_test[1]; _:=I_test eq 2*I_test; //to assign the Hash
+                assert I_test`Hash eq I`Hash;
+                I:=cl[2]; _:=I eq 2*I; //to assign the Hash
+                I_test:=cl_test[2]; _:=I_test eq 2*I_test; //to assign the Hash
+                assert I_test`Hash eq I`Hash;
+                I:=cl[3]; _:=I eq 2*I; //to assign the Hash
+                I_test:=cl_test[3]; _:=I_test eq 2*I_test; //to assign the Hash
+                assert I_test`Hash eq I`Hash;
+                assert cl_test[4]`Hash eq cl[4]`Hash;
+            end for;
+        // print some info
+        ends:=Setseq({ cl[4] : cl in iso });
+        S:=&meet(ends);
+        jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
+        str:=Sprintf("p^a = %7o, p-rank = %o, is R an End ? %o, jumps ? %o, minimum end ? %o, time = %o sec, h = %o\n",
+                Sprint(p) cat "^" cat Sprint(a), 
+                pRank(IsogenyClass(h : Check:=false)),
+                R in ends select "t" else "f",
+                jumps select "t" else "f",
+                S in ends select "t with index = " cat pretty_fac(Index(MaximalOrder(E),S))  else "f",
+                t1,
+                h);
+        printf "%o",str;
+        fprintf file_short_out,"%o",str;
+    catch e
+        e`Object;
+        e`Position;
+        fprintf file_err,"%o = debug me! \n %o\n %o\n\n\n -------------------------\n ",h,e`Object,e`Position;
+    end try;
+
