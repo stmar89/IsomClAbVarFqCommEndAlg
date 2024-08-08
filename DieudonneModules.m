@@ -38,7 +38,9 @@ intrinsic PlacesAboveRationalPrime(E::AlgEtQ,p::RngIntElt)->SeqEnum[AlgEtQIdl]
 end intrinsic;
 
 intrinsic Slope(P::AlgEtQIdl)->RngIntElt
-{Given a maximal ideal P of any order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_PP(pi)/(a*e_PP) where val_PP(pi) is the valuation of pi at any maximal ideal PP of the maximal order above P and e_PP is the ramification index of PP.}
+{Given a maximal ideal P of any order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_PP(pi)/(a*e_PP) where val_PP(pi) is the valuation of pi at any maximal ideal PP of the maximal order above P and e_PP is the ramification index of PP.
+// TODO WARNING: if Order(P) is not OE, then the output is not well defined. but it still makes sense to talk about slope in (0,1), =1 or =0. The description should be written more carefully. Maybe, I should add a CheckMaximal VarArg to avoid misuse.
+}
     if not assigned P`Slope then
         E:=Algebra(P);
         pi:=PrimitiveElement(E);
