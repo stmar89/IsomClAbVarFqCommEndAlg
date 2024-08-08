@@ -18,3 +18,7 @@ p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? f, time = 9
 p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? t, minimum end ? t with index = (3), time = 920.670 sec, h = x^4 + 3*x^3 + 18*x^2 + 27*x + 81
 p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (3), time = 1062.940 sec, h = x^4 + 3*x^3 + 9*x^2 + 27*x + 81
 p^a =     3^2, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (3), time = 1075.700 sec, h = x^4 - 3*x^3 + 9*x^2 - 27*x + 81
+p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1405.640 sec, h = x^4 - 4*x^3 + 8*x^2 - 32*x + 64
+p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1402.430 sec, h = x^4 - 8*x^2 + 64
+p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1451.510 sec, h = x^4 + 4*x^3 + 8*x^2 + 32*x + 64
+p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1336.580 sec, h = x^4 + 8*x^2 + 64
