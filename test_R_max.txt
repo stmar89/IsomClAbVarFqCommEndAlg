@@ -1,0 +1,126 @@
+/* vim: set syntax=magma : */
+/*
+    TODO
+    - Add references to the paper (scan for ADDREF, some might be missing)
+    - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
+        Need to implement it.
+*/
+
+    AttachSpec("~/AbVarFq/packages.spec");
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("PrimesAttributes.m");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+
+    overorders_maximal_at_ss:=function(R)
+    // R = Z[F,V] of an almost ord isogney clas
+        K:=Algebra(R);
+        q:=Truncate(ConstantCoefficient(DefiningPolynomial(K))^(2/Dimension(K)));
+        pi:=PrimitiveElement(K);
+        pp:=[ P : P in PrimesAbove(q*R) | pi in P and q/pi in P];
+        assert #pp eq 1;
+        P:=pp[1];
+        OO:=MaximalOrder(K);
+        OO1:=R!!OneIdeal(OO);
+        OOP:=OO!!P;
+        ROP:=R!!(OOP);
+        oo:=OverOrders(R);
+        output:=[ S : S in oo | OO1 eq ( (R!!OneIdeal(S))+ROP ) ];
+
+        OOP:=PrimesAbove(OOP);
+        assert #OOP eq 1;
+        OOP:=OOP[1];
+        ram:=RamificationIndex(OOP);
+        assert ram in {1,2};
+        return output,ram;
+    end function;
+
+    //SetAssertions(2);
+    //SetDebugOnError(true);
+
+    PP<x>:=PolynomialRing(Integers());
+
+    all_weil_poly:=Split(Read("weil_poly_all.txt"));
+    
+    tot:=#all_weil_poly;
+    perc:=0;
+    for icc->cc in all_weil_poly do
+        if Truncate(icc*100/tot) gt perc then perc+:=1; printf "%o%% ",perc; end if;
+        coeff:=eval(cc);
+        h:=PP!coeff;
+        g:=Degree(h) div 2;
+        q:=Truncate(ConstantCoefficient(h)^(1/g));
+        t,p,a:=IsPrimePower(q);
+        if IsSquarefree(h) and a eq 1 and pRank(IsogenyClass(h : Check:=false)) ne g then
+            assert t; delete t;
+            E:=EtaleAlgebra(h);
+            pi:=PrimitiveElement(E);
+            R:=Order([pi,q/pi]);
+            pp:=PrimesAbove(p*R);
+            pp:=[ P : P in pp | Slope(P) notin {0,1} ];
+            assert #pp eq 1;
+            P:=pp[1];
+            Index(P,P^2) , Index(R,P);
+        end if;
+    end for;
+
+
+
+
+
+
+/*
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+
+    SetVerbose("DieudonneModules",2);
+
+    PP<x>:=PolynomialRing(Integers());
+    //h:=( 16 - 4*x + x^2 )*( 256 - 112*x + 40*x^2 - 7*x^3 + x^4 ); // 3.16.al_dg_aou, Dimension(A) = 48
+    //h:=( 4 - 2*x + x^2 )*( 16 - 4*x + 4 *x^2 - x^3 + x^4); // 3.4.ad_k_aq, Dimension(A) = 12
+    //h:=( 16 - 4*x + 4 *x^2 - x^3 + x^4); // Dimension(A) = 12
+    //h:=x^2 - 2*x + 4;
+    h:=x^4 - 2*x^3 + 4*x^2 - 8*x + 16; //slow
+    h:=x^4 + x^3 - 2*x^2 + 4*x + 16;
+
+    g:=Degree(h) div 2;
+    q:=Truncate(ConstantCoefficient(h)^(1/g));
+    t,p,a:=IsPrimePower(q);
+    assert t; delete t;
+
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    R:=Order([pi,q/pi]);
+
+    time IsomorphismClassesTateModules(R);
+    time IsomorphismClassesDieudonneModules(R);
+    time #IsomorphismClassesAbelianVarieties(R);
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
