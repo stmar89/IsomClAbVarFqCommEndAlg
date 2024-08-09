@@ -24,7 +24,7 @@
         fac:=Factorization(h);
         str:="";
         for g in fac do
-            str cat:="(" cat &cat(Split(Sprint(g[1])," ")) cat ")";
+            str cat:="(" cat &cat(Split(Sprint(g[1])," ")) cat ")" cat g[1] ne 1 select Sprintf("^%o",g[2]) else "";
         end for;
         return str;
     end function;

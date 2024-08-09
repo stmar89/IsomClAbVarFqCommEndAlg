@@ -22,3 +22,67 @@ p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with inde
 p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1402.430 sec, h = x^4 - 8*x^2 + 64
 p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1451.510 sec, h = x^4 + 4*x^3 + 8*x^2 + 32*x + 64
 p^a =     2^3, p-rank = 0, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 1336.580 sec, h = x^4 + 8*x^2 + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 30.220 sec, h = x^6 + 3*x^5 + 14*x^4 + 24*x^3 + 56*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 64.830 sec, h = x^6 + 3*x^5 + 10*x^4 + 24*x^3 + 40*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 234.430 sec, h = x^6 + 3*x^5 + 10*x^4 + 16*x^3 + 40*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 54.950 sec, h = x^6 + 3*x^5 + 8*x^4 + 16*x^3 + 32*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? f, time = 142.240 sec, h = x^6 + 3*x^5 + 8*x^4 + 12*x^3 + 32*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? f, time = 27.970 sec, h = x^6 + 3*x^5 - 12*x^3 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 27.090 sec, h = x^6 + 3*x^5 + 4*x^4 + 16*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 30.760 sec, h = x^6 + x^5 + 10*x^4 + 8*x^3 + 40*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 37.630 sec, h = x^6 + x^5 + 6*x^4 + 12*x^3 + 24*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3)(5), time = 38.440 sec, h = x^6 + x^5 + 6*x^4 + 8*x^3 + 24*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? f, time = 145.210 sec, h = x^6 + x^5 + 8*x^4 + 4*x^3 + 32*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 160.420 sec, h = x^6 + x^5 + 6*x^4 + 24*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(7), time = 29.370 sec, h = x^6 + x^5 + 4*x^4 + 16*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 119.090 sec, h = x^6 + x^5 + 2*x^4 + 12*x^3 + 8*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 645.300 sec, h = x^6 + x^5 + 4*x^4 + 8*x^3 + 16*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 960.350 sec, h = x^6 + x^5 + 8*x^4 + 8*x^3 + 32*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(5), time = 87.660 sec, h = x^6 + x^5 + 2*x^4 + 8*x^3 + 8*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(11), time = 44.940 sec, h = x^6 + x^5 + 2*x^4 - 4*x^3 + 8*x^2 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? f, time = 890.480 sec, h = x^6 + x^5 - 8*x^3 + 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? f, time = 5410.930 sec, h = x^6 + 3*x^5 + 4*x^4 + 4*x^3 + 16*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 31.840 sec, h = x^6 - x^5 + 10*x^4 - 8*x^3 + 40*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? f, time = 134.270 sec, h = x^6 - x^5 + 8*x^4 - 4*x^3 + 32*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3)(5), time = 32.250 sec, h = x^6 - x^5 + 6*x^4 - 8*x^3 + 24*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 39.650 sec, h = x^6 - x^5 + 6*x^4 - 12*x^3 + 24*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(7), time = 28.650 sec, h = x^6 - x^5 + 4*x^4 + 16*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 60.560 sec, h = x^6 - x^5 + 2*x^4 + 8*x^3 + 8*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(11), time = 40.380 sec, h = x^6 - x^5 + 2*x^4 + 4*x^3 + 8*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(5), time = 71.320 sec, h = x^6 - x^5 + 2*x^4 - 8*x^3 + 8*x^2 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? f, time = 811.220 sec, h = x^6 - x^5 + 12*x^3 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 56.380 sec, h = x^6 - x^5 - 16*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(5), time = 39.930 sec, h = x^6 + 3*x^5 + 10*x^4 + 20*x^3 + 40*x^2 + 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 31.290 sec, h = x^6 - 3*x^5 + 14*x^4 - 24*x^3 + 56*x^2 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 159.390 sec, h = x^6 - 3*x^5 + 10*x^4 - 16*x^3 + 40*x^2 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(5), time = 36.120 sec, h = x^6 - 3*x^5 + 10*x^4 - 20*x^3 + 40*x^2 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2), time = 47.100 sec, h = x^6 - 3*x^5 + 10*x^4 - 24*x^3 + 40*x^2 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? f, time = 136.420 sec, h = x^6 - 3*x^5 + 8*x^4 - 12*x^3 + 32*x^2 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 55.680 sec, h = x^6 - 3*x^5 + 6*x^4 - 8*x^3 + 24*x^2 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? f, time = 27.880 sec, h = x^6 - 3*x^5 + 12*x^3 - 48*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 31.240 sec, h = x^6 - 5*x^5 + 18*x^4 - 40*x^3 + 72*x^2 - 80*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2), time = 36.030 sec, h = x^6 - 5*x^5 + 14*x^4 - 28*x^3 + 56*x^2 - 80*x + 64
+p^a =     2^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 31.650 sec, h = x^6 + 5*x^5 + 18*x^4 + 40*x^3 + 72*x^2 + 80*x + 64
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 1876.240 sec, h = x^6 + x^5 - 6*x^4 - 27*x^3 - 54*x^2 + 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3)(5), time = 964.880 sec, h = x^6 - x^5 + 21*x^4 - 18*x^3 + 189*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 979.830 sec, h = x^6 - x^5 + 18*x^4 - 9*x^3 + 162*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3)(7), time = 996.610 sec, h = x^6 - x^5 + 15*x^4 - 18*x^3 + 135*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 1822.930 sec, h = x^6 - x^5 + 12*x^4 + 9*x^3 + 108*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 1018.000 sec, h = x^6 - x^5 + 12*x^4 - 36*x^3 + 108*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 1239.160 sec, h = x^6 - x^5 + 9*x^4 + 18*x^3 + 81*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? f, time = 1018.220 sec, h = x^6 - x^5 + 9*x^4 + 81*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (3)(19), time = 1116.310 sec, h = x^6 - x^5 + 6*x^4 + 18*x^3 + 54*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (3), time = 6633.400 sec, h = x^6 - x^5 + 15*x^4 + 135*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 1864.470 sec, h = x^6 - x^5 + 6*x^4 + 54*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (3)(7), time = 1602.660 sec, h = x^6 - x^5 + 6*x^4 - 18*x^3 + 54*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (2)(3), time = 1472.430 sec, h = x^6 - x^5 + 6*x^4 - 36*x^3 + 54*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 1389.290 sec, h = x^6 - x^5 + 6*x^4 - 45*x^3 + 54*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (3), time = 1581.190 sec, h = x^6 - x^5 + 3*x^4 + 36*x^3 + 27*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 4809.060 sec, h = x^6 - x^5 + 12*x^4 - 27*x^3 + 108*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? t, minimum end ? t with index = (2)(3), time = 1625.610 sec, h = x^6 - x^5 + 3*x^4 - 18*x^3 + 27*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? t with index = (3), time = 2132.810 sec, h = x^6 - x^5 + 3*x^4 + 27*x^2 - 81*x + 729
+p^a =     3^2, p-rank = 1, is R an End ? f, jumps ? f, minimum end ? f, time = 904.990 sec, h = x^6 - x^5 + 9*x^3 - 81*x + 729
+
+// the factorization of the indices in the above is not correct. ignore it. it should be fixed after this one.
+
+

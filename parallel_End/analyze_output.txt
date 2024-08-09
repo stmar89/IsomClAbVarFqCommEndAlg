@@ -4,15 +4,41 @@
 
 // magma script to great the database
 
+    AttachSpec("~/AlgEt/spec");
+    Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
+    Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
+    Attach("~/IsomClassesAbVarFqComEnd/IsomorphismClasses.m");
+
+    PP<x>:=PolynomialRing(Integers());
     file_out:="~/IsomClassesAbVarFqComEnd/parallel_End/output.txt";
     file_new_out:="~/IsomClassesAbVarFqComEnd/parallel_End/output_lines.txt";
     Pipe("rm " cat file_new_out,"");
     data:=Split(Read(file_out),"\n");
-    lines:=[&cat[ data[4*i+j] cat "\t" : j in [1..4] ] : i in [0..(#data div 4)-1] ];
-    for l in lines do
+    tot:=#data div 4; perc:=0;
+    for i in [0..(#data div 4)-1] do
+        if Truncate(i*100/tot) gt perc then perc+:=1; printf "%o%% ",perc; end if;
+        h:=eval(Split(data[4*i+1],"=")[1]);
+        E:=EtaleAlgebra(h);
+        g:=Degree(h) div 2;
+        q:=Round(ConstantCoefficient(h)^(1/g));
+        _,p,a:=IsPrimePower(q);
+        pp:=PlacesAboveRationalPrime(E,p); 
+        sl:=[ Slope(P) : P in pp ];
+        ParallelSort(~sl,~pp);
+        sl_str:=[];
+        for iP->P in pp do
+            n:=RamificationIndex(P)*InertiaDegree(P);
+            sP:=sl[iP];
+            sP:=sP eq 1/n and sP ne 1 select Sprint(sl[iP]) cat "m" else Sprint(sl[iP]);
+            Append(~sl_str,sP);
+        end for;
+        sl:=&cat(Split(Sprint(sl_str)," "));
+        sl:=Sprintf("%25o",sl);
+        l:=sl cat "\t" cat &cat[data[4*i+j] cat "\t" : j in [2,3]] cat "\t" cat data[4*i+1];
         fprintf file_new_out,"%o\n",l;
     end for;
 
+//#########################################################
 
     AttachSpec("~/AlgEt/spec");
     Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");

@@ -54,7 +54,6 @@ intrinsic Slope(P::AlgEtQIdl)->RngIntElt
             t:=exists(PP){ PP : PP in PlacesAboveRationalPrime(E,p) | OneIdeal(S) meet S!!PP eq P};
             assert t;
             P`Slope:=$$(PP);
-            assert2 forall{PP : PP in PrimesAbove(MaximalOrder(E) !! P) | $$(PP) eq P`Slope };
         else
             val_pi:=Valuation(pi,P);
             eP:=RamificationIndex(P);
