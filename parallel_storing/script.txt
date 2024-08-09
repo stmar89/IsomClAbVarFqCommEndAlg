@@ -24,7 +24,7 @@
         fac:=Factorization(h);
         str:="";
         for g in fac do
-            str cat:="(" cat &cat(Split(Sprint(g[1])," ")) cat ")" cat g[1] ne 1 select Sprintf("^%o",g[2]) else "";
+            str cat:=&cat(Split(Sprint(g[1])," ")) cat (g[1] ne 1 select Sprintf("^%o",g[2]) else "");
         end for;
         return str;
     end function;
@@ -59,57 +59,106 @@
     h:=PP!coeff;
 
     file_out:=fld_out cat IsogenyLabel(h);
+    file_already_exists:=eval(Pipe("if test -f " cat file_out cat "; then echo 1; else echo 0; fi;",""));
+    if file_already_exists eq 1 then file_already_exists:=true;
+    elif file_already_exists eq 0 then file_already_exists:= false; end if;
 
+   
     g:=Degree(h) div 2;
     q:=Truncate(ConstantCoefficient(h)^(1/g));
     t,p,a:=IsPrimePower(q);
     assert t; delete t;
-    E:=EtaleAlgebra(h);
-    pi:=PrimitiveElement(E);
-    R:=Order([pi,q/pi]);
-    try
-        t0:=Cputime();
-        oo:=OverOrders(R);
-        iso:=IsomorphismClassesAbelianVarieties(R);
-        t1:=Cputime(t0);
-        str:=save_isom_classes(iso);
-        fprintf file_out,str;
+    if file_already_exists then
+        iso:=load_isom_classes(Read(file_out));
+        t0:=0; t1:=0;
+        R:=Order(iso[1,1]);
+        E:=Algebra(R);
+        pi:=PrimitiveElement(E);
+    else
+        try
+            E:=EtaleAlgebra(h);
+            pi:=PrimitiveElement(E);
+            R:=Order([pi,q/pi]);
+            t0:=Cputime();
+            iso:=IsomorphismClassesAbelianVarieties(R);
+            t1:=Cputime(t0);
+            str:=save_isom_classes(iso);
+            fprintf file_out,str;
 
-        //test loading
-            iso_test:=load_isom_classes(Read(file_out));
-            assert #iso eq #iso_test;
-            for i in [1..#iso_test] do
-                cl:=iso[i];
-                cl_test:=iso_test[i];
+            //test loading
+                iso_test:=load_isom_classes(Read(file_out));
+                assert #iso eq #iso_test;
+                for i in [1..#iso_test] do
+                    cl:=iso[i];
+                    cl_test:=iso_test[i];
 
-                I:=cl[1]; _:=I eq 2*I; //to assign the Hash
-                I_test:=cl_test[1]; _:=I_test eq 2*I_test; //to assign the Hash
-                assert I_test`Hash eq I`Hash;
-                I:=cl[2]; _:=I eq 2*I; //to assign the Hash
-                I_test:=cl_test[2]; _:=I_test eq 2*I_test; //to assign the Hash
-                assert I_test`Hash eq I`Hash;
-                I:=cl[3]; _:=I eq 2*I; //to assign the Hash
-                I_test:=cl_test[3]; _:=I_test eq 2*I_test; //to assign the Hash
-                assert I_test`Hash eq I`Hash;
-                assert cl_test[4]`Hash eq cl[4]`Hash;
-            end for;
-        // print some info
-        ends:=Setseq({ cl[4] : cl in iso });
-        S:=&meet(ends);
-        jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
-        str:=Sprintf("p^a = %7o, p-rank = %o, is R an End ? %o, jumps ? %o, minimum end ? %o, time = %o sec, h = %o\n",
-                Sprint(p) cat "^" cat Sprint(a), 
-                pRank(IsogenyClass(h : Check:=false)),
-                R in ends select "t" else "f",
-                jumps select "t" else "f",
-                S in ends select "t with index = " cat pretty_fac(Index(MaximalOrder(E),S))  else "f",
-                t1,
-                h);
-        printf "%o",str;
-        fprintf file_short_out,"%o",str;
-    catch e
-        e`Object;
-        e`Position;
-        fprintf file_err,"%o = debug me! \n %o\n %o\n\n\n -------------------------\n ",h,e`Object,e`Position;
-    end try;
+                    I:=cl[1]; _:=I eq 2*I; //to assign the Hash
+                    I_test:=cl_test[1]; _:=I_test eq 2*I_test; //to assign the Hash
+                    assert I_test`Hash eq I`Hash;
+                    I:=cl[2]; _:=I eq 2*I; //to assign the Hash
+                    I_test:=cl_test[2]; _:=I_test eq 2*I_test; //to assign the Hash
+                    assert I_test`Hash eq I`Hash;
+                    I:=cl[3]; _:=I eq 2*I; //to assign the Hash
+                    I_test:=cl_test[3]; _:=I_test eq 2*I_test; //to assign the Hash
+                    assert I_test`Hash eq I`Hash;
+                    assert cl_test[4]`Hash eq cl[4]`Hash;
+                end for;
+        catch e
+            e`Object;
+            e`Position;
+            fprintf file_err,"%o = debug me! \n %o\n %o\n\n\n -------------------------\n ",h,e`Object,e`Position;
+        end try;
+    end if;
 
+    // print some info
+    pp:=PlacesAboveRationalPrime(E,p); 
+    sl:=[ Slope(P) : P in pp ];
+    ParallelSort(~sl,~pp);
+    sl_str:=[];
+    for iP->P in pp do
+        n:=RamificationIndex(P)*InertiaDegree(P);
+        sP:=sl[iP];
+        sP:=sP eq 1/n and sP ne 1 select Sprint(sl[iP]) cat "m" else Sprint(sl[iP]);
+        Append(~sl_str,sP);
+    end for;
+    sl:=&cat(Split(Sprint(sl_str)," "));
+    sl:=Sprintf("%25o",sl);
+
+    pp:=PrimesAbove(p*R);
+    pp:=[ P : P in pp | Slope(P) notin {0,1} ];
+    assert #pp eq 1;
+    P:=pp[1];
+
+    ends:=Setseq({ cl[4] : cl in iso });
+    OE:=MaximalOrder(E);
+    S_minimum:=&meet(ends);
+    minimal_ends:=[ ];
+    minimal_ends_max_at_01:=[];
+    for S in ends do
+        if not exists{T :T in ends | T ne S and T subset S} then
+            indS:=pretty_fac(Index(OE,S));
+            is_S_max_at_01:=S!!OneIdeal(OE) eq ( OneIdeal(S) + S!!(OE!!P) );    
+            Append(~minimal_ends_max_at_01,is_S_max_at_01 select "t" else "f");
+            Append(~minimal_ends,indS);
+        end if;
+    end for;
+    minimal_ends:=&cat(Split(Sprint(minimal_ends)," "));
+    minimal_ends_max_at_01:=&cat(Split(Sprint(minimal_ends_max_at_01)," "));
+    jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
+    pa:="p^a = " cat Sprint(p) cat "^" cat Sprint(a);
+    str:=Sprintf("%10o, p-rank = %o, %o, is R an End ? %o, jumps ? %o, minimum end ? %o, are minimal ends maximal at (0,1) ? %o, indices in OE of minimal ends = %o, time = %o sec, h = %o\n",
+            pa,
+            pRank(IsogenyClass(h : Check:=false)),
+            sl,
+            R in ends select "t" else "f",
+            jumps select "t" else "f",
+            S_minimum in ends select "t" else "f",
+            minimal_ends_max_at_01,
+            minimal_ends,
+            t1,
+            h);
+    printf "%o",str;
+    fprintf file_short_out,"%o",str;
+
+"done";
+    quit;

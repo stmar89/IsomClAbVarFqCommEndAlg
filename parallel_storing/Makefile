@@ -1,5 +1,6 @@
 fld = ~/IsomClassesAbVarFqComEnd/parallel_storing/
 file_input = ${fld}input.txt
+file_input_special = ${fld}input_special.txt
 fld_out = ${fld}output/
 file_err = ${fld}/errors.txt
 jobs = 15
@@ -18,8 +19,6 @@ clean_old_parallel:
 	rm ${fld}joblog || true
 	@echo "Removing old error file"
 	rm ${file_err} || true
-	@echo "Removing old output"
-	rm ${fld_out}* || true
 
 parallel:
 	@echo "Starting the parallel"
@@ -27,4 +26,11 @@ parallel:
 	@echo "parallel is done! Congrats!"
 	
 
+parallel_special:
+	@echo "Removing old joblog"
+	rm ${fld}joblog_special || true
+	@echo "Starting the parallel on special input without timeout"
+	parallel -j ${jobs} --resume --joblog ${fld}joblog_special -a ${file_input_special} magma -b cc:={} fld_out:=${fld_out} file_err:=${file_err} ${fld}script.txt 
+	@echo "parallel is done! Congrats!"
+	
 
