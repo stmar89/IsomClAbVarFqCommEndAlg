@@ -19,13 +19,16 @@
 
 
     PP<x>:=PolynomialRing(Integers());
-
     pretty_fac:=function(h)
+        if h eq 1 then 
+            return "1"; 
+        end if;
         fac:=Factorization(h);
         str:="";
         for g in fac do
-            str cat:=&cat(Split(Sprint(g[1])," ")) cat (g[1] ne 1 select Sprintf("^%o",g[2]) else "");
+            str cat:=&cat(Split(Sprint(g[1])," ")) cat (g[2] ne 1 select Sprintf("^%o",g[2]) else "") cat "*";
         end for;
+        Prune(~str);
         return str;
     end function;
 
