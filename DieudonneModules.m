@@ -368,7 +368,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         vprintf DieudonneModules,1 : "[OE':R'] = %o\n",Index(MaximalOrder(E),Order(ZBasis(R) cat ZBasis(MaximalOrder(E)!!pl_01_R[1])));
     end if;
 
-    vprintf DieudonneModules,2 : "number of places nu of E with s(nu) in (0,1) = %o\n",#pl_01_E;
+    vprintf DieudonneModules,2 : "places of E w/ slope in (0,1) = %o\n",Sort([ Slope(P) : P in pl_01_E]);
     // Early exit if no places 
     if #pl_01_E eq 0 then
         dm:=OneIdeal(R);
@@ -536,6 +536,22 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_2,1 : "[OA:WR_01] = %o\n",Index(OA,WR_01);
     // WR_00 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
+
+    ///////////////////////////////////
+    if GetAssertions() ge 2 then
+        tmp_file:="tmp_20240815.txt";
+        file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
+        if file_already_exists eq 0 then
+        "\nWARNING printing WKICM for test_purposes: don't forget to delete the tmp file";
+            for I in WKICM(WR_01) do
+                fprintf tmp_file,"%o\n",strI where _,strI:=PrintSeqAlgEtQElt(ZBasis(I));
+            end for;
+        else
+        "\nWARNING loading WKICM for test_purposes: don't forget to delete the tmp file";
+            WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
+        end if;
+    end if;
+    //////////////////////////////////
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
@@ -582,16 +598,18 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     
     vprintf Algorithm_3,1 : "\n\n################\nAlgorithm 3\n################\n";
     exps:=exps_01[1];
+"WARNING: changing J for test purposes";exps:=exps_01[2];
     JOA:=Ideal(OA,&*[nice_unifs_01[i]^exps[i] : i in [1..#pp_A_01]]);
     J:=WR !! JOA;
-    vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",[ Valuation(OA!!J,P) : P in pp_A_01 ];
+    vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",
+                            [ Valuation(OA!!J,P) : P in pp_A_01 ];
 
     // We scale the ideals I by elements of Delta(E) so that they are in J
 
     vprintf Algorithm_3,1 : "Delta-scaling the ideals into J...";
     for i in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         vprintf Algorithm_3,1 : ".";
-        vprintf Algorithm_3,2 : "\nDelta-scaling the %o-th ideal into J...",i;
+        vprintf Algorithm_3,3 : "\nDelta-scaling the %o-th ideal into J...",i;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[i];
         if not I subset J then
             // We want to keep J/xI small. 
@@ -606,7 +624,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             assert I subset J;
             WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
         end if;
-        vprintf Algorithm_3,2 : "done";
+        vprintf Algorithm_3,3 : "done";
     end for;
     vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,3 : "Ideals are now Delta-scaled in J with indices = %o\n",[Index(J,I) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable];
@@ -714,7 +732,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
     // By looking at the composition series, one deduces that any 
     // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.
-    size:=(p^(m0+1))^AbsoluteDimension(A);
+    size:=(p^(m0+1))^AbsoluteDimension(A); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
     M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in primes_01_WR] );
     vprintf Algorithm_3,1 : "done. Got M=%o\n",M;
 

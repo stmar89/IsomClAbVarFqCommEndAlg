@@ -1,3 +1,4 @@
 *.swp
 *.sig
 *joblog
+tmp_*

@@ -16,7 +16,7 @@
     SetVerbose("DieudonneModules",2);
     SetVerbose("DieudonneModules_L",2);
     SetVerbose("Algorithm_2",1);
-    SetVerbose("Algorithm_3",1);
+    SetVerbose("Algorithm_3",2);
     //SetVerbose("nice_unif",2);
     SetVerbose("sigma",2);
     //SetVerbose("ResidueRingUnits",2);
