@@ -536,7 +536,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_2,1 : "[OA:WR_01] = %o\n",Index(OA,WR_01);
     // WR_00 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
-    wk_01:=[ SmallRepresentative(WR!!I) : I in WKICM(WR_01)];
+    wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
 
@@ -629,7 +629,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     I:=p^(m0+1)*OA;
     QI,qI:=ResidueRing(OA,I);
     sigma:=sigma_A_mod_I(QI,qI,I);
-
 
     alpha_Q_inAs:=[];
     PPs_nus_prod_powers:=[];
@@ -745,7 +744,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // Using QItoQm0 we can compute Fm0 by pushing forward the composition of sigma:QI->QI with the multiplication
     // by alpha:QI->QI.
     // The same construction is applied to Qm0_1.
-    
+//TODO--> in the problematic case, J ne OA. I guess then that the issue is the next part, or in the def of QI.  
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius...\n";
     pp_OAp:=PlacesAboveRationalPrime(A,p);
     vss:=[];

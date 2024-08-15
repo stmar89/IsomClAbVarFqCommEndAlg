@@ -1,0 +1,202 @@
+/* vim: set syntax=magma : */
+/*
+    In this file, we collect a series of tests that run on the output of parallel_storing.
+    For each isogeny class I determined by a squarefree Weil polynomial, with R=Z[F,V],
+    we assert the following: 
+    - if I is ordinary: #I = #ICM(R)
+    - if over Fp, #I = #ICM(R)
+    - if almost ordinary, #I = #ICM(S) or #I = 2*#ICM(S), depending whether the ss place P is ramified or inert, 
+                          with S the smallest overorder of R which is maximal at P.
+    - if I is not simple, find all decompositions I1 x I2, compute N=#I1 x #I2 by either loading previously 
+                          computed data, or using the rules above, and check if the subset I' of I that respect 
+                          the decomposition I1 x I2 has satisfies #I'= N. 
+                          [ such decompositions are 'maximal' so they will give the most info, by recursion ].
+                          [ to compute the decompositions: for each idempotent e, compute the orders that 
+                          contain e and 1-e, and the minimal polynomials of pi*e and pi*(1-e) ]
+    - compute the subset of I that has maximal real multiplication and check its size against 'Bhatnagar, Yu Fu'.
+    - check the number of iso classes in I with maximal End against Waterhouse formula.
+*/
+
+
+
+// Everything below needs to be updated.
+    AttachSpec("~/AbVarFq/old_AlgAss.spec");
+    Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
+    // load "~/PolsAbVarFpCanLift/AlmOrd.m"; //there is a bug here
+
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("PrimesAttributes.m");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+    SetAssertions(2);
+
+    overorders_maximal_at_ss:=function(R)
+    // R = Z[F,V] of an almost ord isogney clas
+        K:=Algebra(R);
+        q:=Truncate(ConstantCoefficient(DefiningPolynomial(K))^(2/Dimension(K)));
+        pi:=PrimitiveElement(K);
+        pp:=[ P : P in PrimesAbove(q*R) | pi in P and q/pi in P];
+        assert #pp eq 1;
+        P:=pp[1];
+        OO:=MaximalOrder(K);
+        OO1:=R!!OneIdeal(OO);
+        OOP:=OO!!P;
+        ROP:=R!!(OOP);
+        oo:=OverOrders(R);
+        output:=[ S : S in oo | OO1 eq ( (R!!OneIdeal(S))+ROP ) ];
+
+        OOP:=PrimesAbove(OOP);
+        assert #OOP eq 1;
+        OOP:=OOP[1];
+        ram:=RamificationIndex(OOP);
+        assert ram in {1,2};
+        return output,ram;
+    end function;
+
+    //SetVerbose("DieudonneModules",2);
+    //SetVerbose("Algorithm_3",2);
+    SetAssertions(2);
+    SetDebugOnError(true);
+
+    PP<x>:=PolynomialRing(Integers());
+
+    to_be_excluded:=[
+        x^4 - 4*x^3 + 8*x^2 - 32*x + 64, // It seems that WKICM(WR_01) is very big
+        x^4 + 4*x^3 + 16*x^2 + 32*x + 64, // too slow (funnily, its twist is not that slow)
+        x^4+64,// Terminate. Why?
+        x^6 - x^5 + 4*x^3 - 4*x + 8 // Magma internal error ... buh...
+        ];
+
+    all_weil_poly:=Split(Read("weil_poly_all.txt"));
+
+    for cc in all_weil_poly do
+        coeff:=eval(cc);
+        h:=PP!coeff;
+        if IsSquarefree(h) and not h in to_be_excluded then
+            g:=Degree(h) div 2;
+            q:=Truncate(ConstantCoefficient(h)^(1/g));
+            if q le 11
+                and not IsCoprime(coeff[g+1],q) // exclude ordinary
+                        then
+                printf "%50o = ",h;
+                t,p,a:=IsPrimePower(q);
+                assert t; delete t;
+                E:=EtaleAlgebra(h);
+                pi:=PrimitiveElement(E);
+                R:=Order([pi,q/pi]);
+                try
+                    t0:=Cputime();
+                    iso:=IsomorphismClassesAbelianVarieties(R);
+                    t1:=Cputime(t0);
+                    num_isom:=#iso;
+                    ends:=Setseq({ I[4] : I in iso });
+                    S:=&meet(ends);
+                    unique_min_end:=S in ends; // is there a unique minimal end?
+                    str:=Sprintf("min end? %o ",unique_min_end select "Y" else "N");
+                    jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
+                    str cat:=Sprintf("jumps? %o ",jumps select "Y" else "N");
+                    printf "%o", str;
+                    num_test:=0;
+                    if IsCoprime(coeff[g+1],q) then 
+                        num_test:=#ICM(R);
+                        descr:="ord"; 
+                    elif p eq q then
+                        num_test:=#ICM(R);
+                        descr:="cs"; 
+                    else
+                        I:=IsogenyClass(h);
+                        g:=Dimension(I);
+                        is_almost_ordinary:=pRank(I) eq g-1;
+                        if is_almost_ordinary then
+                            oo:=FindOverOrders(R);
+                            oo_max_at_ss,ram:=overorders_maximal_at_ss(R);
+                            icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];
+                            if ram eq 2 then //ramified
+                                num_test:=icm;
+                                descr:="alm ord - ram";
+                            else //inert
+                                num_test:=2*icm;
+                                descr:="alm ord - inert";
+                            end if;
+                        end if;
+                    end if;
+                    if num_test gt 0 then
+                        if not num_isom eq num_test then
+                            "failure <-------------------",t1,descr,"computed",num_isom,"expected",num_test;
+                        else
+                            "good",t1,descr;
+                        end if;
+                    else
+                        "can't compare to previous data",t1;
+                    end if;
+                catch
+                    e;
+                    e`Object;
+                    e`Position;
+                    "error detected";
+                    //break cc;
+                end try;
+            end if;
+        end if;
+    end for;
+
+
+
+
+
+
+/*
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+
+    SetVerbose("DieudonneModules",2);
+
+    PP<x>:=PolynomialRing(Integers());
+    //h:=( 16 - 4*x + x^2 )*( 256 - 112*x + 40*x^2 - 7*x^3 + x^4 ); // 3.16.al_dg_aou, Dimension(A) = 48
+    //h:=( 4 - 2*x + x^2 )*( 16 - 4*x + 4 *x^2 - x^3 + x^4); // 3.4.ad_k_aq, Dimension(A) = 12
+    //h:=( 16 - 4*x + 4 *x^2 - x^3 + x^4); // Dimension(A) = 12
+    //h:=x^2 - 2*x + 4;
+    h:=x^4 - 2*x^3 + 4*x^2 - 8*x + 16; //slow
+    h:=x^4 + x^3 - 2*x^2 + 4*x + 16;
+
+    g:=Degree(h) div 2;
+    q:=Truncate(ConstantCoefficient(h)^(1/g));
+    t,p,a:=IsPrimePower(q);
+    assert t; delete t;
+
+    E:=EtaleAlgebra(h);
+    pi:=PrimitiveElement(E);
+    R:=Order([pi,q/pi]);
+
+    time IsomorphismClassesTateModules(R);
+    time IsomorphismClassesDieudonneModules(R);
+    time #IsomorphismClassesAbelianVarieties(R);
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
