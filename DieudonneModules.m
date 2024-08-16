@@ -70,7 +70,7 @@ end intrinsic;
 
 intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
 {This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple
-<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal>
+<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal>
 where //TODO
 }
     if not assigned R`DieudonneAlgebra then
@@ -249,20 +249,20 @@ where //TODO
         mWD_zbOE:=iso<W->D | zbOE_in_D >;
         mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
 
-        sigma_A_mod_I:=function(Q,mQ,I)
-        // Given mQ:OA->Q = OA/I, with Q being an OL/PL^m-module for some m, where PL is the only prime of OL,
+        sigma_J_mod_I:=function(Q,mQ,J)
+        // Given mQ:OA->Q = J/I, with I c J OA-ideals and with Q being an OL/PL^m-module for some m, 
+        // where PL is the only prime of OL,
         // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
-            A:=Algebra(I);
-            assert Order(I) eq OA;
-            // If OA/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
-            // It follows that m is the length of OA/I as an OL-module, which can be computed using the formula
-            // |OL/PL|^m = |OA/I|
-            normI:=Index(OA,I);
-            t,m:=IsPowerOf(normI,normPL);
+            A:=Algebra(J);
+            assert Order(J) eq OA;
+            // If J/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
+            // It follows that m is the length of J/I as an OL-module, which can be computed using the formula
+            // |OL/PL|^m = |J/I|
+            t,m:=IsPowerOf(#Q,normPL);
             assert t;
             //m:=30*m; printf "Warning increasing the precision\n";
             if m eq 0 then
-                vprintf sigma,2 : "sigma m=0\n";
+                vprintf sigma,2 : "m=0 -> sigma is the identity on Q\n";
                 return hom<Q->Q | [Q.i : i in [1..Ngens(Q)]] >;
             end if;
 
@@ -290,14 +290,7 @@ where //TODO
                 assert2 LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
                 imgs_zz:=[ ChangeUniverse(Eltseq(zz^(p*(i-1))),Integers()) : i in [1..Degree(L)] ];
 
-                // Now, we move back to Q:=OA/I where we want to compute the reduction sigma_Q of the 
-                // map induced by the Frobenius of Lp.
-                // We follow the following steps:
                 // - We realize ZZ[zz] as a free abelian group F and zz:->zz^p as an additive map sigma_F:F->F.
-                // - We have computed before the images b1,...,b2g of a ZBasis of OE in OA 
-                //   and an isomorphsm mAW_zbOE:A->L^2g using this basis.
-                // - We construct an algebra 'presentation' of Q over ZZ[zz] by defining a surjective ring
-                //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi 
                 F:=FreeAbelianGroup(Degree(L)); // F = ZZ[zz] as abelian group
                 sigma_F:=hom<F->F | [ F!imgs_zz[i] : i in [1..Ngens(F)] ]>; //TODO check if this should be hom or map
                 Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
@@ -314,15 +307,51 @@ where //TODO
             end if;
             Fs,sigma_Fs,FstoOA,_:=Explode(A`sigma_fin_prec);
             assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
+            // Now, we move back to Q:=OA/I where we want to compute the reduction sigma_Q of the 
+            // map induced by the Frobenius of Lp.
+            // We follow the following steps:
+            // - We have computed before the images b1,...,b2g of a ZBasis of OE in OA 
+            //   and an isomorphsm mAW_zbOE:A->L^2g using this basis.
+            // - Let gg be a generator of J locally at p.
+            // - We construct an algebra 'presentation' of Q over ZZ[zz] by defining a surjective ring
+            //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi*gg 
+
+            if J ne OneIdeal(OA) then
+                // We compute gg, the local (at p) generator of J over OA.
+                pp_OAp:=PlacesAboveRationalPrime(A,p);
+                vss:=[];
+                maps:=[* *];
+                for P in pp_OAp do
+                    K,k:=Quotient(J,P*J);
+                    Append(~vss,K);
+                    Append(~maps,k);
+                end for;
+                KK,embs,projs:=DirectSum(vss);
+                JF:=FreeAbelianGroup(AbsoluteDimension(A));
+                zbJ:=ZBasis(J);
+                JtoJF:=map<A->JF | x:->AbsoluteCoordinates(x,zbJ), y:->SumOfProducts(Eltseq(y),zbJ)>;
+                JFtoKK:=hom<JF->KK | [&+[w@maps[i]@embs[i] : i in [1..#embs]] where w:=JF.j@@JtoJF : j in [1..Ngens(JF)]] >;
+                assert IsSurjective(JFtoKK);
+                JtoKK:=map<A->KK | x:->JFtoKK(JtoJF(x)), y:->y@@JFtoKK@@JtoJF >;
+                gg:=(&+([embs[i](vss[i].1):i in [1..#embs]]))@@JtoKK; // gg is the local generator of J at p over OA.
+                assert gg in J;
+                assert2 (not IsZeroDivisor(gg)) and Q eq sub<Q | [ mQ(z) : z in ZBasis(gg*OA) ] >;
+                vprintf Algorithm_3,2 : "gg = %o\n",PrintSeqAlgEtQElt([gg])[1];
+            else
+                gg:=A!1;
+            end if;
             // Now we compute a presentation of Q as a Z[zz]-algebra
-            pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
+            pres:=hom<Fs->Q | [ mQ(gg*FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
             assert IsSurjective(pres);
 
             sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
-            assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
-                            where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
-                            where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
-                         }; // Is sigma_Q multiplicative ? (by construction is additive)
+            if J eq OneIdeal(OA) then
+                // if J eq OA, we check if the sigma is multiplicative
+                assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
+                                where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
+                                where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
+                             };
+            end if;
             return sigma_Q;
         end function;
 
@@ -343,7 +372,7 @@ where //TODO
             return J;
         end function;
 
-        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal>;
+        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal>;
     end if;
     return Explode(R`DieudonneAlgebra);
 
@@ -352,7 +381,7 @@ end intrinsic;
 intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 {}
     vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
-    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
+    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
 
@@ -453,7 +482,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         // Action of the Frobenius on Q=OA/I, to compute Frobenius on U, which is a quotient of Q^*
         // ###################################
         Q,q:=ResidueRing(OA,I);
-        sigma:=sigma_A_mod_I(Q,q,I); // sigma: Q->Q
+        sigma:=sigma_J_mod_I(Q,q,OneIdeal(OA)); // sigma: Q->Q
         //Ugens_inA:=[ u(U.i) : i in [1..Ngens(U)] ];
         //vprintf Algorithm_2,2 : "... which has generators in tilde{OA} : %o\n", PrintSeqAlgEtQElt( Ugens_inA );
         //id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in Ugens_inA ]>;
@@ -534,7 +563,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
 
     ///////////////////////////////////
-    ///*
+    /*
     if GetAssertions() ge 2 then
         tmp_file:="tmp_20240815.txt"; // to debug  h:=x^8-6*x^7+18*x^6-36*x^5+68*x^4-144*x^3+288*x^2-384*x+256;
         file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
@@ -548,7 +577,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
         end if;
     end if;
-    //*/
+    */
     //////////////////////////////////
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
@@ -646,7 +675,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // ###################################
     I:=p^(m0+1)*OA;
     QI,qI:=ResidueRing(OA,I);
-    sigma:=sigma_A_mod_I(QI,qI,I);
+    sigma:=sigma_J_mod_I(QI,qI,OneIdeal(OA));
 
     alpha_Q_inAs:=[];
     PPs_nus_prod_powers:=[];
@@ -766,46 +795,14 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // by alpha:QI->QI.
     // The same construction is applied to Qm0_1.
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius...\n";
-    pp_OAp:=PlacesAboveRationalPrime(A,p);
-    vss:=[];
-    maps:=[* *];
-    for P in pp_OAp do
-        PJOA:=P*JOA;
-        K,k:=Quotient(JOA,PJOA);
-        Append(~vss,K);
-        Append(~maps,k);
-    end for;
-    KK,embs,projs:=DirectSum(vss);
-    JF:=FreeAbelianGroup(AbsoluteDimension(A));
-    zbJ:=ZBasis(JOA);
-    JtoJF:=map<A->JF | x:->AbsoluteCoordinates(x,zbJ), y:->SumOfProducts(Eltseq(y),zbJ)>;
-    JFtoKK:=hom<JF->KK | [&+[w@maps[i]@embs[i] : i in [1..#embs]] where w:=JF.j@@JtoJF : j in [1..Ngens(JF)]] >;
-    assert IsSurjective(JFtoKK);
-    JtoKK:=map<A->KK | x:->JFtoKK(JtoJF(x)), y:->y@@JFtoKK@@JtoJF >;
-    gg:=(&+([embs[i](vss[i].1):i in [1..#embs]]))@@JtoKK; // gg is the local generator of J at p over OA.
-    assert gg in J;
-    assert2 (not IsZeroDivisor(gg)) and Qm0_1 eq sub<Qm0_1 | [ qm0_1(z) : z in ZBasis(gg*OA) ] >;
-    vprintf Algorithm_3,2 : "gg = %o\n",PrintSeqAlgEtQElt([gg])[1];
-
-    QItoQm0:=hom<QI->Qm0 | [ qm0(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
-    QItoQm0_1:=hom<QI->Qm0_1 | [ qm0_1(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
-
     
-    // TODO ERROR: going from QI to Qm0, I should multiply by sigma(gg) = gg*k for some k in OA.
-    // but from Qm0 to QI, I should only divide by 1/gg, as I already do.
-    // alpha_action:=hom<QI->QI | [ qI(alpha*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
-    //FQm0:=hom<Qm0->Qm0 | [ QItoQm0(alpha_action(sigma(Qm0.i@@QItoQm0))) : i in [1..Ngens(Qm0)]]>;
-    //FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha_action(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
-    assert gg in OA;
+    sigma_Qm0:=sigma_J_mod_I(Qm0,qm0,JOA);
+    sigma_Qm0_1:=sigma_J_mod_I(Qm0_1,qm0_1,JOA);
     alpha_action_Qm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
     alpha_action_Qm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
-    sigma_gg:=(sigma(qI(gg)))@@qI; // TODO is this well defined ?
-    assert sigma_gg in J;
-    QItoQm0_sigma:=hom<QI->Qm0 | [ qm0(sigma_gg*(sigma(QI.i)@@qI)) : i in [1..Ngens(QI)] ]>;
-    FQm0:=hom<Qm0->Qm0 | [ alpha_action_Qm0(QItoQm0_sigma(Qm0.i@@QItoQm0)) : i in [1..Ngens(Qm0)]]>;
-    QItoQm0_1_sigma:=hom<QI->Qm0_1 | [ qm0_1(sigma_gg*(sigma(QI.i)@@qI)) : i in [1..Ngens(QI)] ]>;
-    FQm0_1:=hom<Qm0_1->Qm0_1|[alpha_action_Qm0_1(QItoQm0_1_sigma(Qm0_1.i@@QItoQm0_1)):i in [1..Ngens(Qm0_1)]]>;
 
+    FQm0:=sigma_Qm0*alpha_action_Qm0;
+    FQm0_1:=sigma_Qm0_1*alpha_action_Qm0_1;
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
     // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
     assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
