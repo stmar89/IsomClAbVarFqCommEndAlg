@@ -1,15 +1,26 @@
 /* vim: set syntax=magma : */
 /*
-    TODO
-    - Add references to the paper (scan for ADDREF, some might be missing)
-    - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
-        Need to implement it.
 */
+
+    // parameters for quick tests
+    //allow_cs:=false;
+    allow_cs:=true;
+    //allow_ord:=false;
+    allow_ord:=true;
+    //allow_alm_ord:=false;
+    allow_alm_ord:=true;
+    q_max:=11;
+
+    PP<x>:=PolynomialRing(Integers());
+    to_be_excluded:=[
+        x^4 - 4*x^3 + 8*x^2 - 32*x + 64, // It seems that WKICM(WR_01) is very big
+        x^4 + 4*x^3 + 16*x^2 + 32*x + 64, // too slow (funnily, its twist is not that slow)
+        x^4+64,// Terminate. Why?
+        x^6 - x^5 + 4*x^3 - 4*x + 8 // Magma internal error ... buh...
+        ];
 
     AttachSpec("~/AbVarFq/old_AlgAss.spec");
     Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
-    // load "~/PolsAbVarFpCanLift/AlmOrd.m"; //there is a bug here
-
 
     AttachSpec("~/AlgEt/spec");
     Attach("PrimesAttributes.m");
@@ -45,15 +56,6 @@
     SetAssertions(2);
     SetDebugOnError(true);
 
-    PP<x>:=PolynomialRing(Integers());
-
-    to_be_excluded:=[
-        x^4 - 4*x^3 + 8*x^2 - 32*x + 64, // It seems that WKICM(WR_01) is very big
-        x^4 + 4*x^3 + 16*x^2 + 32*x + 64, // too slow (funnily, its twist is not that slow)
-        x^4+64,// Terminate. Why?
-        x^6 - x^5 + 4*x^3 - 4*x + 8 // Magma internal error ... buh...
-        ];
-
     all_weil_poly:=Split(Read("weil_poly_all.txt"));
 
     for cc in all_weil_poly do
@@ -62,12 +64,19 @@
         if IsSquarefree(h) and not h in to_be_excluded then
             g:=Degree(h) div 2;
             q:=Truncate(ConstantCoefficient(h)^(1/g));
-            if q le 11
-                and not IsCoprime(coeff[g+1],q) // exclude ordinary
+            I:=IsogenyClass(h : Check:=false);
+            t,p,a:=IsPrimePower(q);
+            assert t; delete t;
+            prank:=pRank(I);
+            is_ord:=prank eq g;
+            is_alm_ord:=prank eq g-1;
+            is_cs:=q eq p;
+            if  (q le q_max)
+                and (is_ord select allow_ord else true)
+                and (is_alm_ord select allow_alm_ord else true)
+                and (is_cs select allow_cs else true) 
                         then
                 printf "%50o = ",h;
-                t,p,a:=IsPrimePower(q);
-                assert t; delete t;
                 E:=EtaleAlgebra(h);
                 pi:=PrimitiveElement(E);
                 R:=Order([pi,q/pi]);
@@ -94,10 +103,7 @@
                         ends_test:=Seqset(OverOrders(R));
                         descr:="cs"; 
                     else
-                        I:=IsogenyClass(h);
-                        g:=Dimension(I);
-                        is_almost_ordinary:=pRank(I) eq g-1;
-                        if is_almost_ordinary then
+                        if is_alm_ord then
                             oo:=FindOverOrders(R);
                             oo_max_at_ss,ram:=overorders_maximal_at_ss(R);
                             icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];

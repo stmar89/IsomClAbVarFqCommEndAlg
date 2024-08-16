@@ -2,8 +2,8 @@
 /*
     TODO
     - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
-        Need to implement it.
-    - check types (output and input) of intrinsics
+        Need to implement it. Look for DUALITY keyword.
+    - check types (output and input) of all intrinsics: switch from R to IsogenyClass
 */
 
 declare verbose DieudonneModules,3;
@@ -37,11 +37,15 @@ intrinsic PlacesAboveRationalPrime(E::AlgEtQ,p::RngIntElt)->SeqEnum[AlgEtQIdl]
     return E`PlacesAboveRationalPrime;
 end intrinsic;
 
-intrinsic Slope(P::AlgEtQIdl)->RngIntElt
-{Given a maximal ideal P of any order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_PP(pi)/(a*e_PP) where val_PP(pi) is the valuation of pi at any maximal ideal PP of the maximal order above P and e_PP is the ramification index of PP.
-// TODO WARNING: if Order(P) is not OE, then the output is not well defined. but it still makes sense to talk about slope in (0,1), =1 or =0. The description should be written more carefully. Maybe, I should add a CheckMaximal VarArg to avoid misuse.
-}
+intrinsic Slope(P::AlgEtQIdl : CheckMaximal:=true)->RngIntElt
+{Given a maximal ideal P of the maximal order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_P(pi)/(a*e_P) where val_P(pi) is the valuation of pi at P and e_P is the ramification index of P.
+If the vararg CheckMaximal is set to false, the instrinsic will accept as input also a P is a maximal ideal of a non-maximal order and return val_PP(pi)/(a*e_PP) where PP is a maximal ideal of the maximal order above P. If the output is not 0 or 1, then it is not well defined: it will be a rational number in the open interval (0,1), but the exact value might depend on the choice of PP above P.}
     if not assigned P`Slope then
+        require IsPrime(P) : "The ideal is not a maximal ideal.";
+        S:=Order(P);
+        if CheckMaximal then
+            require IsMaximal(S) : "The ideal is not a maximal ideal of the maximal order. You might want to set the VarArg CheckMaximal to false.";
+        end if;
         E:=Algebra(P);
         pi:=PrimitiveElement(E);
         h:=DefiningPolynomial(E);
@@ -49,7 +53,6 @@ intrinsic Slope(P::AlgEtQIdl)->RngIntElt
         q:=Truncate(ConstantCoefficient(h)^(1/g));
         t,p,a:=IsPrimePower(q);
         assert t;
-        S:=Order(P);
         if not IsMaximal(S) then
             t:=exists(PP){ PP : PP in PlacesAboveRationalPrime(E,p) | OneIdeal(S) meet S!!PP eq P};
             assert t;
@@ -68,8 +71,6 @@ intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
 <p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal>
 where //TODO
 }
-    //TODO 
-    // input should be of type IsogenyClass
     if not assigned R`DieudonneAlgebra then
         E:=Algebra(R);
         pi:=PrimitiveElement(E);
@@ -351,10 +352,6 @@ end intrinsic;
 
 intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 {}
-//TODO 
-// input should be of type IsogenyClass
-// check output Type
-//
     vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
     p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
     vprintf DieudonneModules,1 : "done\n";
@@ -510,7 +507,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
     vprintf Algorithm_2,1 : "\n\n################\nAlgorithm 2\n################\n";
 
-    // TODO add duality here
+    // Can add DUALITY here
     exps_nus:=[];
     pp_A_nus:=[];
     for P in pl_01_E do
@@ -540,7 +537,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     ///////////////////////////////////
     /*
     if GetAssertions() ge 2 then
-        tmp_file:="tmp_20240815.txt";
+        tmp_file:="tmp_20240815.txt"; // to debug  h:=x^8-6*x^7+18*x^6-36*x^5+68*x^4-144*x^3+288*x^2-384*x+256;
         file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
         if file_already_exists eq 0 then
         "\nWARNING printing WKICM for test_purposes: don't forget to delete the tmp file";
@@ -657,7 +654,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     uniformizers_at_nus:=Uniformizers(pl_01_E);
     for inu->nu in pl_01_E do
         vprintf Algorithm_3,1 : "Computing alpha_Q for %oth place of %o...",inu,#pl_01_E;
-        //TODO Add duality here
+        // Can add DUALITY here
         PPs_nu:=primes_of_A_above_place_of_E(A,nu);
         f_nu:=InertiaDegree(nu);
         g_nu:=GCD(a,f_nu); //q=p^a
@@ -801,7 +798,10 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha_action(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
 
-//TODO add assert F^a = multiplication by pi and semilinearity x*F = F*sigma(x) forall x in L
+    // check that FQm0^a and FQm0_1^a are both equal to multiplication by pi_A
+    assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
+    assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
+//TODO add assert for semilinearity x*F = F*sigma(x) forall x in L
 
     vprintf Algorithm_3,2 : "FQ's are computed\n";
 
