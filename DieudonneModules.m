@@ -4,6 +4,8 @@
     - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
         Need to implement it. Look for DUALITY keyword.
     - check types (output and input) of all intrinsics: switch from R to IsogenyClass
+    - I should add the possibility to force the precision of the computation of sigma to a higher value 
+      using VarArgs. But it is not clear to me how to do it, since it depends on QI, hence on I.
 */
 
 declare verbose DieudonneModules,3;
@@ -274,17 +276,7 @@ where //TODO
                 //   TODO add references to Magma documentation).
                 // - We create an auxiliary number field LL<zz>, isomorphic to L via zz:->zeta.
                 // - We have an isomorphism OL/PL^m = ZZ[zz]/p^m*ZZ[zz].
-                // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient.
-                // 
-                // Now, we move back to Q:=OA/I where we want to compute the reduction sigma_Q of the 
-                // map induced by the Frobenius of Lp.
-                // We follow the following steps:
-                // - We realize ZZ[zz] as a free abelian group F and zz:->zz^p as an additive map sigma_F:F->F.
-                // - We have computed before the images b1,...,b2g of a ZBasis of OE in OA 
-                //   and an isomorphsm mAW_zbOE:A->L^2g using this basis.
-                // - We construct an algebra 'presentation' of Q over ZZ[zz] by defining a surjective ring
-                //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi 
-                
+                // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient
                 _,moL:=quo<OL | PL^m >;
                 frob:=moL(L.1); // L.1 generates F_q = OL/pOL
                 repeat
@@ -296,13 +288,20 @@ where //TODO
                 assert Degree(LL) eq Degree(L);
                 LLtoL:=iso<LL->L | [ zeta ] >;
                 assert2 LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
-
                 imgs_zz:=[ ChangeUniverse(Eltseq(zz^(p*(i-1))),Integers()) : i in [1..Degree(L)] ];
+
+                // Now, we move back to Q:=OA/I where we want to compute the reduction sigma_Q of the 
+                // map induced by the Frobenius of Lp.
+                // We follow the following steps:
+                // - We realize ZZ[zz] as a free abelian group F and zz:->zz^p as an additive map sigma_F:F->F.
+                // - We have computed before the images b1,...,b2g of a ZBasis of OE in OA 
+                //   and an isomorphsm mAW_zbOE:A->L^2g using this basis.
+                // - We construct an algebra 'presentation' of Q over ZZ[zz] by defining a surjective ring
+                //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi 
                 F:=FreeAbelianGroup(Degree(L)); // F = ZZ[zz] as abelian group
                 sigma_F:=hom<F->F | [ F!imgs_zz[i] : i in [1..Ngens(F)] ]>; //TODO check if this should be hom or map
                 Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
-                sigma_Fs:=hom<Fs->Fs|[
-                                        &+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
+                sigma_Fs:=hom<Fs->Fs|[&+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
                                       :j in [1..Ngens(Fs)]]>;
                 // sigma_Fs is simply sigma_F on each component
 
@@ -535,7 +534,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
 
     ///////////////////////////////////
-    /*
+    ///*
     if GetAssertions() ge 2 then
         tmp_file:="tmp_20240815.txt"; // to debug  h:=x^8-6*x^7+18*x^6-36*x^5+68*x^4-144*x^3+288*x^2-384*x+256;
         file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
@@ -549,7 +548,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
         end if;
     end if;
-    */
+    //*/
     //////////////////////////////////
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
@@ -766,7 +765,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // Using QItoQm0 we can compute Fm0 by pushing forward the composition of sigma:QI->QI with the multiplication
     // by alpha:QI->QI.
     // The same construction is applied to Qm0_1.
-//TODO--> in the problematic case, J ne OA. I guess then that the issue is the next part, or in the def of QI.  
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius...\n";
     pp_OAp:=PlacesAboveRationalPrime(A,p);
     vss:=[];
@@ -789,16 +787,27 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     assert2 (not IsZeroDivisor(gg)) and Qm0_1 eq sub<Qm0_1 | [ qm0_1(z) : z in ZBasis(gg*OA) ] >;
     vprintf Algorithm_3,2 : "gg = %o\n",PrintSeqAlgEtQElt([gg])[1];
 
-    QItoQm0:=hom<QI->Qm0 | [ qm0(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;// TODO ERROR here: going from QI to Qm0, I should multiply by sigma(gg) = gg*k for some k in OA.
-                                                                         // but from Qm0 to QI, I should only divide by 1/gg, as I already do.
+    QItoQm0:=hom<QI->Qm0 | [ qm0(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
     QItoQm0_1:=hom<QI->Qm0_1 | [ qm0_1(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
-    alpha_action:=hom<QI->QI | [ qI(alpha*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
-    
-    FQm0:=hom<Qm0->Qm0 | [ QItoQm0(alpha_action(sigma(Qm0.i@@QItoQm0))) : i in [1..Ngens(Qm0)]]>;
-    FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha_action(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
-    assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
 
-    // check that FQm0^a and FQm0_1^a are both equal to multiplication by pi_A
+    
+    // TODO ERROR: going from QI to Qm0, I should multiply by sigma(gg) = gg*k for some k in OA.
+    // but from Qm0 to QI, I should only divide by 1/gg, as I already do.
+    // alpha_action:=hom<QI->QI | [ qI(alpha*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
+    //FQm0:=hom<Qm0->Qm0 | [ QItoQm0(alpha_action(sigma(Qm0.i@@QItoQm0))) : i in [1..Ngens(Qm0)]]>;
+    //FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha_action(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
+    assert gg in OA;
+    alpha_action_Qm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+    alpha_action_Qm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
+    sigma_gg:=(sigma(qI(gg)))@@qI; // TODO is this well defined ?
+    assert sigma_gg in J;
+    QItoQm0_sigma:=hom<QI->Qm0 | [ qm0(sigma_gg*(sigma(QI.i)@@qI)) : i in [1..Ngens(QI)] ]>;
+    FQm0:=hom<Qm0->Qm0 | [ alpha_action_Qm0(QItoQm0_sigma(Qm0.i@@QItoQm0)) : i in [1..Ngens(Qm0)]]>;
+    QItoQm0_1_sigma:=hom<QI->Qm0_1 | [ qm0_1(sigma_gg*(sigma(QI.i)@@qI)) : i in [1..Ngens(QI)] ]>;
+    FQm0_1:=hom<Qm0_1->Qm0_1|[alpha_action_Qm0_1(QItoQm0_1_sigma(Qm0_1.i@@QItoQm0_1)):i in [1..Ngens(Qm0_1)]]>;
+
+    assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
+    // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
     assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
     assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
 //TODO add assert for semilinearity x*F = F*sigma(x) forall x in L

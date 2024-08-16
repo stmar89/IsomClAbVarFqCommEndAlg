@@ -52,8 +52,8 @@
     //h:=x^4 - 4*x^3 + 8*x^2 - 32*x + 64; // It seems that WKICM(WR_01) is very big
     //h:=x^4+64;// Terminate. Why? It seems that WKICM(WR_01) is the issue. Maybe the recursion?
     //h:=x^4 + 4*x^3 + 16*x^2 + 32*x + 64; // too slow (funnily, its twist is not that slow)
-    h:=x^6 - x^5 + 4*x^3 - 4*x + 8; // m0 seems to vary a lot: often m0=2, sometimes m0=32
-    //h:=x^8 - 6*x^7 + 18*x^6 - 36*x^5 + 68*x^4 - 144*x^3 + 288*x^2 - 384*x + 256; // BUG. sl 1/4,3/4. Quite fast.
+    //h:=x^6 - x^5 + 4*x^3 - 4*x + 8; // m0 seems to vary a lot: often m0=2, sometimes m0=32
+    h:=x^8 - 6*x^7 + 18*x^6 - 36*x^5 + 68*x^4 - 144*x^3 + 288*x^2 - 384*x + 256; // BUG. sl 1/4,3/4. Quite fast.
 
     coeff:=Coefficients(h);
     g:=Degree(h) div 2;
