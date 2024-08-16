@@ -247,7 +247,7 @@ where //TODO
         mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
 
         sigma_A_mod_I:=function(Q,mQ,I)
-        // Given mQ:OA->Q = OA/I, with Q being an OL/PL^m-module for some m, where PL is the only prim of OL,
+        // Given mQ:OA->Q = OA/I, with Q being an OL/PL^m-module for some m, where PL is the only prime of OL,
         // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
             A:=Algebra(I);
             assert Order(I) eq OA;
@@ -285,7 +285,7 @@ where //TODO
                 //   homomorphism pres: Fs->Q sending (c1,...,c2g):->image of \sum_i ci*bi 
                 
                 _,moL:=quo<OL | PL^m >;
-                frob:=moL(L.1); // L.1 generates F_q = (OL/pOL)^*
+                frob:=moL(L.1); // L.1 generates F_q = OL/pOL
                 repeat
                     old:=frob;
                     frob:=frob^q;
@@ -538,19 +538,21 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
 
     ///////////////////////////////////
+    /*
     if GetAssertions() ge 2 then
         tmp_file:="tmp_20240815.txt";
         file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
         if file_already_exists eq 0 then
         "\nWARNING printing WKICM for test_purposes: don't forget to delete the tmp file";
             for I in WKICM(WR_01) do
-                fprintf tmp_file,"%o\n",strI where _,strI:=PrintSeqAlgEtQElt(ZBasis(I));
+                fprintf tmp_file,"%o\n",&cat(Split(strI)) where _,strI:=PrintSeqAlgEtQElt(ZBasis(I));
             end for;
         else
         "\nWARNING loading WKICM for test_purposes: don't forget to delete the tmp file";
             WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
         end if;
     end if;
+    */
     //////////////////////////////////
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
@@ -598,7 +600,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     
     vprintf Algorithm_3,1 : "\n\n################\nAlgorithm 3\n################\n";
     exps:=exps_01[1];
-"WARNING: changing J for test purposes";exps:=exps_01[2];
+    //"WARNING: changing J for test purposes";exps:=exps_01[2];
     JOA:=Ideal(OA,&*[nice_unifs_01[i]^exps[i] : i in [1..#pp_A_01]]);
     J:=WR !! JOA;
     vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",
@@ -642,7 +644,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
     
     // ###################################
-    // Action of the Frobenius on QI=OA/p^(,0+1)*OA
+    // Precomputation for the Frobenius: 
+    // - sigma in QI=OA/p^(m0+1)*OA
+    // - alpha using the unit argument
     // ###################################
     I:=p^(m0+1)*OA;
     QI,qI:=ResidueRing(OA,I);
@@ -650,6 +654,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 
     alpha_Q_inAs:=[];
     PPs_nus_prod_powers:=[];
+    uniformizers_at_nus:=Uniformizers(pl_01_E);
     for inu->nu in pl_01_E do
         vprintf Algorithm_3,1 : "Computing alpha_Q for %oth place of %o...",inu,#pl_01_E;
         //TODO Add duality here
@@ -693,14 +698,12 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         vprintf Algorithm_3,2 : "\tQ and U are computed\n";
 
         image_phi:=function(gamma)
-            // gamma in US_nu[gnu] = OA/PP_{nu,gnu}^(m0+1)
+            // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m0+1))^*
             // phi does the following two steps
             // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m0+1)
             // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-            beta:=&+[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma) : i in [1..g_nu]]; 
-            // ###################################
+            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma) : i in [1..g_nu]]; 
             // Action of the Frobenius on U
-            // ###################################
             img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
 
             vprintf Algorithm_3,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
@@ -709,18 +712,22 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
         end function;
         phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
         
-        u_nu:=Uniformizers([nu])[1]; // in E
+        u_nu:=uniformizers_at_nus[inu]; // in E
         val_nu:=Valuation(pi,nu); // in E
         w_nu:=pi/(u_nu^val_nu); // in E
-        w:=U_pr(Delta_map(w_nu)); // in E->A->U
-        gamma_Ugnu:=w@@phi;
+        assert Valuation(w_nu,nu) eq 0;
+        wU:=U_pr(Delta_map(w_nu)); // in E->A->U
+        gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
         gamma_A:=(&+[i lt g_nu select 
                                 U_embs[i](One(A)@@us_nu[i]) else 
-                                U_embs[i](gamma_Ugnu) : i in [1..g_nu]])@@U_pr; // in A
-        beta_Q:=&+[i lt g_nu select 
+                                U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+        u0:=Delta_map(u_nu^(Integers()!(val_nu*g_nu/a)));
+        beta_A:=(&+[i lt g_nu select 
                                 embs[i](rs_nu[i](One(A))) else 
-                                embs[i](rs_nu[i](Delta_map(u_nu^(Integers()!(val_nu*g_nu/a))))) : i in [1..g_nu]]; 
-        alpha_A:=gamma_A*(beta_Q@@pr);
+                                embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
+        alpha_A:=gamma_A*beta_A;
+//TODO add asserts here. // I want N_{Anu/Enu}(alpha_A_nu) - pi_nu in Pnu^{m0+1}
+        
         Append(~alpha_Q_inAs,alpha_A);
         vprintf Algorithm_3,1 : "done\n";
     end for;
@@ -785,13 +792,17 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     assert2 (not IsZeroDivisor(gg)) and Qm0_1 eq sub<Qm0_1 | [ qm0_1(z) : z in ZBasis(gg*OA) ] >;
     vprintf Algorithm_3,2 : "gg = %o\n",PrintSeqAlgEtQElt([gg])[1];
 
-    QItoQm0:=hom<QI->Qm0 | [ qm0(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;   
+    QItoQm0:=hom<QI->Qm0 | [ qm0(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;// TODO ERROR here: going from QI to Qm0, I should multiply by sigma(gg) = gg*k for some k in OA.
+                                                                         // but from Qm0 to QI, I should only divide by 1/gg, as I already do.
     QItoQm0_1:=hom<QI->Qm0_1 | [ qm0_1(gg*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
-    alpha:=hom<QI->QI | [ qI(alpha*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
+    alpha_action:=hom<QI->QI | [ qI(alpha*(QI.i@@qI)) : i in [1..Ngens(QI)] ]>;
     
-    FQm0:=hom<Qm0->Qm0 | [ QItoQm0(alpha(sigma(Qm0.i@@QItoQm0))) : i in [1..Ngens(Qm0)]]>;
-    FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
+    FQm0:=hom<Qm0->Qm0 | [ QItoQm0(alpha_action(sigma(Qm0.i@@QItoQm0))) : i in [1..Ngens(Qm0)]]>;
+    FQm0_1:=hom<Qm0_1->Qm0_1 | [ QItoQm0_1(alpha_action(sigma(Qm0_1.i@@QItoQm0_1))) : i in [1..Ngens(Qm0_1)]]>;
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
+
+//TODO add assert F^a = multiplication by pi and semilinearity x*F = F*sigma(x) forall x in L
+
     vprintf Algorithm_3,2 : "FQ's are computed\n";
 
     mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
@@ -799,7 +810,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     assert Image(mp) subset Image(FQm0_1);
     vprintf Algorithm_3,2 : "mp is computed\n";
 
-  
     
     z_gamma_s:=[];
     for i in [1..Ngens(Qm0)] do

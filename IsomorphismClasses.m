@@ -180,6 +180,7 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
         dm_orders:=[ dm_order : P in places_01 ];
         for I in isom_away_01 do
             ell_01_orders:=[ MultiplicatorRing(I) : P in places_away_01 ];
+            // note that if R is maximal 
             orders:=ell_01_orders cat dm_orders;
             primes:=places_away_01 cat places_01;
             assert #orders eq #primes;
@@ -187,6 +188,38 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
                 S:=R;
             else
                 S:=glue_local_parts_orders(primes, ell_01_orders cat dm_orders);
+            end if;
+            //TEST (this test is quite time consuming)
+            // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
+            if GetAssertions() ge 2 then
+                p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
+                places_E_0,places_E_01,places_1:=Explode(places_E);
+                OE:=MaximalOrder(E);
+                end_test:=[];
+                M:=dm;
+                for T in OverOrders(R) do
+                    mT:=R!!OneIdeal(T);
+                    if #places_away_01 gt 0 then
+                        IT:=R!!(T!!I);
+                        I_IT:=I+IT;
+                        sendsItoI:=forall{P : P in places_away_01 | I_IT eq I + P*I_IT }; 
+                    else
+                        sendsItoI:=true; 
+                    end if;
+                    if #places_01 gt 0 then
+                        MT:=Ideal(WR,[ Delta_map(t)*m : t in ZBasis(T) , m in ZBasis(M) ]);
+                        M_MT:=M+MT;
+                        assert assigned WR`PrimesOfSlopeIn01;
+                        sendsMtoM:=forall{ P : P in WR`PrimesOfSlopeIn01 | M_MT eq M + P*(M_MT) };
+                        // M = MT at (0,1)
+                    else
+                        sendsMtoM:=true;
+                    end if;
+                    if sendsItoI and sendsMtoM then
+                        Append(~end_test,T);
+                    end if;
+                end for;
+                assert S eq Order(&cat[ ZBasis(T) : T in end_test ]);
             end if;
             PS,pS:=PicardGroup(S);
             for ll in PS do
@@ -196,9 +229,6 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
             end for;
         end for;
     end for;
-
-    //TODO add tests! see test_specific_ex.txt for some good tests
-
     return output;
 end intrinsic;
 
