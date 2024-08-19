@@ -80,7 +80,7 @@ end intrinsic;
 
 intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
 {This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple
-<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
+<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
 where //TODO}
     if not assigned R`DieudonneAlgebra then
         E:=Algebra(R);
@@ -276,16 +276,12 @@ where //TODO}
         mWD_zbOE:=iso<W->D | zbOE_in_D >;
         mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
 
-        sigma_J_mod_I:=function(Q,mQ,J)
-        // Given mQ:J->Q=J/I, with I c J OA-ideals and with Q being an OL/PL^m-module for some m, 
+        sigma_OA_mod_I:=function(Q,mQ,A)
+        // Given mQ:OA->Q=OA/I, with I an OA-ideals and with Q being an OL/PL^m-module for some m, 
         // where PL is the only prime of OL,
         // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
-        // (We need to include J as an input since Domain(mQ)=Algebra(J)).
-            A:=Algebra(J);
-            assert Order(J) eq OA;
-            // If J/I is an OL/PL^m-module from some m, then PL is the only prime of OL in its support.
-            // It follows that m is the length of J/I as an OL-module, which can be computed using the formula
-            // |OL/PL|^m = |J/I|
+            
+            // m can be computed using the formula |OL/PL|^m = |OA/I|
             t,m:=IsPowerOf(#Q,normPL);
             assert t;
             //m:=30*m; printf "Warning increasing the precision\n";
@@ -331,81 +327,26 @@ where //TODO}
             end if;
             _,F,sigma_F,LL,LLtoL,powers_zz_diagonally_inOA_via_zbOE:=Explode(A`sigma_fin_prec);
 
-            // - We move back to Q:=J/I where we want to compute the reduction sigma_Q of the 
-            // map induced by the Frobenius of Lp.
             // - To do so, we need to find the ZZ[zz]-module structure of Q. 
             // - More precisely, we need a sigma-equivariant presentation ZZ[zz]^s->>Q.
             // - We need a set of generators of J over ZZ[zz] which are fixed by sigma, i.e. in Delta(E).
-            if J eq OneIdeal(OA) then
             // - If J = OA, since OA = OE \otimes Z[zz] (at p), we can use the images b1,...,b2g of the
             // ZBasis of OE in OA we computed before, together with the isomorphsm mAW_zbOE:A->L^2g.
-                Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
-                sigma_Fs:=hom<Fs->Fs|[&+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
-                                      :j in [1..Ngens(Fs)]]>;
-                // sigma_Fs is simply sigma_F on each component
-                FstoOA:=map<Fs->A | x:-> (W![ LLtoL(LL!Eltseq(projs[i](x))) : i in [1..#projs] ])@@mAW_zbOE >; 
-                // Fs->LL^2g->W->D->A where the last iso is given by mAW_zbO
-                assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
-                pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
-                assert IsSurjective(pres);
+            Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
+            sigma_Fs:=hom<Fs->Fs|[&+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
+                                  :j in [1..Ngens(Fs)]]>;
+            // sigma_Fs is simply sigma_F on each component
+            FstoOA:=map<Fs->A | x:-> (W![ LLtoL(LL!Eltseq(projs[i](x))) : i in [1..#projs] ])@@mAW_zbOE >; 
+            // Fs->LL^2g->W->D->A where the last iso is given by mAW_zbO
+            assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
+            pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
+            assert IsSurjective(pres);
 
-                sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
-                assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
-                                where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
-                                where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
-                             };
-            else // J ne OA, J c OA
-            // - We have computed before an isomorphism fOA:OA->FOA onto a Free abelian group and the image
-            //   of Delta(OE) in it.
-            // - Let b1 be a lift of a non-zero elt of (J meet Delta(OE))/(pJ meet Delta(OE)).
-            // - Compute b1*ZZ[zz] using the fact that b1 is in OE, and we know the image of a ZBasis of OE in
-            //   the algebra OA (see the def of powers_zz_diagonally_inOA_via_zbOE)
-            // - Then, recursively construct bi+1 by lifting a non-zero elt of 
-            //      (J meet Delta(OE))/(pJ+\sum_1^i b_i*ZZ[zz] meet Delta(OE))
-            //   until J = pJ + \sum_i^N bi*ZZ[zz].
-            // - It follows that J_p is generated by the bi's over W = ZZ_p[zz].
-                vprintf sigma,2 : "OA is not a Dieudonne module\n";
-                if not assigned J`sigma_stable_gens or J`sigma_stable_gens[1] lt m then
-                    vprintf sigma,2 : "Computing the J`sigma_stable_gens...\n";
-                    JFOA:=sub<FOA | [fOA(z) : z in ZBasis(J)]>;
-                    vprintf sigma,2 : "\tJFOA...";
-                    JFOA_OE:=JFOA meet imageDeltaOE_inFOA;
-                    vprintf sigma,2 : "JFOA_OE...";
-                    bis:=[ JFOA_OE.i@@fOA : i in [1..Ngens(JFOA_OE)] ];  // the generators bi.
-                    vprintf sigma,2 : "rel_sub...";
-                    bi_ZZ_zz_inOAs:=&cat[[biA*x: x in powers_zz_diagonally_inOA_via_zbOE] : biA in bis]; 
-                    bi_ZZ_zz_inFOAs:=[fOA(x) : x in bi_ZZ_zz_inOAs]; //ZBasis in JFOA of bi*ZZ[zz], for each i
-                    rel_sub:=p*JFOA + sub<FOA|bi_ZZ_zz_inFOAs>;
-                    while not JFOA eq rel_sub do
-                        Ji,mJi:=quo<JFOA|rel_sub>;
-                        vprintf sigma,2 : "%o ",#Ji;
-                        assert not IsTrivial(Ji);
-                        Ji_OE:=sub<Ji|[mJi(JFOA_OE.i) : i in [1..Ngens(JFOA_OE)]]>;
-                        assert not IsTrivial(Ji_OE);
-                        bi:=(Ji_OE.1)@@mJi; // in JFOA meet OE, and not in rel_sub 
-                        assert bi notin rel_sub;
-                        biA:=(FOA!bi)@@fOA;
-                        Append(~bis,biA);
-                        bi_ZZ_zz_inOA:=[biA*x: x in powers_zz_diagonally_inOA_via_zbOE]; // bi*ZZ[zz] c J
-                        assert forall{x:x in bi_ZZ_zz_inOA | x in J};
-                        bi_ZZ_zz_inOAs cat:=bi_ZZ_zz_inOA;
-                        bi_ZZ_zz_inFOAs cat:=[ fOA(x) : x in bi_ZZ_zz_inOA]; // bi*ZZ[zz] in FOA 
-                        rel_sub:=rel_sub+sub<FOA|bi_ZZ_zz_inFOAs>;
-                        assert rel_sub subset JFOA;
-                    end while;
-                    assert J eq Ideal(R , ZBasis(p*J) cat bi_ZZ_zz_inOAs);
-                    vprintf sigma,2 : "done\n";
-                    J`sigma_stable_gens:=<m,bi_ZZ_zz_inOAs>;
-                end if;
-                _,bi_ZZ_zz_inOAs:=Explode(J`sigma_stable_gens);
-                Fs,embs,projs:=DirectSum([F : i in [1..#bis]]);
-                sigma_Fs:=hom<Fs->Fs|[&+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
-                                      :j in [1..Ngens(Fs)]]>; //sigma_F componentwise
-                FstoJ:=hom< Fs->A | bi_ZZ_zz_inOAs>; //check if it works
-                pres:=hom<Fs->Q | [ mQ(FstoJ(Fs.i)) : i in [1..Ngens(Fs)]] >;
-                assert IsSurjective(pres);
-                sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
-            end if;
+            sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
+            assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
+                            where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
+                            where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
+                         };
             assert IsSurjective(sigma_Q);
             assert IsTrivial(Kernel(sigma_Q));
             return sigma_Q,powers_zz_diagonally_inOA_via_zbOE;
@@ -444,12 +385,12 @@ where //TODO}
         // #######################
 
         alpha_at_precision:=function(m)
-        // given a positive integer m, it returns an element alpga in A such that its image in ....TODO
+        // given a positive integer m, it returns an element alpha in A such that its image in ....TODO
         // computes for the Frobenius sigma in QI=OA/p^m*OA.
         // - alpha using the unit argument
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
-            sigma:=sigma_J_mod_I(QI,qI,OneIdeal(OA));
+            sigma:=sigma_OA_mod_I(QI,qI,A);
             alpha_Q_inAs:=[];
             PPs_nus_prod_powers:=[];
             uniformizers_at_nus:=Uniformizers(plE_sl_in01);
@@ -534,7 +475,7 @@ where //TODO}
             return alpha;
         end function;
 
-        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
+        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
     end if;
     return Explode(R`DieudonneAlgebra);
 
@@ -548,7 +489,7 @@ end intrinsic;
 intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 {}
     vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
-    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
+    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
     _,plE_sl_in01,_:=Explode(places_E);
@@ -614,14 +555,8 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // - u is a map u:U->OA giving representatives 
     // - F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
         U,u,I:=units_quotient_01(S); //u:U->A
-        // ###################################
-        // Action of the Frobenius on Q=OA/I, to compute Frobenius on U, which is a quotient of Q^*
-        // ###################################
         Q,q:=ResidueRing(OA,I);
-        sigma:=sigma_J_mod_I(Q,q,OneIdeal(OA)); // sigma: Q->Q
-        //Ugens_inA:=[ u(U.i) : i in [1..Ngens(U)] ];
-        //vprintf Algorithm_2,2 : "... which has generators in tilde{OA} : %o\n", PrintSeqAlgEtQElt( Ugens_inA );
-        //id_sigma:=hom< U->U | [ (x/sigma(x))@@u : x in Ugens_inA ]>;
+        sigma:=sigma_OA_mod_I(Q,q,A); // sigma: Q->Q
         id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation
         F:=Kernel(id_sigma);
         return U,u,F;
@@ -704,22 +639,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // WR_00 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
 
-    ///////////////////////////////////
-    if GetAssertions() ge 2 
-        and Coefficients(DefiningPolynomial(E)) eq [256,-384,288,-144,68,-36,18,-6,1] then
-        tmp_file:="tmp_20240815.txt"; // to debug  h:=x^8-6*x^7+18*x^6-36*x^5+68*x^4-144*x^3+288*x^2-384*x+256;
-        file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
-        if file_already_exists eq 0 then
-        "\nWARNING printing WKICM for test_purposes: don't forget to delete the tmp file";
-            for I in WKICM(WR_01) do
-                fprintf tmp_file,"%o\n",&cat(Split(strI)) where _,strI:=PrintSeqAlgEtQElt(ZBasis(I));
-            end for;
-        else
-        "\nWARNING loading WKICM for test_purposes: don't forget to delete the tmp file";
-            WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
-        end if;
-    end if;
-    //////////////////////////////////
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
@@ -766,7 +685,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_3,1 : "\n\n################\nAlgorithm 3\n################\n";
     exps:=exps_01[1];
     //"WARNING: changing J for test purposes";exps:=exps_01[2];
-    JOA:=Ideal(OA,&*[nice_unifs_01[i]^exps[i] : i in [1..#pp_A_01]]);
+    JOA:=&*[ pp_A_01[i]^exps[i] : i in [1..#exps] ]; 
     J:=WR !! JOA;
     ZBasisLLL(J);
     vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",
@@ -809,8 +728,9 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
     //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
-   
+    vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m0;
     alpha:=alpha_at_precision(m0+1);
+    vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,1 : "Computing M...";
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
@@ -834,24 +754,21 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
     
     // ###################################
-    // Action of the Frobenius on J/p^m0J.
+    // Semilinear Frobenius on Qm0, Qm0_1
     // ###################################
-    // We want to compute the Frobenius FQm0 on Qm0=(0,1)-part of J/p^m0*J.
-    // Note that Jp=gg*OAp for some generator gg.
-    // Hence, multiplication by gg induces a surjective map QItoQm0:QI->>Qm0.
-    // Using QItoQm0 we can compute Fm0 by pushing forward the composition of sigma:QI->QI with the multiplication
-    // by alpha:QI->QI.
-    // The same construction is applied to Qm0_1.
-    vprintf Algorithm_3,1 : "Action of the semilinear Frobenius...\n";
-    
-    sigma_Qm0_1,imgs_zz_inOA:=sigma_J_mod_I(Qm0_1,qm0_1,JOA);
-    // imgs_zz_inOA is used in the test below to check semilinearity
-    sigma_Qm0:=sigma_J_mod_I(Qm0,qm0,JOA);
-    alpha_action_Qm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-    alpha_action_Qm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
+    assert JOA subset OA;
+    m1:=m0+1+Valuation(Index(OA,JOA),p);
+    //m2:=m1+1000; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //to force it bigger
+    vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
+    // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
+    // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
+    QOA,qOA:=ResidueRing(OA,p^m1*OA);
+    sigma_QOA:=sigma_OA_mod_I(QOA,qOA,A);
+    vprintf Algorithm_3,1 : "done\n";
 
-    FQm0:=sigma_Qm0*alpha_action_Qm0;
-    FQm0_1:=sigma_Qm0_1*alpha_action_Qm0_1;
+    vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
+    FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
+    FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
     // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
     assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
@@ -869,27 +786,26 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     //        assert2 forall{i:i in [1..Ngens(Qm0_1)]| z_action_Qm0_1(FQm0_1(Qm0_1.i)) eq FQm0_1(sigma_z_action_Qm0_1(Qm0_1.i))};
     //    end for;
     //end if;
-    vprintf Algorithm_3,2 : "FQ's are computed\n";
+    vprintf Algorithm_3,2 : "\tFQ's are computed\n";
 
     mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
     assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
     assert Image(mp) subset Image(FQm0_1);
-    vprintf Algorithm_3,2 : "mp is computed\n";
+    vprintf Algorithm_3,2 : "\tmp is computed\n";
 
-    
     z_gamma_s:=[];
     for i in [1..Ngens(Qm0)] do
-        vprintf Algorithm_3,2 : "Computing z_gamma for the %oth generator of Qm0...",i;
+        vprintf Algorithm_3,2 : "\tComputing z_gamma for the %oth generator of Qm0...",i;
         gamma:=Qm0.i;
         x_gamma:=gamma@@pr;
         z_gamma:=(mp(x_gamma))@@FQm0_1;
-        vprintf Algorithm_3,2 : "done\n";
+        vprintf Algorithm_3,2 : "\tdone\n";
         Append(~z_gamma_s,z_gamma);
     end for;
     VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
     assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
     assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
-    vprintf Algorithm_3,2 : "VQ is computed\n";
+    vprintf Algorithm_3,2 : "\tVQ is computed\n";
 // TODO Qm0,FQm0,VQm0 should be stored in an attribute of the isogeny class.
 // TODO Then I need to upgrade the saving/loading functions with this data.
 // TODO I need to be able to increase the precision by a VarArg, for all major intrinsics.
@@ -908,7 +824,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     Delta_isom_classes_WR_F_V:=[ ];
     vprintf Algorithm_3,2 : "Started checking for F-V stability for the ...\n";
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
-        vprintf Algorithm_3,2 : "%oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable...\n",iI;
+        vprintf Algorithm_3,3 : "%oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable...\n",iI;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
         vprintf Algorithm_3,3 : "[J:I] = %o\n",Index(J,I);
         vprintf Algorithm_3,3 : "[I:p^m0*J] = %o\n",Index(I,p^m0*J);
@@ -923,7 +839,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
             I`DeltaEndomorphismRing:=S;
             Append(~Delta_isom_classes_WR_F_V,I);
         else
-            vprint Algorithm_3,2 : "...it is not F-V stable\n";
+            vprint Algorithm_3,3 : "...it is not F-V stable\n";
         end if;
     end for;
 

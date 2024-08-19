@@ -19,6 +19,7 @@
     SetVerbose("Algorithm_3",2);
     //SetVerbose("nice_unif",2);
     SetVerbose("sigma",2);
+    SetVerbose("IsomAbVar",2);
     //SetVerbose("ResidueRingUnits",2);
     SetAssertions(2);
     SetDebugOnError(true);

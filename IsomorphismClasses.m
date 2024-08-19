@@ -1,6 +1,7 @@
 /* vim: set syntax=magma : */
 
 declare verbose IsomClTate, 3;
+declare verbose IsomAbVar, 3;
 
 intrinsic IsomorphismClassesTateModules(R::AlgEtQOrd)->Any
 { TODO }
@@ -192,6 +193,7 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
             //TEST (this test is quite time consuming)
             // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
             if GetAssertions() ge 2 then
+                vprintf IsomAbVar,2 : "Slow test on Ends...";
                 p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
                 places_E_0,places_E_01,places_1:=Explode(places_E);
                 OE:=MaximalOrder(E);
@@ -220,6 +222,7 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
                     end if;
                 end for;
                 assert S eq Order(&cat[ ZBasis(T) : T in end_test ]);
+                vprintf IsomAbVar,2 : "all good\n";
             end if;
             PS,pS:=PicardGroup(S);
             for ll in PS do
