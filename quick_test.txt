@@ -80,7 +80,7 @@
                 E:=EtaleAlgebra(h);
                 pi:=PrimitiveElement(E);
                 R:=Order([pi,q/pi]);
-                try
+                //try
                     t0:=Cputime();
                     iso:=IsomorphismClassesAbelianVarieties(R);
                     ends:={ X[4] : X in iso };
@@ -126,13 +126,13 @@
                     else
                         "can't compare to previous data",t1;
                     end if;
-                catch
-                    e;
-                    e`Object;
-                    e`Position;
-                    "error detected";
-                    //break cc;
-                end try;
+                //catch
+                //    e;
+                //    e`Object;
+                //    e`Position;
+                //    "error detected";
+                //    break cc;
+                //end try;
             end if;
         end if;
     end for;
