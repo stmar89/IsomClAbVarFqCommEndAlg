@@ -13,6 +13,7 @@ declare verbose DieudonneModules_L,3;
 declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 declare verbose sigma,3;
+declare verbose alpha_at_precision,3;
 
 declare attributes AlgEtQ    : sigma_fin_prec,
                                PlacesAboveRationalPrime;
@@ -38,6 +39,10 @@ intrinsic PlacesAboveRationalPrime(E::AlgEtQ,p::RngIntElt)->SeqEnum[AlgEtQIdl]
     end if;
     return E`PlacesAboveRationalPrime;
 end intrinsic;
+
+////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// Slopes of Primes ///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic Slope(P::AlgEtQIdl : CheckMaximal:=true)->RngIntElt
 {Given a maximal ideal P of the maximal order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_P(pi)/(a*e_P) where val_P(pi) is the valuation of pi at P and e_P is the ramification index of P.
@@ -68,11 +73,14 @@ If the vararg CheckMaximal is set to false, the instrinsic will accept as input 
     return P`Slope;
 end intrinsic;
 
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// DieudonneAlgebra /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
 intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
 {This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple
-<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal>
-where //TODO
-}
+<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
+where //TODO}
     if not assigned R`DieudonneAlgebra then
         E:=Algebra(R);
         pi:=PrimitiveElement(E);
@@ -83,21 +91,21 @@ where //TODO
         assert t;
         
         // Places of E
-        pl:=PlacesAboveRationalPrime(E,p);
-        pl_0:=[];
-        pl_01:=[];
-        pl_1:=[];
-        for P in pl do
+        places_E:=PlacesAboveRationalPrime(E,p); //unsorted
+        plE_sl0:=[];     //slope=0
+        plE_sl_in01:=[]; //slope in (0,1)
+        plE_sl1:=[];     //slope=1
+        for P in places_E do
             sl:=Slope(P);
             if sl eq 0 then
-                Append(~pl_0,P);
+                Append(~plE_sl0,P);
             elif sl eq 1 then
-                Append(~pl_1,P);
+                Append(~plE_sl1,P);
             else
-                Append(~pl_01,P);
+                Append(~plE_sl_in01,P);
             end if;
         end for;
-        places_E:=<pl_0,pl_01,pl_1>;
+        places_E:=<plE_sl0,plE_sl_in01,plE_sl1>;
 
         // ################### 
         // Global Representatives: L and sigma_L
@@ -371,64 +379,163 @@ where //TODO
             assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
             return J;
         end function;
+   
+        // #######################
+        // primes of orders in A above places
+        // #######################
 
-        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal>;
+        primes_of_A_above_place_of_E:=function(A,P)
+        // given a maximal ideal P of OE returns the maximal ideals of OA above P
+            if not assigned P`PlacesOfAAbove then
+                OA:=MaximalOrder(A);
+                P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+            end if;
+            return P`PlacesOfAAbove;
+        end function;
+       
+        primes_of_S_of_slope_in_01:=function(S)
+            if not assigned S`PrimesOfSlopeIn01 then
+                pp:=[];
+                oneS:=OneIdeal(S);
+                A:=Algebra(S);
+                for P in plE_sl_in01 do
+                    pp_P:=Setseq({ oneS meet (S!!Q) : Q in primes_of_A_above_place_of_E(A,P) });
+                    pp cat:= pp_P;
+                    assert2 forall{P : P in pp | IsPrime(P)};
+                end for;
+                S`PrimesOfSlopeIn01:=pp;
+            end if;
+            return S`PrimesOfSlopeIn01;
+        end function;
+
+        // #######################
+        // alpha
+        // #######################
+
+        alpha_at_precision:=function(m)
+        // given a positive integer m, it returns an element alpga in A such that its image in ....TODO
+        // computes for the Frobenius sigma in QI=OA/p^m*OA.
+        // - alpha using the unit argument
+            I:=p^m*OA;
+            QI,qI:=ResidueRing(OA,I);
+            sigma:=sigma_J_mod_I(QI,qI,OneIdeal(OA));
+            alpha_Q_inAs:=[];
+            PPs_nus_prod_powers:=[];
+            uniformizers_at_nus:=Uniformizers(plE_sl_in01);
+            for inu->nu in plE_sl_in01 do
+                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#plE_sl_in01;
+                // Can add DUALITY here
+                PPs_nu:=primes_of_A_above_place_of_E(A,nu);
+                f_nu:=InertiaDegree(nu);
+                g_nu:=GCD(a,f_nu); //q=p^a
+                assert #PPs_nu eq g_nu;
+
+                Rs_nu:=[];
+                rs_nu:=<>;
+                Us_nu:=[];
+                us_nu:=<>;
+                PPs_nu_m:=[];
+                for PP in PPs_nu do
+                    PP_m:=PP^(RamificationIndex(PP)*(m));
+                    Append(~PPs_nu_m,PP_m);
+                    R,r:=ResidueRing(OA,PP_m);
+                    vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
+                    U,u:=ResidueRingUnits(OA,PP_m);
+                    vprintf alpha_at_precision,2 : "\tU,u computed\n";
+                    Append(~Rs_nu,R);
+                    Append(~rs_nu,r);
+                    Append(~Us_nu,U);
+                    Append(~us_nu,u);
+                end for;
+                PPs_nu_m_prod:=&*PPs_nu_m;
+                Append(~PPs_nus_prod_powers,PPs_nu_m_prod);
+
+                Q,embs,projs:=DirectSum(Rs_nu);
+                pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
+                                           y:->CRT( PPs_nu_m ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
+                pi_Q:=pr(pi_A);
+                assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
+
+                U,U_embs,U_projs:=DirectSum(Us_nu);
+                U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
+                                             y:->CRT( PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
+                sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
+                assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+
+                vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
+
+                image_phi:=function(gamma)
+                    // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
+                    // phi does the following two steps
+                    // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
+                    // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
+                    beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+                    // Action of the Frobenius on U
+                    img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+                    vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
+                    assert2 sigma_U(img) eq img;
+                    return img;
+                end function;
+                phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
+                
+                u_nu:=uniformizers_at_nus[inu]; // in E
+                val_nu:=Valuation(pi,nu); // in E
+                w_nu:=pi/(u_nu^val_nu); // in E
+                assert Valuation(w_nu,nu) eq 0;
+                wU:=U_pr(Delta_map(w_nu)); // in E->A->U
+                gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+                gamma_A:=(&+[i lt g_nu select 
+                                        U_embs[i](One(A)@@us_nu[i]) else 
+                                        U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+                u0:=Delta_map(u_nu^(Integers()!(val_nu*g_nu/a)));
+                beta_A:=(&+[i lt g_nu select 
+                                        embs[i](rs_nu[i](One(A))) else 
+                                        embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
+                alpha_A:=gamma_A*beta_A;
+//TODO add asserts here. // I want N_{Anu/Enu}(alpha_A_nu) - pi_nu in Pnu^{m}
+                
+                Append(~alpha_Q_inAs,alpha_A);
+                vprintf alpha_at_precision,1 : "done\n";
+            end for;
+            // end of unit argument
+            alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
+            vprintf alpha_at_precision,1 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
+            return alpha;
+        end function;
+
+        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
     end if;
     return Explode(R`DieudonneAlgebra);
 
 end intrinsic;
 
+
+////////////////////////////////////////////////////////////////////////////////////
+//////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
 intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
 {}
     vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
-    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
+    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_J_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
-
-
-    _,pl_01_E,_:=Explode(places_E);
-    pl_01_R:=Setseq({ OneIdeal(R) meet (R!!P) : P in pl_01_E });
-    if #pl_01_E ne 0 then
+    _,plE_sl_in01,_:=Explode(places_E);
+    pl_01_R:=Setseq({ OneIdeal(R) meet (R!!P) : P in plE_sl_in01 });
+    if #plE_sl_in01 ne 0 then
         assert #pl_01_R eq 1;
         vprintf DieudonneModules,1 : "[OE':R'] = %o\n",Index(MaximalOrder(E),Order(ZBasis(R) cat ZBasis(MaximalOrder(E)!!pl_01_R[1])));
     end if;
 
-    vprintf DieudonneModules,2 : "places of E w/ slope in (0,1) = %o\n",Sort([ Slope(P) : P in pl_01_E]);
+    vprintf DieudonneModules,2 : "places of E w/ slope in (0,1) = %o\n",Sort([ Slope(P) : P in plE_sl_in01]);
     // Early exit if no places 
-    if #pl_01_E eq 0 then
+    if #plE_sl_in01 eq 0 then
         dm:=OneIdeal(R);
         dm`DeltaEndomorphismRing:=R;
-        return [dm],pl_01_E; 
+        return [dm],plE_sl_in01; 
     end if;
 
 
-    // #######################
-    // primes of orders in A above places
-    // #######################
-
-    primes_of_A_above_place_of_E:=function(A,P)
-    // given a maximal ideal P of OE returns the maximal ideals of OA above P
-        if not assigned P`PlacesOfAAbove then
-            OA:=MaximalOrder(A);
-            P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
-        end if;
-        return P`PlacesOfAAbove;
-    end function;
-   
-    primes_of_S_of_slope_in_01:=function(S)
-        if not assigned S`PrimesOfSlopeIn01 then
-            pp:=[];
-            oneS:=OneIdeal(S);
-            A:=Algebra(S);
-            for P in pl_01_E do
-                pp_P:=Setseq({ oneS meet (S!!Q) : Q in primes_of_A_above_place_of_E(A,P) });
-                pp cat:= pp_P;
-                assert2 forall{P : P in pp | IsPrime(P)};
-            end for;
-            S`PrimesOfSlopeIn01:=pp;
-        end if;
-        return S`PrimesOfSlopeIn01;
-    end function;
 
     //////////////////
     // Units quotient
@@ -538,7 +645,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // Can add DUALITY here
     exps_nus:=[];
     pp_A_nus:=[];
-    for P in pl_01_E do
+    for P in plE_sl_in01 do
         Append(~exps_nus,exponents_from_Waterhouse(P));
         Append(~pp_A_nus,primes_of_A_above_place_of_E(A,P));
     end for;
@@ -661,104 +768,14 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     //vpNks:=[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ]; //forming these quotients it is sometimes much more expensive then just working with a slightly larger m0
     m0:=Maximum(vpNks);
     vprintf Algorithm_3 : "m0 = %o\n",m0;
-    vprintf Algorithm_3,2 : "v_nu(pi) for all nu's = %o\n",[ Valuation( pi, P ) : P in pl_01_E ];
-    vprintf Algorithm_3,2 : "e_nu for all nu's = %o\n",[ RamificationIndex(P) : P in pl_01_E ];
-    vprintf Algorithm_3,2 : "f_nu for all nu's = %o\n",[ InertiaDegree(P) : P in pl_01_E ];
-    vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in pl_01_E ];
+    vprintf Algorithm_3,2 : "v_nu(pi) for all nu's = %o\n",[ Valuation( pi, P ) : P in plE_sl_in01 ];
+    vprintf Algorithm_3,2 : "e_nu for all nu's = %o\n",[ RamificationIndex(P) : P in plE_sl_in01 ];
+    vprintf Algorithm_3,2 : "f_nu for all nu's = %o\n",[ InertiaDegree(P) : P in plE_sl_in01 ];
+    vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
     //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
-    
-    // ###################################
-    // Precomputation for the Frobenius: 
-    // - sigma in QI=OA/p^(m0+1)*OA
-    // - alpha using the unit argument
-    // ###################################
-    I:=p^(m0+1)*OA;
-    QI,qI:=ResidueRing(OA,I);
-    sigma:=sigma_J_mod_I(QI,qI,OneIdeal(OA));
-
-    alpha_Q_inAs:=[];
-    PPs_nus_prod_powers:=[];
-    uniformizers_at_nus:=Uniformizers(pl_01_E);
-    for inu->nu in pl_01_E do
-        vprintf Algorithm_3,1 : "Computing alpha_Q for %oth place of %o...",inu,#pl_01_E;
-        // Can add DUALITY here
-        PPs_nu:=primes_of_A_above_place_of_E(A,nu);
-        f_nu:=InertiaDegree(nu);
-        g_nu:=GCD(a,f_nu); //q=p^a
-        assert #PPs_nu eq g_nu;
-
-        Rs_nu:=[];
-        rs_nu:=<>;
-        Us_nu:=[];
-        us_nu:=<>;
-        PPs_nu_m0_1:=[];
-        for PP in PPs_nu do
-            PP_m0_1:=PP^(RamificationIndex(PP)*(m0+1));
-            Append(~PPs_nu_m0_1,PP_m0_1);
-            R,r:=ResidueRing(OA,PP_m0_1);
-            vprintf Algorithm_3,2 : "\n\tR,r computed\n";
-            U,u:=ResidueRingUnits(OA,PP_m0_1);
-            vprintf Algorithm_3,2 : "\tU,u computed\n";
-            Append(~Rs_nu,R);
-            Append(~rs_nu,r);
-            Append(~Us_nu,U);
-            Append(~us_nu,u);
-        end for;
-        PPs_nu_m0_1_prod:=&*PPs_nu_m0_1;
-        Append(~PPs_nus_prod_powers,PPs_nu_m0_1_prod);
-
-        Q,embs,projs:=DirectSum(Rs_nu);
-        pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-                                   y:->CRT( PPs_nu_m0_1 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
-        pi_Q:=pr(pi_A);
-        assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
-
-        U,U_embs,U_projs:=DirectSum(Us_nu);
-        U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
-                                     y:->CRT( PPs_nu_m0_1 ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
-        sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
-        assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
-
-        vprintf Algorithm_3,2 : "\tQ and U are computed\n";
-
-        image_phi:=function(gamma)
-            // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m0+1))^*
-            // phi does the following two steps
-            // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m0+1)
-            // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma) : i in [1..g_nu]]; 
-            // Action of the Frobenius on U
-            img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
-
-            vprintf Algorithm_3,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
-            assert2 sigma_U(img) eq img;
-            return img;
-        end function;
-        phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
-        
-        u_nu:=uniformizers_at_nus[inu]; // in E
-        val_nu:=Valuation(pi,nu); // in E
-        w_nu:=pi/(u_nu^val_nu); // in E
-        assert Valuation(w_nu,nu) eq 0;
-        wU:=U_pr(Delta_map(w_nu)); // in E->A->U
-        gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
-        gamma_A:=(&+[i lt g_nu select 
-                                U_embs[i](One(A)@@us_nu[i]) else 
-                                U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
-        u0:=Delta_map(u_nu^(Integers()!(val_nu*g_nu/a)));
-        beta_A:=(&+[i lt g_nu select 
-                                embs[i](rs_nu[i](One(A))) else 
-                                embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
-        alpha_A:=gamma_A*beta_A;
-//TODO add asserts here. // I want N_{Anu/Enu}(alpha_A_nu) - pi_nu in Pnu^{m0+1}
-        
-        Append(~alpha_Q_inAs,alpha_A);
-        vprintf Algorithm_3,1 : "done\n";
-    end for;
-    // end of unit argument
-
-    
+   
+    alpha:=alpha_at_precision(m0+1);
     vprintf Algorithm_3,1 : "Computing M...";
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
@@ -782,8 +799,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     pr:=hom< Qm0_1->Qm0 | [ qm0(Qm0_1.i@@qm0_1) : i in [1..Ngens(Qm0_1)]] >;
     assert IsSurjective(pr);
     assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
-    alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
-    vprintf Algorithm_3,1 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
     
     // ###################################
     // Action of the Frobenius on J/p^m0J.

@@ -3,10 +3,10 @@
 */
 
     // parameters for quick tests
-    //allow_cs:=false;
-    allow_cs:=true;
-    //allow_ord:=false;
-    allow_ord:=true;
+    allow_cs:=false;
+    //allow_cs:=true;
+    allow_ord:=false;
+    //allow_ord:=true;
     //allow_alm_ord:=false;
     allow_alm_ord:=true;
     q_max:=11;

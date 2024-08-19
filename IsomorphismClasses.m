@@ -192,7 +192,7 @@ intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
             //TEST (this test is quite time consuming)
             // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
             if GetAssertions() ge 2 then
-                p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_A_mod_I,Delta_inverse_ideal:=DieudonneAlgebra(R);
+                p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
                 places_E_0,places_E_01,places_1:=Explode(places_E);
                 OE:=MaximalOrder(E);
                 end_test:=[];
