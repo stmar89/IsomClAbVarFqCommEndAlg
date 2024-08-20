@@ -698,6 +698,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     exps:=exps_01[1];
     //"WARNING: changing J for test purposes";exps:=exps_01[2];
     JOA:=&*[ pp_A_01[i]^exps[i] : i in [1..#exps] ]; 
+    assert MultiplicatorRing(J) eq OA;
     J:=WR !! JOA;
     ZBasisLLL(J);
     vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",
