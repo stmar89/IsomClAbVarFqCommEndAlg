@@ -1,3 +1,0 @@
-Seq	Host	Starttime	JobRuntime	Send	Receive	Exitval	Signal	Command
-2	:	1723211420.794	     0.667	0	221	0	0	magma -b cc:='[ 16, 0, 0, -4, 0, -2, 0, 0, 1 ]' fld_out:=~/IsomClassesAbVarFqComEnd/parallel_storing/output/ file_err:=~/IsomClassesAbVarFqComEnd/parallel_storing//errors.txt /home/stmar/IsomClassesAbVarFqComEnd/parallel_storing/script.txt
-1	:	1723211420.792	     0.694	0	229	0	0	magma -b cc:='[ 81, 0, 0, -9, 9, -3, 0, 0, 1 ]' fld_out:=~/IsomClassesAbVarFqComEnd/parallel_storing/output/ file_err:=~/IsomClassesAbVarFqComEnd/parallel_storing//errors.txt /home/stmar/IsomClassesAbVarFqComEnd/parallel_storing/script.txt

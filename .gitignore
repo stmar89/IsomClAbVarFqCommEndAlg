@@ -1,5 +1,6 @@
 *.swp
 *.sig
-*joblog
+*joblog*
 tmp_*
 parallel_storing/output
+parallel_storing/errors.txt

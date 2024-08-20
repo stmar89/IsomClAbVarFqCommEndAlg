@@ -2,7 +2,7 @@
 /*
 */
 
-    AttachSpec("~/AbVarFq/packages.spec");
+    AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/spec");
     Attach("~/IsomClassesAbVarFqComEnd/PrimesAttributes.m");
     Attach("~/IsomClassesAbVarFqComEnd/DieudonneModules.m");
@@ -128,7 +128,7 @@
     sl:=Sprintf("%25o",sl);
 
     pp:=PrimesAbove(p*R);
-    pp:=[ P : P in pp | Slope(P) notin {0,1} ];
+    pp:=[ P : P in pp | Slope(P : CheckMaximal:=false) notin {0,1} ];
     assert #pp eq 1;
     P:=pp[1];
 

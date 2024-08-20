@@ -16,9 +16,9 @@ prep_input:
 
 clean_old_parallel:
 	@echo "Removing old joblog"
-	rm ${fld}joblog || true
+	git rm ${fld}joblog || true
 	@echo "Removing old error file"
-	rm ${file_err} || true
+	git rm ${file_err} || true
 
 parallel:
 	@echo "Starting the parallel"
@@ -28,7 +28,7 @@ parallel:
 
 parallel_special:
 	@echo "Removing old joblog"
-	rm ${fld}joblog_special || true
+	git rm ${fld}joblog_special || true
 	@echo "Starting the parallel on special input without timeout"
 	parallel -j ${jobs} --resume --joblog ${fld}joblog_special -a ${file_input_special} magma -b cc:={} fld_out:=${fld_out} file_err:=${file_err} ${fld}script.txt 
 	@echo "parallel is done! Congrats!"

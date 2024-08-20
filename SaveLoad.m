@@ -126,6 +126,7 @@ end intrinsic;
     PP<x>:=PolynomialRing(Integers());
 
     hs:=[
+        x^4 + 4*x^2 + 16,
         x^4 - 9*x^3 + 36*x^2 - 72*x + 64, // 1 iso
         x^2 - 3*x + 9,
         x^2 + 9,

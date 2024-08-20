@@ -3,7 +3,7 @@
 */
 
 
-    AttachSpec("~/AbVarFq/packages.spec");
+    AttachSpec("~/AbVarFq/spec");
     PP<x>:=PolynomialRing(Integers());
     all:=Split(Read("~/IsomClassesAbVarFqComEnd/weil_poly_all.txt"));
     
