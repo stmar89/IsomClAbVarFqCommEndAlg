@@ -19,6 +19,7 @@ declare attributes AlgEtQ    : sigma_fin_prec,
 
 declare attributes AlgEtQOrd : units_quotient_fixed_sigma,
                                DieudonneAlgebra, //TODO this should be an attribute of the IsogenyClass
+                               SemilinearOperators, //TODO this should be an attribute of the IsogenyClass
                                PrimesOfSlopeIn01;
 
 declare attributes AlgEtQIdl : DeltaEndomorphismRing,
@@ -761,7 +762,8 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP01*J);
     vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,1 : "Computing Qm0...";
-    Qm0,qm0:=Quotient(J,p^(m0)*J+PP01*J);
+    den_ideal:=p^(m0)*J+PP01*J; //to be stored in SemilinearOperators, together with J
+    Qm0,qm0:=Quotient(J,den_ideal);
     vprintf Algorithm_3,1 : "done\n";
     // these quotients are isomorphic to the (0,1)-part of J/p^(m0+1)J and J/p^m0J
 
@@ -803,7 +805,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
         gamma:=Qm0.i;
         x_gamma:=gamma@@pr;
         z_gamma:=(mp(x_gamma))@@FQm0_1;
-        vprintf Algorithm_3,2 : "\tdone\n";
+        vprintf Algorithm_3,2 : "done\n";
         Append(~z_gamma_s,z_gamma);
     end for;
     VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
@@ -814,51 +816,46 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     // We check semilinearity for F, V: F*x = sigma(x)*F and x*V=V*sigma(x)  forall x in L?
     // It suffices to check if for powers of zz in OA.
     if GetAssertions() ge 2 then
+        vprintf Algorithm_3,2 : "\tTesting semilinearity of F and V...";
         for z in powers_zz_diagonally_inOA_via_zbOE do
             sigma_z:=z@qOA@sigma_QOA@@qOA;
             z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
             sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(sigma_z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
             assert2 forall{i:i in [1..Ngens(Qm0)]| FQm0(z_action_Qm0(Qm0.i)) eq sigma_z_action_Qm0(FQm0(Qm0.i))};
             assert2 forall{i:i in [1..Ngens(Qm0)]| z_action_Qm0(VQm0(Qm0.i)) eq VQm0(sigma_z_action_Qm0(Qm0.i))};
-            ".............";
         end for;
+        vprintf Algorithm_3,2 : "all good.\n";
     end if;
-    
-// TODO Qm0,FQm0,VQm0 should be stored in an attribute of the isogeny class.
-// TODO Then I need to upgrade the saving/loading functions with this data.
+    R`SemilinearOperators:=<m0,J,den_ideal,Qm0,qm0,FQm0,VQm0>;
 
     is_F_V_stable:=function(I)
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
         IFV_Qm0:=I_Qm0 + 
                         sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +
                         sub<Qm0 | [VQm0(z) : z in Generators(I_Qm0)] >;
-        vprintf Algorithm_3,2 : "[I_Q+F_Q(I_Q)+V_Q(I_Q):I_Q] = %o\n",Index(IFV_Qm0,sub<IFV_Qm0|I_Qm0>);
+        vprintf Algorithm_3,3 : "[I_Q+F_Q(I_Q)+V_Q(I_Q):I_Q] = %o\n",Index(IFV_Qm0,sub<IFV_Qm0|I_Qm0>);
         return I_Qm0 eq IFV_Qm0;
     end function;
 
     Delta_isom_classes_WR_F_V:=[ ];
-    vprintf Algorithm_3,2 : "Started checking for F-V stability for the ...\n";
+    vprintf Algorithm_3,2 : "Started checking for F-V stability:";
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
-        vprintf Algorithm_3,3 : "%oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable...\n",iI;
+        vprintf Algorithm_3,3 : "\nfor the %oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable:",iI;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
-        vprintf Algorithm_3,3 : "[J:I] = %o\n",Index(J,I);
-        vprintf Algorithm_3,3 : "[I:p^m0*J] = %o\n",Index(I,p^m0*J);
         assert IsCoprime(Denominator(Index(I,p^m0*J)),p);
         if is_F_V_stable(I) then
-            vprint Algorithm_3,2 : "...it is F-V stable\n";
+            vprintf Algorithm_3,2 : "y";
             assert Order(I) eq WR;
-            // TODO the following 2 lines seem to give the wrong answer.
-            //II:=Delta_inverse_ideal(I);
-            //S:=MultiplicatorRing(II);
             S:=MultiplicatorRing(Delta_inverse_ideal(WR!!OneIdeal(MultiplicatorRing(I))));
             I`DeltaEndomorphismRing:=S;
             Append(~Delta_isom_classes_WR_F_V,I);
         else
-            vprint Algorithm_3,3 : "...it is not F-V stable\n";
+            vprintf Algorithm_3,2 : "n";
         end if;
     end for;
+    vprintf Algorithm_3,2 : "\n";
 
-    return Delta_isom_classes_WR_F_V , pl_01_R;
+    return Delta_isom_classes_WR_F_V,pl_01_R;
 end intrinsic;
 
 

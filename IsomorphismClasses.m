@@ -191,15 +191,27 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             else
                 S:=glue_local_parts_orders(primes, ell_01_orders cat dm_orders);
             end if;
-            //TEST (this test is quite time consuming)
-            // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
-            if GetAssertions() ge 2 then
-                vprintf IsomAbVar,2 : "Slow test on Ends...";
-                p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
-                places_E_0,places_E_01,places_1:=Explode(places_E);
-                OE:=MaximalOrder(E);
+            PS,pS:=PicardGroup(S);
+            for ll in PS do
+                L:=pS(ll);
+                X:=<I,dm,L,S>;
+                Append(~output,X);
+            end for;
+        end for;
+    end for;
+    if GetAssertions() ge 2 then
+        // TEST (this test is quite time consuming)
+        // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
+        vprintf IsomAbVar,2 : "Slow test on Ends...";
+        p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
+        places_E_0,places_E_01,places_1:=Explode(places_E);
+        OE:=MaximalOrder(E);
+        ends:={@ X[4] : X in output @};
+        for S in ends do
+            Is:=[ X[1] : X in output | X[4] eq S ];
+            Ms:=[ X[2] : X in output | X[4] eq S ];
+            for I in Is, M in Ms do
                 end_test:=[];
-                M:=dm;
                 for T in OverOrders(R) do
                     mT:=R!!OneIdeal(T);
                     if #places_away_01 gt 0 then
@@ -223,16 +235,12 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
                     end if;
                 end for;
                 assert S eq Order(&cat[ ZBasis(T) : T in end_test ]);
-                vprintf IsomAbVar,2 : "all good\n";
-            end if;
-            PS,pS:=PicardGroup(S);
-            for ll in PS do
-                L:=pS(ll);
-                X:=<I,dm,L,S>;
-                Append(~output,X);
             end for;
+            vprintf IsomAbVar,2 : "ok.";
         end for;
-    end for;
+        vprintf IsomAbVar,2 : "..all good\n";
+
+    end if;
     return output;
 end intrinsic;
 
