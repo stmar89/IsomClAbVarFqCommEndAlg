@@ -171,8 +171,9 @@ glue_local_parts_orders:=function(primes,orders)
     return S;
 end function;
 
-intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd)->Any
-{ TODO }
+intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd : MinimumPrecisionForSemilinearFV:=0)->Any
+{ TODO 
+The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to which the semilinear operators F and V are computed while computing the isomorphism classes of the Dieudonne Modules. More precisely, the isomorphism classes of WR\{F,V\}-ideals are computed in (the (0,1)-part of) a quotient of the form J/p^m*J, with J a WR\{F,V\}-ideal with multiplicator ring OA. Setting MinimumPrecisionForSemilinearFV increses the exponend m.}
     output:=[];
     isom_away_01,places_away_01:=IsomorphismClassesTateModules(R);
     isom_DM_01,places_01:=IsomorphismClassesDieudonneModules(R);
