@@ -464,7 +464,17 @@ where //TODO}
                                         embs[i](rs_nu[i](One(A))) else 
                                         embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
                 alpha_A:=gamma_A*beta_A;
-//TODO add asserts here. // I want N_{Anu/Enu}(alpha_A_nu) - pi_nu in Pnu^{m}
+
+                //// Check that N_{LEnu/Enu}(alpha) - pi_nu in Pnu^{m}, for every nu.
+                //TODO the following test is probably not correct.
+                //if GetAssertions() ge 2 then
+                //    norm_alpha:=&*[ i eq 1 select alpha_A else Self(i-1)@qI@sigma@@qI : i in [1..a] ];
+                //    x:=(norm_alpha-pi_A)@qI;
+                //    for nu in plE_sl_in01 do
+                //        nu_sub:=sub<QI | [ qI(Delta_map(z)) : z in ZBasis(nu^m) ]>;
+                //        assert2 x in nu_sub;
+                //    end for;
+                //end if;
                 
                 Append(~alpha_Q_inAs,alpha_A);
                 vprintf alpha_at_precision,1 : "done\n";
@@ -763,7 +773,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
     // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
     QOA,qOA:=ResidueRing(OA,p^m1*OA);
-    sigma_QOA:=sigma_OA_mod_I(QOA,qOA,A);
+    sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
     vprintf Algorithm_3,1 : "done\n";
 
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
@@ -773,19 +783,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
     assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
     assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
-    // TODO the next test does something from...
-    //// we check semilinearity for F: x*F = F*sigma(x) forall x in L?
-    //// it suffices to check if for powers of zz in OA.
-    //if GetAssertions() ge 2 then
-    //    for z in imgs_zz_inOA do
-    //        z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-    //        sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z^p*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-    //        assert2 forall{i:i in [1..Ngens(Qm0)]| z_action_Qm0(FQm0(Qm0.i)) eq FQm0(sigma_z_action_Qm0(Qm0.i))};
-    //        z_action_Qm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(z*(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
-    //        sigma_z_action_Qm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(z^p*(Qm0_1.i@@qm0_1)) : i in [1..Ngens(Qm0_1)] ]>;
-    //        assert2 forall{i:i in [1..Ngens(Qm0_1)]| z_action_Qm0_1(FQm0_1(Qm0_1.i)) eq FQm0_1(sigma_z_action_Qm0_1(Qm0_1.i))};
-    //    end for;
-    //end if;
+
     vprintf Algorithm_3,2 : "\tFQ's are computed\n";
 
     mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
@@ -806,6 +804,20 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
     assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
     vprintf Algorithm_3,2 : "\tVQ is computed\n";
+
+    // We check semilinearity for F, V: F*x = sigma(x)*F and x*V=V*sigma(x)  forall x in L?
+    // It suffices to check if for powers of zz in OA.
+    if GetAssertions() ge 2 then
+        for z in powers_zz_diagonally_inOA_via_zbOE do
+            sigma_z:=z@qOA@sigma_QOA@@qOA;
+            z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+            sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(sigma_z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+            assert2 forall{i:i in [1..Ngens(Qm0)]| FQm0(z_action_Qm0(Qm0.i)) eq sigma_z_action_Qm0(FQm0(Qm0.i))};
+            assert2 forall{i:i in [1..Ngens(Qm0)]| z_action_Qm0(VQm0(Qm0.i)) eq VQm0(sigma_z_action_Qm0(Qm0.i))};
+            ".............";
+        end for;
+    end if;
+    
 // TODO Qm0,FQm0,VQm0 should be stored in an attribute of the isogeny class.
 // TODO Then I need to upgrade the saving/loading functions with this data.
 // TODO I need to be able to increase the precision by a VarArg, for all major intrinsics.
