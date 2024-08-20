@@ -4,7 +4,6 @@
     - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
         Need to implement it. Look for DUALITY keyword.
     - check types (output and input) of all intrinsics: switch from R to IsogenyClass
-    - I should add the possibility to force the precision of the computation of sigma to a higher value 
       using VarArgs. But it is not clear to me how to do it, since it depends on QI, hence on I.
 */
 
@@ -81,7 +80,8 @@ end intrinsic;
 intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
 {This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple
 <p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
-where //TODO}
+where //TODO
+}
     if not assigned R`DieudonneAlgebra then
         E:=Algebra(R);
         pi:=PrimitiveElement(E);
@@ -496,8 +496,9 @@ end intrinsic;
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
-{}
+intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd : MinimumPrecisionForSemilinearFV:=0)->Any
+{//TODO
+The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to which the semilinear operators F and V are computed. More precisely, the isomorphism classes of WR\{F,V\}-ideals are computed in (the (0,1)-part of) a quotient of the form J/p^m*J, with J a WR\{F,V\}-ideal with multiplicator ring OA. Setting MinimumPrecisionForSemilinearFV increses the exponend m.}
     vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
     p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
     vprintf DieudonneModules,1 : "done\n";
@@ -731,13 +732,18 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     vprintf Algorithm_3,2 : "Ideals are now Delta-scaled in J with vp(indices) = %o\n",vpNks;
     //vpNks:=[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ]; //forming these quotients it is sometimes much more expensive then just working with a slightly larger m0
     m0:=Maximum(vpNks);
+    if MinimumPrecisionForSemilinearFV gt m0 then
+        m0:=MinimumPrecisionForSemilinearFV;
+        vprintf Algorithm_3 : "Incresing m0 to %o, using MinimumPrecisionForSemilinearFV\n",m0;
+    end if;
+
     vprintf Algorithm_3 : "m0 = %o\n",m0;
     vprintf Algorithm_3,2 : "v_nu(pi) for all nu's = %o\n",[ Valuation( pi, P ) : P in plE_sl_in01 ];
     vprintf Algorithm_3,2 : "e_nu for all nu's = %o\n",[ RamificationIndex(P) : P in plE_sl_in01 ];
     vprintf Algorithm_3,2 : "f_nu for all nu's = %o\n",[ InertiaDegree(P) : P in plE_sl_in01 ];
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
-    //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //to force it bigger
+    //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //for debugging
     vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m0;
     alpha:=alpha_at_precision(m0+1);
     vprintf Algorithm_3,1 : "done\n";
@@ -768,7 +774,7 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     // ###################################
     assert JOA subset OA;
     m1:=m0+1+Valuation(Index(OA,JOA),p);
-    //m2:=m1+1000; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //to force it bigger
+    //m2:=m1+1000; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
     vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
     // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
     // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
@@ -820,9 +826,6 @@ intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd)->Any
     
 // TODO Qm0,FQm0,VQm0 should be stored in an attribute of the isogeny class.
 // TODO Then I need to upgrade the saving/loading functions with this data.
-// TODO I need to be able to increase the precision by a VarArg, for all major intrinsics.
-//      The VarArg should be an input of IsomClasse and IsomClassesDieudonneMods to be passed to DieudonneAlgebra
-//      where it affects the functions sigma_J_mod_I and alpha_at_precision.
 
     is_F_V_stable:=function(I)
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
