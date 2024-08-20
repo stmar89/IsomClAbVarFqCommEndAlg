@@ -2,3 +2,4 @@
 *.sig
 *joblog
 tmp_*
+parallel_storing/output
