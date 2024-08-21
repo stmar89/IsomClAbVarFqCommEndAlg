@@ -17,19 +17,13 @@
     - check the number of iso classes in I with maximal End against Waterhouse formula.
 */
 
-
-
-// Everything below needs to be updated.
-    AttachSpec("~/AbVarFq/old_AlgAss.spec");
-    Attach("~/PolsAbVarFpCanLift/ResRefCond.m");
-    // load "~/PolsAbVarFpCanLift/AlmOrd.m"; //there is a bug here
+    AttachSpec("~/AbVarFq/spec");
 
 
     AttachSpec("~/AlgEt/spec");
     Attach("PrimesAttributes.m");
     Attach("DieudonneModules.m");
     Attach("IsomorphismClasses.m");
-    SetAssertions(2);
 
     overorders_maximal_at_ss:=function(R)
     // R = Z[F,V] of an almost ord isogney clas
@@ -54,91 +48,72 @@
         return output,ram;
     end function;
 
-    //SetVerbose("DieudonneModules",2);
-    //SetVerbose("Algorithm_3",2);
     SetAssertions(2);
     SetDebugOnError(true);
 
     PP<x>:=PolynomialRing(Integers());
 
-    to_be_excluded:=[
-        x^4 - 4*x^3 + 8*x^2 - 32*x + 64, // It seems that WKICM(WR_01) is very big
-        x^4 + 4*x^3 + 16*x^2 + 32*x + 64, // too slow (funnily, its twist is not that slow)
-        x^4+64,// Terminate. Why?
-        x^6 - x^5 + 4*x^3 - 4*x + 8 // Magma internal error ... buh...
-        ];
+    test_ord_cs:=function(R,iso)
+        icm:=ICM(R);
+        oo:=OverOrders(R);
+        output:=true;
+        for S in oo do
+            output &and:=#[ I : I in icm | MultiplicatorRing(I) eq S ] eq #[ X : X in iso | X[4] eq S];
+        end for;
+        return output;
+    end function;
 
-    all_weil_poly:=Split(Read("weil_poly_all.txt"));
-
-    for cc in all_weil_poly do
-        coeff:=eval(cc);
-        h:=PP!coeff;
-        if IsSquarefree(h) and not h in to_be_excluded then
-            g:=Degree(h) div 2;
-            q:=Truncate(ConstantCoefficient(h)^(1/g));
-            if q le 11
-                and not IsCoprime(coeff[g+1],q) // exclude ordinary
-                        then
-                printf "%50o = ",h;
-                t,p,a:=IsPrimePower(q);
-                assert t; delete t;
-                E:=EtaleAlgebra(h);
-                pi:=PrimitiveElement(E);
-                R:=Order([pi,q/pi]);
-                try
-                    t0:=Cputime();
-                    iso:=IsomorphismClassesAbelianVarieties(R);
-                    t1:=Cputime(t0);
-                    num_isom:=#iso;
-                    ends:=Setseq({ I[4] : I in iso });
-                    S:=&meet(ends);
-                    unique_min_end:=S in ends; // is there a unique minimal end?
-                    str:=Sprintf("min end? %o ",unique_min_end select "Y" else "N");
-                    jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
-                    str cat:=Sprintf("jumps? %o ",jumps select "Y" else "N");
-                    printf "%o", str;
-                    num_test:=0;
-                    if IsCoprime(coeff[g+1],q) then 
-                        num_test:=#ICM(R);
-                        descr:="ord"; 
-                    elif p eq q then
-                        num_test:=#ICM(R);
-                        descr:="cs"; 
-                    else
-                        I:=IsogenyClass(h);
-                        g:=Dimension(I);
-                        is_almost_ordinary:=pRank(I) eq g-1;
-                        if is_almost_ordinary then
-                            oo:=FindOverOrders(R);
-                            oo_max_at_ss,ram:=overorders_maximal_at_ss(R);
-                            icm:=&+[ #ICM_bar(S) : S in oo_max_at_ss ];
-                            if ram eq 2 then //ramified
-                                num_test:=icm;
-                                descr:="alm ord - ram";
-                            else //inert
-                                num_test:=2*icm;
-                                descr:="alm ord - inert";
-                            end if;
-                        end if;
-                    end if;
-                    if num_test gt 0 then
-                        if not num_isom eq num_test then
-                            "failure <-------------------",t1,descr,"computed",num_isom,"expected",num_test;
-                        else
-                            "good",t1,descr;
-                        end if;
-                    else
-                        "can't compare to previous data",t1;
-                    end if;
-                catch
-                    e;
-                    e`Object;
-                    e`Position;
-                    "error detected";
-                    //break cc;
-                end try;
+    test_alm_ord:=function(R,iso)
+        oo:=FindOverOrders(R);
+        oo_max_at_ss,ram:=overorders_maximal_at_ss(R);
+        S:=&meet(oo_max_at_ss);
+        icm:=ICM(S);
+        output:=true;
+        for S in oo do
+            iso_S:=#[ X : X in iso | X[4] eq S ];
+            icm_S:=#[ I : I in icm | MultiplicatorRing(I) eq S ];
+            if ram eq 2 then //ramified
+                output &and:=iso_S eq icm_S
+                descr:="ram";
+            else //inert
+                output &and:=iso_S eq 2*icm_S
+                descr:="inert";
             end if;
+        end for;
+        return output,descr;
+    end function;
+
+    fld:="~/IsomClassesAbVarFqComEnd/parallel_storing/output/";
+    input_ls:=Pipe("ls " cat fld,"");
+    for file in input_ls do
+        str:=Read(fld cat file);
+        iso:=load_isom_classes(str);
+        R:=Order(iso[1,1]);
+        E:=Algebra(R);
+        h:=DefiningPolynomial(E);
+        assert IsSquarefree(h);
+        q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
+        t,p,a:=IsPrimePower(q); assert t;
+        if a eq 1 then
+            // CS case
+            test_size_ends:=test_ord_cs(R,iso);
+            descr:="Fp";
+        else
+            prank:=pRank(IsogenyClass(h));
+            g:=Degree(h) div 2;
+            if prank eq g then
+                // ord case
+                testi_size_ends:=test_ord_cs(R,iso);
+                descr:="ord";
+            elif prank eq g-1 then
+                testi_size_ends,descr:=test_alm_ord(R,iso);
+                descr:="alm ord " cat descr;
+            end if; 
         end if;
+
+        // maximal totally real part
+        Ep:=
+
     end for;
 
 

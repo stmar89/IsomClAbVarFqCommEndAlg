@@ -591,7 +591,8 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             fixed_pts_gens:=[ g@@u : g in units_quotient_fixed_sigma_WR_gens];
             Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
             q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
-            S`units_quotient_fixed_sigma:=<Q,q>;
+            gammas:=[q(x) : x in Q];
+            S`units_quotient_fixed_sigma:=<Q,q,gammas>;
         end if;
         return Explode(S`units_quotient_fixed_sigma);
     end function;
@@ -651,6 +652,22 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     // WR_00 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
 
+    // to speed-up debuggin. from here to XXX to be removed.
+    if Coefficients(DefiningPolynomial(E)) eq [ 256, 64, 16, 16, -4, 4, 1, 1, 1 ] then
+        tmp_file:="tmp_20240821.txt";
+        file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
+        if file_already_exists eq 0 then
+        "\nWARNING printing WKICM for test_purposes: don't forget to delete the tmp file";
+            for I in WKICM(WR_01) do
+                fprintf tmp_file,"%o\n",&cat(Split(strI)) where _,strI:=PrintSeqAlgEtQElt(ZBasis(I));
+            end for;
+        else
+        "\nWARNING loading WKICM for test_purposes: don't forget to delete the tmp file";
+            WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
+        end if;
+    end if;
+    // XXX
+
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
@@ -666,8 +683,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             assert #exps eq #pp_A_01; 
             Append(~deltas,&*[nice_unifs_01[i]^(valsJ[i]-exps[i]) : i in [1..#pp_A_01]]);
         end for;
-        QS,qS:=units_quotient_fixed_sigma(S); // this is now cached in an attributed
-        gammas:=[ qS(x) : x in QS ];
+        QS,qS,gammas:=units_quotient_fixed_sigma(S); // this is now cached in an attributed
         vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
         vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
         vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);

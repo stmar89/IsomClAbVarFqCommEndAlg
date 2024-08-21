@@ -1,0 +1,78 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+    AttachSpec("~/AbVarFq/spec");
+
+
+    AttachSpec("~/AlgEt/spec");
+    Attach("PrimesAttributes.m");
+    Attach("DieudonneModules.m");
+    Attach("IsomorphismClasses.m");
+    Attach("SaveLoad.m");
+
+    PP<x>:=PolynomialRing(Integers());
+
+    fld:="~/IsomClassesAbVarFqComEnd/parallel_storing/output/";
+    input_ls:=Pipe("ls " cat fld,"");
+    file:="4.4.b_b_e_ae";
+    str:=Read(fld cat file);
+    iso:=load_isom_classes(str);
+    R:=Order(iso[1,1]);
+    E:=Algebra(R);
+    h:=DefiningPolynomial(E);
+    assert IsSquarefree(h);
+    q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
+    t,p,a:=IsPrimePower(q); assert t;
+
+    oo:=OverOrders(R);
+    OE:=MaximalOrder(E);
+    ind:=[Index(OE,S):S in oo];
+    ParallelSort(~ind,~oo);
+    Reverse(~oo);
+    ends:={@ X[4] : X in iso @};
+    for iS->S in oo do
+        dmS:={@ X[2] : X in iso | X[4] eq S @};
+        iS,Index(OE,S),#dmS,#PicardGroup(S),[ Index(oo,T) : T in MinimalOverOrders(S) ];
+    end for;
+
+    // a-numbers
+    m0,J,dJ,Q,mQ,F,V:=Explode(R`SemilinearOperators);
+    for X in iso do
+        M:=X[2];
+        assert M subset J;
+        M:=sub<Q|[mQ(z):z in ZBasis(M)]>;
+        FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
+        VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
+        a_num:=Ilog(q,Index(M,FM+VM));
+        a_num;
+    end for;
+
+/*
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
