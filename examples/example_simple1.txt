@@ -3,17 +3,12 @@
 */
 
     AttachSpec("~/AbVarFq/spec");
-
-
     AttachSpec("~/AlgEt/spec");
-    Attach("PrimesAttributes.m");
-    Attach("DieudonneModules.m");
-    Attach("IsomorphismClasses.m");
-    Attach("SaveLoad.m");
+    AttachSpec("~/IsomClassesAbVarFqComEnd/spec");
 
     PP<x>:=PolynomialRing(Integers());
 
-    fld:="~/IsomClassesAbVarFqComEnd/parallel_storing/output/";
+    fld:="~/IsomClassesAbVarFqComEnd/examples/";
     input_ls:=Pipe("ls " cat fld,"");
     file:="4.4.b_b_e_ae";
     str:=Read(fld cat file);
@@ -22,30 +17,48 @@
     m0,J,dJ,Q,mQ,F,V:=Explode(R`SemilinearOperators);
     E:=Algebra(R);
     h:=DefiningPolynomial(E);
+    g:=Degree(h) div 2;
     assert IsSquarefree(h);
     q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
     t,p,a:=IsPrimePower(q); assert t;
 
     oo:=OverOrders(R);
     OE:=MaximalOrder(E);
+    P:=Setseq({OneIdeal(R) meet R!!P:P in [P:P in PlacesAboveRationalPrime(E,p)|Slope(P) notin {0,1}]});
+    
+    assert #P eq 1;
+    P:=P[1];
+
+    is_maximal_at_01:=function(S)
+        return S!!OneIdeal(OE) eq OneIdeal(S) + S!!OE!!P;
+    end function;
+
+    Ep,mEp:=TotallyRealSubAlgebra(E);
+    OEp:=MaximalOrder(Ep);
+    "p is " cat (#PlacesAboveRationalPrime(Ep,p) eq g select "" else "not ") cat "totally split in E^+";
+    OEp:=[mEp(z):z in ZBasis(OEp)];
+    contains_OEp:=func< S | forall{z:z in OEp|z in S}>;
+
+
     ind:=[Index(OE,S):S in oo];
     ParallelSort(~ind,~oo);
     Reverse(~oo);
     ends:={@ X[4] : X in iso @};
+    printf "For each overorder S, we print the following string of data:\niS = which overorder of Z[pi,q/pi]\n[OE:S]\nd(S) = #Dieudonné modules with End S\n#Pic(S)\na numbers of the DM with End S\nis S maximal at (0,1)\ndoes S contain O_{E^+}\nindices of minimal overorders\n\n";
     for iS->S in oo do
         dmS:={@ X[2] : X in iso | X[4] eq S @};
         // a-numbers
         a_nums:=[];
-        for M in dms do
-            assert M subset J;
-            M:=sub<Q|[mQ(z):z in ZBasis(M)]>;
+        for dm in dmS do
+            assert dm subset J;
+            M:=sub<Q|[mQ(z):z in ZBasis(dm)]>;
             FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
             VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
             Append(~a_nums,Ilog(q,Index(M,FM+VM)));
         end for;
         // indices of minimal overorders (to find the place of S in the graph of inclusions)
         ind_min_oo:=[ Index(oo,T) : T in MinimalOverOrders(S) ];
-        printf "%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,ind_min_oo;
+        printf "%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
     end for;
 
 /*

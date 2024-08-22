@@ -10,7 +10,7 @@
 
     fld:="~/IsomClassesAbVarFqComEnd/examples/";
     input_ls:=Pipe("ls " cat fld,"");
-    file:="2.4.a_e";
+    file:="4.4.ag_s_abk_cq";
     str:=Read(fld cat file);
     iso:=load_isom_classes(str);
     R:=Order(iso[1,1]);
@@ -44,9 +44,10 @@
     ParallelSort(~ind,~oo);
     Reverse(~oo);
     ends:={@ X[4] : X in iso @};
-    printf "For each overorder S, we print the following string of data:\niS = which overorder of Z[pi,q/pi]\n[OE:S]\nd(S) = #Dieudonné modules with End S\n#Pic(S)\na numbers of the DM with End S\nis S maximal at (0,1)\ndoes S contain O_{E^+}\nindices of minimal overorders\n\n";
+    printf "For each overorder S, we print the following string of data:\niS = which overorder of Z[pi,q/pi]\n[OE:S]\nt(S)= #Tate modules away from (0,1) with End S\nd(S) = #Dieudonné modules with End S\n#Pic(S)\na numbers of the DM with End S\nis S maximal at (0,1)\ndoes S contain O_{E^+}\nindices of minimal overorders\n\n";
     for iS->S in oo do
         dmS:={@ X[2] : X in iso | X[4] eq S @};
+        tmS:={@ X[1] : X in iso | X[4] eq S @};
         // a-numbers
         a_nums:=[];
         for dm in dmS do
@@ -58,7 +59,7 @@
         end for;
         // indices of minimal overorders (to find the place of S in the graph of inclusions)
         ind_min_oo:=[ Index(oo,T) : T in MinimalOverOrders(S) ];
-        printf "%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
+        printf "%o,%o,(%o,%o,%o),%o,%o,%o,%o\n",iS,Index(OE,S),#tmS,#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
     end for;
 
 /*
