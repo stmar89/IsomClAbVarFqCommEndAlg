@@ -1,0 +1,93 @@
+/* vim: set syntax=magma : */
+/*
+    See the conditions defined in the beginning of Section 8 of the paper (the one about the examples).
+    Here we search for an isogeny class satisfying 1+2+3 but not (*).
+    This implies in particular that 1+2+3 and (*) are not equivalent, and also that 1+2+3 is not equivalent to a+b+c (i.e. almost ordinary).
+*/
+
+    AttachSpec("~/AbVarFq/spec");
+
+    AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/IsomClassesAbVarFqComEnd/spec");
+
+    SetAssertions(2);
+    SetDebugOnError(true);
+
+    PP<x>:=PolynomialRing(Integers());
+
+    fld:="~/IsomClassesAbVarFqComEnd/parallel_storing/output/";
+    input_ls:=Split(Pipe("ls " cat fld,""));
+    for file in input_ls do
+        str:=Read(fld cat file);
+        iso:=load_isom_classes(str);
+        R:=Order(iso[1,1]);
+        E:=Algebra(R);
+        h:=DefiningPolynomial(E);
+        assert IsSquarefree(h);
+        q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
+        t,p,a:=IsPrimePower(q); assert t;
+        OE:=MaximalOrder(E);
+        P:=Setseq({OneIdeal(R) meet R!!P:P in [P:P in PlacesAboveRationalPrime(E,p)|Slope(P) notin {0,1}]});
+        assert #P eq 1;
+        P:=P[1];
+        is_maximal_at_01:=function(S)
+            return S!!OneIdeal(OE) eq OneIdeal(S) + S!!OE!!P;
+        end function;
+
+        ends:={@ X[4] : X in iso @};
+        S:=&meet(ends);
+        unique_min_end:=S in ends; // is there a unique minimal end?
+        str:=Sprintf("min end? %o ",unique_min_end select "Y" else "N");
+        jumps:=not forall{ T : T in ends | forall{ TT : TT in MinimalOverOrders(T) | TT in ends } };
+
+        size_div:=true;
+        for S in ends do
+            nS:=#{X:X in iso |X[4] eq S};
+            for T in ends do
+                if S subset T then
+                    nT:=#{X:X in iso |X[4] eq T};
+                    size_div and:=nS mod nT eq 0; //nT divides nS?
+                end if;
+            end for;
+        end for;
+
+        star:=forall{S:S in ends|is_maximal_at_01(S)};
+
+        if (not jumps) and unique_min_end and size_div then
+            printf "%o,%o,%o,%o,%o\n",star,h,IsIrreducible(h),#OverOrders(R),#ends;
+        end if;
+    end for;
+
+
+
+
+
+
+/*
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
