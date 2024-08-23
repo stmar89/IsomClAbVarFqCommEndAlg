@@ -856,6 +856,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
 
     Delta_isom_classes_WR_F_V:=[ ];
     vprintf Algorithm_3,2 : "Started checking for F-V stability:";
+    delta_inverses_mult_rings:=[];
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         vprintf Algorithm_3,3 : "\nfor the %oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable:",iI;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
@@ -863,7 +864,14 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
         if is_F_V_stable(I) then
             vprintf Algorithm_3,2 : "y";
             assert Order(I) eq WR;
-            S:=MultiplicatorRing(Delta_inverse_ideal(WR!!OneIdeal(MultiplicatorRing(I))));
+            mI:=MultiplicatorRing(I);
+            t:=exists(S){pair[2]:pair in delta_inverses_mult_rings|pair[1] eq mI};
+            if not t then
+                Sid:=Delta_inverse_ideal(WR!!OneIdeal(mI));
+                S:=Order(ZBasis(Sid));
+                assert Sid eq Order(Sid)!!OneIdeal(S);
+                Append(~delta_inverses_mult_rings,<mI,S>);
+            end if;
             I`DeltaEndomorphismRing:=S;
             Append(~Delta_isom_classes_WR_F_V,I);
         else
