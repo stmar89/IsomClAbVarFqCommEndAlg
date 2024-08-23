@@ -1,0 +1,98 @@
+/* vim: set syntax=magma : */
+/*
+*/
+
+    AttachSpec("~/AbVarFq/spec");
+
+    AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/IsomClassesAbVarFqComEnd/spec");
+
+    SetAssertions(2);
+    SetDebugOnError(true);
+
+    PP<x>:=PolynomialRing(Integers());
+
+    fld:="~/IsomClassesAbVarFqComEnd/parallel_storing/output/";
+    input_ls:=Split(Pipe("ls " cat fld,""));
+    for file in input_ls do
+        str:=Read(fld cat file);
+        iso:=load_isom_classes(str);
+        R:=Order(iso[1,1]);
+        m0,J,dJ,Q,mQ,F,V:=Explode(R`SemilinearOperators);
+        E:=Algebra(R);
+        h:=DefiningPolynomial(E);
+        prank:=pRank(IsogenyClass(h:Check:=false));
+        g:=Degree(h) div 2;
+        assert IsSquarefree(h);
+        q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
+        t,p,a:=IsPrimePower(q); assert t;
+        OE:=MaximalOrder(E);
+        P:=Setseq({OneIdeal(R) meet R!!P:P in [P:P in PlacesAboveRationalPrime(E,p)|Slope(P) notin {0,1}]});
+        assert #P eq 1;
+        P:=P[1];
+        is_maximal_at_01:=function(S)
+            return S!!OneIdeal(OE) eq OneIdeal(S) + S!!OE!!P;
+        end function;
+
+        ends:={@ X[4] : X in iso @};
+
+        data_a_nums:=[];
+        for iS->S in ends do
+            dmS:={@ X[2] : X in iso | X[4] eq S @};
+            // a-numbers
+            a_nums:=[];
+            for dm in dmS do
+                assert dm subset J;
+                M:=sub<Q|[mQ(z):z in ZBasis(dm)]>;
+                FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
+                VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
+                Append(~a_nums,Ilog(q,Index(M,FM+VM)));
+                assert forall{ a : a in a_nums | a+prank le g};
+            end for;
+            if #Seqset(a_nums) gt 1 then
+                printf "more than one a-num per End in %o\n",h;
+                #ends,#OverOrders(R),IsIrreducible(h),IsProductOfOrders(S);
+            end if;
+            Append(~data_a_nums,<S,a_nums>);
+        end for;
+
+        if exists{s:s in data_a_nums | exists{t:t in data_a_nums| s[1] subset t[1] and t[1] ne s[1] and
+                                            Max(s[2]) gt Min(t[2]) }} then
+            printf "the a-num are not upper-semicont in %o\n,h";
+        end if;
+
+    end for;
+
+
+
+
+
+
+/*
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
