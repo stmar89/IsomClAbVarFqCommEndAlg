@@ -55,6 +55,11 @@
             end if;
             Append(~data_a_nums,<S,a_nums>);
         end for;
+        
+        a_num_OE:=[pp[2]:pp in data_a_nums|pp[1] eq OE][1];
+        if g-prank ne Min(a_num_OE) or g-prank ne Max(a_num_OE) then
+            h,a_num_OE,#ends,#OverOrders(R),IsIrreducible(h);
+        end if;
 
         if exists{s:s in data_a_nums | exists{t:t in data_a_nums| s[1] subset t[1] and t[1] ne s[1] and
                                             Max(s[2]) gt Min(t[2]) }} then
