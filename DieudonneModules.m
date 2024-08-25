@@ -13,6 +13,7 @@ declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 declare verbose sigma,3;
 declare verbose alpha_at_precision,3;
+declare verbose Delta_scaling,3;
 
 declare attributes AlgEtQ    : sigma_fin_prec,
                                PlacesAboveRationalPrime;
@@ -646,10 +647,10 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     // We compute the W'_R-isomorpshim classes of W'_R-ideals.
     k:=Valuation(Index(OA,WR),p);
     WR_01:=Order( ZBasis(WR) cat ZBasis(OA!!&*[ P^(k*RamificationIndex(P)) : P in pp_A_01 ]));
+    // WR_01 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "[OA:WR] = %o\n",Index(OA,WR);
     vprintf Algorithm_2,1 : "[OA:WR_01] = %o\n",Index(OA,WR_01);
-    // WR_00 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
 
     // to speed-up debuggin. from here to XXX to be removed.
@@ -689,7 +690,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
         vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
         assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
-        II:=[ (d^-1)*g*I : d in deltas, g in gammas ];
+        II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
         vprintf Algorithm_2,2 : "#II = %o\n",#II;
         vprintf Algorithm_2,3 : "valuations of the of extensions O_A' of the ideals in II = %o\n",[ [ Valuation(OA!!ii,P) : P in pp_A_01 ] : ii in II ]; // computing this info might take a lot of time.
         WR_01_idls_with_ext_i_to_OA_F_V_stable cat:=II;
@@ -697,15 +698,6 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of Delta'-isomorphism classes with FV-stable extension to O_A' = %o\n",#WR_01_idls_with_ext_i_to_OA_F_V_stable;
    
-    //TEST Delta_inverse_ideal: this test is expensive
-    if GetAssertions() ge 3 then
-        vprintf Algorithm_2,1 : "Expensive test with Delta_inverse_ideal...";
-        for I in WR_01_idls_with_ext_i_to_OA_F_V_stable do
-            _:=Delta_inverse_ideal(I);
-        end for;
-        vprintf Algorithm_2,1 : "done\n";
-    end if;
-
     // ####################
     // Algorithm 3
     // ####################
@@ -722,34 +714,90 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
 
     // We scale the ideals I by elements of Delta(E) so that they are in J
     vprintf Algorithm_3,1 : "Delta-scaling the ideals into J...";
+
+    nus:=PlacesAboveRationalPrime(E,p);
+    unifs:=Uniformizers(nus);
+
+    pExponent:=function(A,B)
+    // given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B)
+        vp_ind:=Valuation(Index(A,B),p);
+        // now I only compute the quotient of the p-part.
+        vp_exp:=Valuation(Exponent(Quotient(A,B+p^vp_ind*A)),p);
+        return vp_exp;
+    end function;
+
+    Delta_scale_inside:=function(I,J)
+    // given an OA-ideal WR!!J and a WR-ideal I, it find an element x in E^* such that Delta(x)I c J.
+    // This element is chosen so that [J:xI] will have a small p-adic valuation.
+        vprintf Delta_scaling,1 : "Computing: colon ideal...";
+        cc:=OA!!ColonIdeal(J,I);
+        exps:=[];
+        vprintf Delta_scaling,1 : "M_nu's";
+        for nu in nus do
+            M_nu:=Max([Valuation(cc,P) : P in primes_of_A_above_place_of_E(A,nu)]);
+            vprintf Delta_scaling,1 : ".";
+            Append(~exps,M_nu);
+        end for;
+        x:=&*[unifs[i]^exps[i]:i in [1..#nus]];
+        vprintf Delta_scaling,1 : "xI...";
+        xI:=Delta_map(x)*I;
+        vprintf Delta_scaling,1 : "y...";
+        // Computing Quotient can give Magma Internal Error (I guess because of coefficients explosion)
+        // We don't really care if y is big, since it will be coprime to p. So we take the index.
+        // y:=Exponent(Quotient(xI,xI meet J));
+        y:=Index(xI+J,J);
+        assert (y mod p) ne 0; // y coprime p
+        yxI:=y*xI;
+        assert yxI subset J;
+        vprintf Delta_scaling,1 : "ZBasisLLL...";
+        ZBasisLLL(yxI);
+        vprintf Delta_scaling,1 : "pExponent=";
+        vpN:=pExponent(J,yxI);
+        vprintf Delta_scaling,1 : "%o...",vpN;
+        vprintf Delta_scaling,1 : "done";
+        return yxI,vpN;
+    end function;
+
+    // We need to scale all I's by an element of Delta(E) inside J, so that the max value of vp(exp(J/I)) 
+    // is as small as possible.
+    m0:=0; 
     for i in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
-        vprintf Algorithm_3,1 : ".";
-        vprintf Algorithm_3,3 : "\nDelta-scaling the %o-th ideal into J...",i;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[i];
         ZBasisLLL(I);
-        if not I subset J then
-            // We want to keep J/xI small. 
-            // The best result is obtained by picking a small element in Delta^-1((J:I)).
-            // Computing Delta^-1 can be very expensive, even with LLL ZBasis.
-            // Other options are taking x = I/J meet I or x = Exponent(I/J meet I).
-             
-            //x:=ShortElement(Delta_inverse_ideal(ColonIdeal(J,I)));
-            //x:=Index(I,J meet I);
-            x:=Exponent(Quotient(I,J meet I));
-            I:=Delta_map(x)*I;
-            ZBasisLLL(I);
-            assert I subset J;
+        D_scale:=true;
+        if I subset J then
+            vpN:=pExponent(J,I);
+            if vpN le m0 then
+                D_scale:=false;
+            end if;
+        else
+            // we first try to push I in J by multiplying by the pExponent 
+            vp_x:=pExponent(I+J,J);
+            if vp_x le m0 then
+                vprintf Delta_scaling,1 : "\npExp-scaling the %o-th ideal into J...",i;
+                x:=p^vp_x;
+                xI:=x*I;
+                y:=Index(xI+J,J);
+                assert (y mod p) ne 0; // y coprime p
+                yxI:=y*xI;
+                assert yxI subset J;
+                D_scale:=false;
+                vprintf Delta_scaling,1 : "ZBasisLLL...";
+                ZBasisLLL(yxI);
+                vprintf Delta_scaling,1 : "done";
+                WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=yxI;
+            end if;
+        end if;
+        if D_scale then
+            vprintf Delta_scaling,1 : "\nDelta-scaling the %o-th ideal into J...",i;
+            I,vpN:=Delta_scale_inside(I,J);
+            m0:=Max(m0,vpN);
             WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
         end if;
-        vprintf Algorithm_3,3 : "done";
     end for;
     vprintf Algorithm_3,1 : "done\n";
-    vprintf Algorithm_3,3 : "Ideals are now Delta-scaled in J with indices = %o\n",[Index(J,I) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable];
 
-    vpNks:=[ Valuation(Index(J,I),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ];
-    vprintf Algorithm_3,2 : "Ideals are now Delta-scaled in J with vp(indices) = %o\n",vpNks;
-    //vpNks:=[ Valuation(Exponent(Quotient(J,I)),p) : I in WR_01_idls_with_ext_i_to_OA_F_V_stable ]; //forming these quotients it is sometimes much more expensive then just working with a slightly larger m0
-    m0:=Maximum(vpNks);
+    //TODO change how the VarArg works. Increase the m0 computed above by the value of the VarArg.
     if MinimumPrecisionForSemilinearFV gt m0 then
         m0:=MinimumPrecisionForSemilinearFV;
         vprintf Algorithm_3 : "Incresing m0 to %o, using MinimumPrecisionForSemilinearFV\n",m0;

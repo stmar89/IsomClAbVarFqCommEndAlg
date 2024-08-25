@@ -17,11 +17,12 @@
     SetVerbose("DieudonneModules_L",2);
     SetVerbose("Algorithm_2",1);
     SetVerbose("Algorithm_3",2);
+    SetVerbose("Delta_scaling",2);
     //SetVerbose("nice_unif",2);
     SetVerbose("sigma",2);
     SetVerbose("IsomAbVar",2);
     //SetVerbose("ResidueRingUnits",2);
-    SetAssertions(1);
+    SetAssertions(2);
     SetDebugOnError(true);
 
     overorders_maximal_at_ss:=function(R)
@@ -54,8 +55,10 @@
     //h:=x^4+64;// Terminate. Why? It seems that WKICM(WR_01) is the issue. Maybe the recursion?
     //h:=x^4 + 4*x^3 + 16*x^2 + 32*x + 64; // too slow (funnily, its twist is not that slow)
     //h:=x^6 - x^5 + 4*x^3 - 4*x + 8; // m0 seems to vary a lot: often m0=2, sometimes m0=32
-    // h:=x^8 - 6*x^7 + 18*x^6 - 36*x^5 + 68*x^4 - 144*x^3 + 288*x^2 - 384*x + 256; // FIXED ON 20240819 BUG. sl 1/4,3/4. Quite fast.
-    h:=PP![ 256, 64, 16, 16, -4, 4, 1, 1, 1 ];
+    h:=x^8 - 6*x^7 + 18*x^6 - 36*x^5 + 68*x^4 - 144*x^3 + 288*x^2 - 384*x + 256; // FIXED ON 20240819 BUG. sl 1/4,3/4. Quite fast.
+    //h:=PP![ 256, 64, 16, 16, -4, 4, 1, 1, 1 ];
+    //h:=x^4 + 2*x^3 + 4*x^2 + 8*x + 16; //used while working on optimizing Delta-scaling
+    h:=x^4 + 4*x^2 + 16; // for timings
     h;
 
 
