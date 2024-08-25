@@ -347,3 +347,9 @@
  p^a = 3^2, p-rank = 0,               [1/2m,1/2m], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2^2*3], time = 0 sec, h = x^4 + 9*x^2 + 81
  p^a = 3^2, p-rank = 0,                     [1/2], is R an End ? f, jumps ? f, minimum end ? f, are minimal ends maximal at (0,1) ? [f,f], indices in OE of minimal ends = [3,3^2], time = 0 sec, h = x^4 - 9*x^2 + 81
  p^a = 2^2, p-rank = 0,               [1/2m,1/2m], is R an End ? f, jumps ? t, minimum end ? f, are minimal ends maximal at (0,1) ? [f,f], indices in OE of minimal ends = [2^4,2^3], time = 0 sec, h = x^4 + 4*x^2 + 16
+ p^a = 2^3, p-rank = 0,                     [1/2], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2], time = 0 sec, h = x^4 - 4*x^3 + 8*x^2 - 32*x + 64
+ p^a = 2^3, p-rank = 0,               [1/2m,1/2m], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2^2], time = 0 sec, h = x^4 - 4*x^3 + 16*x^2 - 32*x + 64
+ p^a = 2^3, p-rank = 0,               [1/2m,1/2m], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2^2], time = 0 sec, h = x^4 + 4*x^3 + 16*x^2 + 32*x + 64
+ p^a = 2^3, p-rank = 0,                     [1/2], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2], time = 0 sec, h = x^4 + 4*x^3 + 8*x^2 + 32*x + 64
+ p^a = 2^3, p-rank = 0,                     [1/2], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2], time = 0 sec, h = x^4 - 8*x^2 + 64
+ p^a = 2^3, p-rank = 0,                     [1/2], is R an End ? f, jumps ? f, minimum end ? t, are minimal ends maximal at (0,1) ? [f], indices in OE of minimal ends = [2], time = 0 sec, h = x^4 + 8*x^2 + 64

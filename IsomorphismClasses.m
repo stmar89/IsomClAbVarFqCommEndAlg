@@ -199,7 +199,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             end for;
         end for;
     end for;
-    if GetAssertions() ge 2 then
+    if GetAssertions() ge 3 then
         // TEST (this test is quite time consuming)
         // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
         vprintf IsomAbVar,2 : "Slow test on Ends...";
