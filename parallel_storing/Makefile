@@ -22,7 +22,7 @@ clean_old_parallel:
 
 parallel:
 	@echo "Starting the parallel"
-	parallel -j ${jobs} --timeout ${timeout} --resume --joblog ${fld}joblog -a ${file_input} magma -b cc:={} fld_out:=${fld_out} file_err:=${file_err} ${fld}script.txt 
+	parallel -j ${jobs} --shuf --timeout ${timeout} --resume --joblog ${fld}joblog -a ${file_input} magma -b cc:={} fld_out:=${fld_out} file_err:=${file_err} ${fld}script.txt 
 	@echo "parallel is done! Congrats!"
 	
 
@@ -30,7 +30,7 @@ parallel_special:
 	@echo "Removing old joblog"
 	git rm ${fld}joblog_special || true
 	@echo "Starting the parallel on special input without timeout"
-	parallel -j ${jobs} --shuf --resume --joblog ${fld}joblog_special -a ${file_input_special} magma -b cc:={} fld_out:=${fld_out} file_err:=${file_err} ${fld}script.txt 
+	parallel -j ${jobs} --resume --joblog ${fld}joblog_special -a ${file_input_special} magma -b cc:={} fld_out:=${fld_out} file_err:=${file_err} ${fld}script.txt 
 	@echo "parallel is done! Congrats!"
 	
 
