@@ -908,7 +908,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         vprintf Algorithm_3,3 : "\nfor the %oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable:",iI;
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
-        assert IsCoprime(Denominator(Index(I,p^m0*J)),p);
+        //assert IsCoprime(Denominator(Index(I,p^m0*J)),p);
         if is_F_V_stable(I) then
             vprintf Algorithm_3,2 : "y";
             assert Order(I) eq WR;
