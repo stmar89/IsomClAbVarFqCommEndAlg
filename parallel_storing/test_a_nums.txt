@@ -14,11 +14,17 @@
 
     fld:="~/IsomClassesAbVarFqComEnd/parallel_storing/output/";
     input_ls:=Split(Pipe("ls " cat fld,""));
-    for file in input_ls do
+    tot:=#input_ls;
+    m0s:=[];
+    perc:=0;
+    for ifile->file in input_ls do
+        if Truncate(ifile*100/tot) gt perc then perc+:=1; printf "%o%% ",perc; end if;
         str:=Read(fld cat file);
         iso:=load_isom_classes(str);
         R:=Order(iso[1,1]);
         m0,J,dJ,Q,mQ,F,V:=Explode(R`SemilinearOperators);
+        Append(~m0s,m0);
+        /*
         E:=Algebra(R);
         h:=DefiningPolynomial(E);
         prank:=pRank(IsogenyClass(h:Check:=false));
@@ -65,7 +71,7 @@
                                             Max(s[2]) gt Min(t[2]) }} then
             printf "the a-num are not upper-semicont in %o\n,h";
         end if;
-
+        */
     end for;
 
 
