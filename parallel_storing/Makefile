@@ -4,7 +4,7 @@ file_input_special = ${fld}input_special.txt
 fld_out = ${fld}output/
 file_err = ${fld}/errors.txt
 jobs = 15
-timeout = 7200
+timeout = 28800
 
 all: clean_old_parallel parallel
 
