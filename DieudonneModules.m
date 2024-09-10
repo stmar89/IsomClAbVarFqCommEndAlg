@@ -28,20 +28,6 @@ declare attributes AlgEtQIdl : DeltaEndomorphismRing,
                                Slope,
                                sigma_stable_gens;
 
-intrinsic PlacesAboveRationalPrime(E::AlgEtQ,p::RngIntElt)->SeqEnum[AlgEtQIdl]
-{
-//TODO move this intrinsic to AlgEtQ
-}
-    if not assigned E`PlacesAboveRationalPrime then
-        E`PlacesAboveRationalPrime:=AssociativeArray();
-    end if;
-    if not IsDefined(E`PlacesAboveRationalPrime,p) then
-        require IsPrime(p) : "The integer p needs to be a prime number";
-        E`PlacesAboveRationalPrime:=PrimesAbove(p*MaximalOrder(E));
-    end if;
-    return E`PlacesAboveRationalPrime;
-end intrinsic;
-
 ////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// Slopes of Primes ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
