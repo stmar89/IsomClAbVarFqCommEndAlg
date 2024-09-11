@@ -1,8 +1,31 @@
 /* vim: set syntax=magma : */
+
+/////////////////////////////////////////////////////
+// Stefano Marseglia, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
+// 
+// Distributed under the terms of the GNU Lesser General Public License (L-GPL)
+//      http://www.gnu.org/licenses/
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3.0 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+// 
+// Copyright 2024, S. Marseglia
+/////////////////////////////////////////////////////
+
 /*
     TODO
-    - 'Duality', i.e. the induced complex conjugation on A, allow us to compute only for place with slope <= 1/2.
-        Need to implement it. Look for DUALITY keyword.
     - check types (output and input) of all intrinsics: switch from R to IsogenyClass
       using VarArgs. But it is not clear to me how to do it, since it depends on QI, hence on I.
 */
@@ -15,18 +38,19 @@ declare verbose sigma,3;
 declare verbose alpha_at_precision,3;
 declare verbose Delta_scaling,3;
 
-declare attributes AlgEtQ    : sigma_fin_prec,
-                               PlacesAboveRationalPrime;
+declare attributes IsogenyClassFq : DieudonneAlgebra,
+                                    SemilinearOperators;
+                               
 
-declare attributes AlgEtQOrd : units_quotient_fixed_sigma,
-                               DieudonneAlgebra, //TODO this should be an attribute of the IsogenyClass
-                               SemilinearOperators, //TODO this should be an attribute of the IsogenyClass
-                               PrimesOfSlopeIn01;
+declare attributes AlgEtQ         : sigma_fin_prec,
+                                    PlacesAboveRationalPrime;
 
-declare attributes AlgEtQIdl : DeltaEndomorphismRing,
-                               PlacesOfAAbove,
-                               Slope,
-                               sigma_stable_gens;
+declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
+                                    PrimesOfSlopeIn01;
+
+declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
+                                    PlacesOfAAbove,
+                                    Slope;
 
 ////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// Slopes of Primes ///////////////////////////////////
@@ -65,17 +89,25 @@ end intrinsic;
 ///////////////////////////////// DieudonneAlgebra /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic DieudonneAlgebra(R::AlgEtQOrd)->Any
-{This intrisic populates the attribute DieudonneAlgebra of the input, which consists of the tuple
-<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
-where //TODO
-}
-    if not assigned R`DieudonneAlgebra then
+intrinsic DieudonneAlgebra(isog::IsogenyClassFq)->Any
+{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DieudonneAlgebra of the isogeny class, which consists of the tuple <places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision> where: 
+- places_E is a triple of sequences containing the maximal ideals with slope equal to 0, in (0,1), equal to 1, respectively;
+- L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL;
+- A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
+- WR is an order in A, isomorphic to R\otimes_Z OA.
+- Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
+- Delta_inverse_ideal is a function that given a fractional WR ideal returns its preimage via Delta_map;
+- primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
+- primes_of_S_of_slope_in_01 is a function that an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
+- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 3 of the paper to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_{i=1}^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_{LE_nu/E_nu}(u)=pi_nu.}
+    if not assigned isog`DieudonneAlgebra then
+        require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
+        R:=ZFVOrder(isog);
         E:=Algebra(R);
         pi:=PrimitiveElement(E);
-        h:=DefiningPolynomial(E);
-        g:=Degree(h) div 2;
-        q:=Truncate(ConstantCoefficient(h)^(1/g));
+        //h:=DefiningPolynomial(E);
+        g:=Dimension(isog);
+        q:=FiniteField(isog);
         t,p,a:=IsPrimePower(q);
         assert t;
         
@@ -345,7 +377,7 @@ where //TODO
         // #######################
 
         primes_of_A_above_place_of_E:=function(A,P)
-        // given a maximal ideal P of OE returns the maximal ideals of OA above P
+        // see the description above
             if not assigned P`PlacesOfAAbove then
                 OA:=MaximalOrder(A);
                 P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
@@ -354,6 +386,7 @@ where //TODO
         end function;
        
         primes_of_S_of_slope_in_01:=function(S)
+        // see the description above
             if not assigned S`PrimesOfSlopeIn01 then
                 pp:=[];
                 oneS:=OneIdeal(S);
@@ -373,8 +406,7 @@ where //TODO
         // #######################
 
         alpha_at_precision:=function(m)
-        // given a positive integer m, it returns an element alpha in A such that its image in ....TODO
-        // computes for the Frobenius sigma in QI=OA/p^m*OA.
+        // see the description above
         // - alpha using the unit argument
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
@@ -452,18 +484,6 @@ where //TODO
                                         embs[i](rs_nu[i](One(A))) else 
                                         embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
                 alpha_A:=gamma_A*beta_A;
-
-                //// Check that N_{LEnu/Enu}(alpha) - pi_nu in Pnu^{m}, for every nu.
-                //TODO the following test is probably not correct.
-                //if GetAssertions() ge 2 then
-                //    norm_alpha:=&*[ i eq 1 select alpha_A else Self(i-1)@qI@sigma@@qI : i in [1..a] ];
-                //    x:=(norm_alpha-pi_A)@qI;
-                //    for nu in plE_sl_in01 do
-                //        nu_sub:=sub<QI | [ qI(Delta_map(z)) : z in ZBasis(nu^m) ]>;
-                //        assert2 x in nu_sub;
-                //    end for;
-                //end if;
-                
                 Append(~alpha_Q_inAs,alpha_A);
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
@@ -473,10 +493,17 @@ where //TODO
             return alpha;
         end function;
 
-        R`DieudonneAlgebra:=<p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
+        isog`DieudonneAlgebra:=<places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
     end if;
-    return Explode(R`DieudonneAlgebra);
+    return Explode(isog`DieudonneAlgebra);
+end intrinsic;
 
+
+intrinsic SemilinearOperators(isog::IsogenyClassFq)->Any
+{//TODO
+}
+    require assigned isog`SemilinearOperators : "Run first IsomorphismClassesDieudonneModules(isog)";
+    return isog`SemilinearOperators;
 end intrinsic;
 
 
@@ -484,11 +511,19 @@ end intrinsic;
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic IsomorphismClassesDieudonneModules(R::AlgEtQOrd : MinimumPrecisionForSemilinearFV:=0)->Any
-{//TODO
-The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to which the semilinear operators F and V are computed. More precisely, the isomorphism classes of WR\{F,V\}-ideals are computed in (the (0,1)-part of) a quotient of the form J/p^m*J, with J a WR\{F,V\}-ideal with multiplicator ring OA. Setting MinimumPrecisionForSemilinearFV increses the exponend m.}
+intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->Any
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of th local-local parts of the Dieudonné modules of the varieteis. These representatives are given as fractional WR-ideals, where WR is defined as in DieudonneAlgebra, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
+    require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
-    p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
+    R:=ZFVOrder(isog);
+    E:=Algebra(R);
+    pi:=PrimitiveElement(E);
+    //h:=DefiningPolynomial(E);
+    g:=Dimension(isog);
+    q:=FiniteField(isog);
+    t,p,a:=IsPrimePower(q);
+    assert t;
+    places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
     _,plE_sl_in01,_:=Explode(places_E);
@@ -653,7 +688,6 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
         end if;
     end if;
-    // XXX
 
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
@@ -813,7 +847,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
     Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP01*J);
     vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,1 : "Computing Qm0...";
-    den_ideal:=p^(m0)*J+PP01*J; //to be stored in SemilinearOperators, together with J
+    den_ideal:=p^(m0)*J+PP01*J;
     Qm0,qm0:=Quotient(J,den_ideal);
     vprintf Algorithm_3,1 : "done\n";
     // these quotients are isomorphic to the (0,1)-part of J/p^(m0+1)J and J/p^m0J
@@ -877,7 +911,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
         end for;
         vprintf Algorithm_3,2 : "all good.\n";
     end if;
-    R`SemilinearOperators:=<m0,J,den_ideal,Qm0,qm0,FQm0,VQm0>;
+    isog`SemilinearOperators:=<m0,J,den_ideal,Qm0,qm0,FQm0,VQm0>;
 
     is_F_V_stable:=function(I)
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;

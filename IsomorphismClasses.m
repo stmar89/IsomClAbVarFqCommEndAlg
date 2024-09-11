@@ -3,7 +3,7 @@
 declare verbose IsomClTate, 3;
 declare verbose IsomAbVar, 3;
 
-intrinsic IsomorphismClassesTateModules(R::AlgEtQOrd)->Any
+intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
 { TODO }
     // ################### 
     // we compute the isomorphism classes of the part at ell\neq p, slope 0 and slope 1;
@@ -14,16 +14,17 @@ intrinsic IsomorphismClassesTateModules(R::AlgEtQOrd)->Any
 
     //TODO if there are no sing primes then the output is empty
    
+    require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
+    R:=ZFVOrder(isog);
     E:=Algebra(R);
     pi:=PrimitiveElement(E);
-    O:=MaximalOrder(E);
-    indOR:=Index(O,R);
-    pi:=PrimitiveElement(E);
-    h:=DefiningPolynomial(E);
-    g:=Degree(h) div 2;
-    q:=Truncate(ConstantCoefficient(h)^(1/g));
+    //h:=DefiningPolynomial(E);
+    g:=Dimension(isog);
+    q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
+    O:=MaximalOrder(E);
+    indOR:=Index(O,R);
     vp_indOR:=Valuation(indOR,p);
 
     ps:=[];
@@ -171,12 +172,13 @@ glue_local_parts_orders:=function(primes,orders)
     return S;
 end function;
 
-intrinsic IsomorphismClassesAbelianVarieties(R::AlgEtQOrd : MinimumPrecisionForSemilinearFV:=0)->Any
+intrinsic IsomorphismClassesCommEndAlg(R::AlgEtQOrd : MinimumPrecisionForSemilinearFV:=0)->Any
 { TODO 
 The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to which the semilinear operators F and V are computed while computing the isomorphism classes of the Dieudonne Modules. More precisely, the isomorphism classes of WR\{F,V\}-ideals are computed in (the (0,1)-part of) a quotient of the form J/p^m*J, with J a WR\{F,V\}-ideal with multiplicator ring OA. Setting MinimumPrecisionForSemilinearFV increses the exponend m.}
+    require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     output:=[];
-    isom_away_01,places_away_01:=IsomorphismClassesTateModules(R);
-    isom_DM_01,places_01:=IsomorphismClassesDieudonneModules(R);
+    isom_away_01,places_away_01:=IsomorphismClassesTateModulesCommEndAlg(R);
+    isom_DM_01,places_01:=IsomorphismClassesDieudonneModulesCommEndAlg(R);
     for dm in isom_DM_01 do
         dm_order:=dm`DeltaEndomorphismRing;
         dm_orders:=[ dm_order : P in places_01 ];
@@ -203,7 +205,15 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
         // TEST (this test is quite time consuming)
         // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
         vprintf IsomAbVar,2 : "Slow test on Ends...";
-        p,q,a,g,E,pi,places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
+        R:=ZFVOrder(isog);
+        E:=Algebra(R);
+        //pi:=PrimitiveElement(E);
+        //h:=DefiningPolynomial(E);
+        //g:=Dimension(isog);
+        //q:=FiniteField(isog);
+        //t,p,a:=IsPrimePower(q);
+        //assert t;
+        L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
         places_E_0,places_E_01,places_1:=Explode(places_E);
         OE:=MaximalOrder(E);
         ends:={@ X[4] : X in output @};
