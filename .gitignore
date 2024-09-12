@@ -1,6 +1,5 @@
 *.swp
 *.sig
 *joblog*
-tmp_*
-parallel_storing/output
-parallel_storing/errors.txt
+old/parallel_storing/output
+old/parallel_storing/errors.txt
