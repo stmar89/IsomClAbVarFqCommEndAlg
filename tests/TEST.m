@@ -1,6 +1,55 @@
 /* vim: set syntax=magma : */
-/*
-*/
+
+    // Testing on a few classes together with saving loading.
+
+    AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+
+    PP<x>:=PolynomialRing(Integers());
+
+    hs:=[
+        x^4 - 9*x^3 + 36*x^2 - 72*x + 64, // 1 iso
+        x^2 - 3*x + 9,
+        x^2 + 9,
+        PP![ 16, 8, 8, 2, 1 ], //4 classes
+        x^4 + 4*x^2 + 16
+        ];
+
+    for h in hs do
+        h;
+        isog:=IsogenyClass(h);
+        time iso:=IsomorphismClasses(isog);
+        str:=SaveAbVarFqCommEndAlg(iso);
+        delete isog;
+        isog:=IsogenyClass(h);
+        iso_test:=LoadAbVarFqCommEndAlg(isog,str);
+        assert #iso eq #iso_test;
+        _,J,dJ,Q,qm,F,V:=SemilinearOperators(isog);
+        assert #Q eq #Quotient(J,dJ);
+        for i in [1..#iso_test] do
+            I,M,L,S:=IsomDataCommEndAlg(iso[i]);
+            II,MM,LL,SS:=IsomDataCommEndAlg(iso_test[i]);
+            _:=I eq 2*I; //to assign the Hash
+            _:=II eq 2*II; //to assign the Hash
+            _:=M eq 2*M; //to assign the Hash
+            _:=MM eq 2*MM; //to assign the Hash
+            _:=L eq 2*L; //to assign the Hash
+            _:=LL eq 2*LL; //to assign the Hash
+            assert II`Hash eq I`Hash;
+            assert MM`Hash eq M`Hash;
+            assert LL`Hash eq L`Hash;
+            assert S`Hash eq SS`Hash;
+            assert MM subset J;
+            MQ:=sub<Q|[qm(z):z in ZBasis(MM)]>;
+            FMQ:=sub<Q|[F(MQ.i):i in [1..Ngens(MQ)]]>;
+            VMQ:=sub<Q|[V(MQ.i):i in [1..Ngens(MQ)]]>;
+            assert FMQ+VMQ subset MQ;
+        end for;
+    end for;
+
 
     // parameters for quick tests
     allow_cs:=false;
@@ -19,6 +68,7 @@
         x^6 - x^5 + 4*x^3 - 4*x + 8 // Magma internal error ... buh...
         ];
 
+    // TeST on a very big set of inputs: comparing ordinary, cs, almost ordinary data
 
     AttachSpec("~/AlgEt/spec");
     AttachSpec("~/AlgEt/specMod");
@@ -131,63 +181,4 @@
             end if;
         end if;
     end for;
-
-
-
-
-
-
-/*
-
-    AttachSpec("~/AlgEt/spec");
-    Attach("DieudonneModules.m");
-    Attach("IsomorphismClasses.m");
-
-    SetVerbose("DieudonneModules",2);
-
-    PP<x>:=PolynomialRing(Integers());
-    //h:=( 16 - 4*x + x^2 )*( 256 - 112*x + 40*x^2 - 7*x^3 + x^4 ); // 3.16.al_dg_aou, Dimension(A) = 48
-    //h:=( 4 - 2*x + x^2 )*( 16 - 4*x + 4 *x^2 - x^3 + x^4); // 3.4.ad_k_aq, Dimension(A) = 12
-    //h:=( 16 - 4*x + 4 *x^2 - x^3 + x^4); // Dimension(A) = 12
-    //h:=x^2 - 2*x + 4;
-    h:=x^4 - 2*x^3 + 4*x^2 - 8*x + 16; //slow
-    h:=x^4 + x^3 - 2*x^2 + 4*x + 16;
-
-    g:=Degree(h) div 2;
-    q:=Truncate(ConstantCoefficient(h)^(1/g));
-    t,p,a:=IsPrimePower(q);
-    assert t; delete t;
-
-    E:=EtaleAlgebra(h);
-    pi:=PrimitiveElement(E);
-    R:=Order([pi,q/pi]);
-
-    time IsomorphismClassesTateModules(R);
-    time IsomorphismClassesDieudonneModules(R);
-    time #IsomorphismClassesAbelianVarieties(R);
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
