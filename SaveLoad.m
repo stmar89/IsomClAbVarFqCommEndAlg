@@ -1,13 +1,41 @@
 /* vim: set syntax=magma : */
 
-intrinsic save_isom_classes(classes::SeqEnum)-> .
-{ We get a sequence of elments of the form <I,dm,L,S>, where :
- - I is an fractional R-ideal in E=Q[pi], where R=Z[pi,q/pi];
- - dm is a fractional WR-ideal in A;
- - L is an invertible S-ideal in E;
- - S is an order in E, determined as the End of I and dm.
- Returns a string that contains all the data. 
- This string can be loaded using load_isom_classes, defined below. }
+/////////////////////////////////////////////////////
+// Stefano Marseglia, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
+// 
+// Distributed under the terms of the GNU Lesser General Public License (L-GPL)
+//      http://www.gnu.org/licenses/
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3.0 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+// 
+// Copyright 2024, S. Marseglia
+/////////////////////////////////////////////////////
+
+intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
+{Given a sequence of abelian vareities belonging to an isogney class over Fq with commutative Fq-endomorphism algebra, returns a string containing all the info about the isomorphism classes of the varietis. This string can be loaded using LoadAbVarFqCommEndAlg defined below.}
+    isog:=IsogenyClass(classes[1]);
+    require forall{A:A in classes|IsogenyClass(A) eq isog} : "The abelian varieties need to belong to the same isogeny class.";
+    require IsSquarefree(isog) : "The isogeny class needs to have squarefree Weil polynomial.";
+    classes0:=[];
+    for A in classes do
+        tup:=A`IsomDataCommEndAlg;
+        Append(~classes0,tup);
+    end for;
+    classes:=classes0;
+
     E:=Algebra(classes[1,1]);
     E:=[ Coefficients(DefiningPolynomial(F)) : F in Components(E) ];
     E:=Sprint(E);
@@ -49,8 +77,8 @@ intrinsic save_isom_classes(classes::SeqEnum)-> .
     pics_str cat:="]";
 
     R:=Order(classes[1,1]);
-    assert assigned R`SemilinearOperators;
-    m0,J,den_idl,Qm0,qm0,FQm0,VQm0:=Explode(R`SemilinearOperators);
+    assert assigned isog`SemilinearOperators;
+    m0,J,den_idl,Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperators);
     _,zbJ:=PrintSeqAlgEtQElt(ZBasis(J));
     _,zbden:=PrintSeqAlgEtQElt(ZBasis(den_idl));
     _,imgsF:=PrintSeqAlgEtQElt([(FQm0(Qm0.i))@@qm0 : i in [1..Ngens(Qm0)]]); //in J
@@ -68,17 +96,19 @@ intrinsic save_isom_classes(classes::SeqEnum)-> .
     return output;
 end intrinsic;
 
-intrinsic load_isom_classes(input::MonStgElt)-> .
-{ input: the string produced by save_isom_classes
-  output: a sequence of tuples <I,dm,L,S>, as produced by IsomorphismClassesAbelianVarieties.
-  R`SemilinearOperators is populated with the information about the computation of the semilinear F and V on the Dieudonne modules.}
+intrinsic LoadAbVarFqCommEndAlg(isog::IsogenyClassFq,input::MonStgElt)->SeqEnum[AbelianVarietyFq]
+{Given an isogeny class of abelian varieties over Fq with commutative Fq-endomorphism algebra and the string produced by SaveAbVarFqCommEndAlg, returns the sequence of abelian varieties which is stored in the string. The SemilinearOperator attribute of isog is populated (see SemilinearOperators for details).}
     input:=eval(input);
     PP<x>:=PolynomialRing(Integers());
+    /*
     E:=EtaleAlgebra([NumberField(PP!f) : f in input[1]]);
     h:=DefiningPolynomial(E);
     pi:=PrimitiveElement(E);
     q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
     R:=Order([pi,q/pi]);
+    */
+    R:=ZFVOrder(isog);
+    E:=Algebra(R);
     A:=EtaleAlgebra([NumberField(PP!f) : f in input[2]]);
     WR:=Order([A!z : z in input[3]]);
     ends:=[Order([E!z : z in S]) : S in input[4]];
@@ -87,16 +117,18 @@ intrinsic load_isom_classes(input::MonStgElt)-> .
     dms:=[ Ideal(WR,[A!z:z in dm]) : dm in input[7] ];
     output:=[];
     for iso in input[8] do
-        Append(~output, < Is[iso[1]] , dms[iso[2]] , pics[iso[4],iso[3]] , ends[iso[4]] >);
+        AV:=AbelianVarietyCommEndAlg(isog,<Is[iso[1]],dms[iso[2]],pics[iso[4],iso[3]],ends[iso[4]]>);
+        AV`EndomorphismRing:=ends[iso[4]];
+        Append(~output,AV);
     end for;
 
-    _,p,a:=IsPrimePower(q);
     slinop:=input[9];
     m0:=slinop[1];
     J:=Ideal(WR,[A!z:z in slinop[2]]);
     J`ZBasis:=[A!z : z in slinop[2]]; // the ideal creation does an HNF of the ZBasis.
                                       // this messes up the info about the quotient below.
     den_idl:=Ideal(WR,[A!z:z in slinop[3]]);
+    p:=CharacteristicFiniteField(isog);
     assert p^m0*J subset den_idl;
     Qm0,qm0:=Quotient(J,den_idl);
     assert Index(J,den_idl) eq #Qm0;
@@ -110,71 +142,7 @@ intrinsic load_isom_classes(input::MonStgElt)-> .
     VQm0:=hom<Qm0->Qm0|imgsV>;
     assert forall{i:i in [1..Ngens(Qm0)] | FQm0(VQm0(Qm0.i)) eq p*Qm0.i};
     assert forall{i:i in [1..Ngens(Qm0)] | VQm0(FQm0(Qm0.i)) eq p*Qm0.i};
-    R`SemilinearOperators:=<m0,J,den_idl,Qm0,qm0,FQm0,VQm0>;
+    isog`SemilinearOperators:=<m0,J,den_idl,Qm0,qm0,FQm0,VQm0>;
     return output;
 end intrinsic;
-
-
-/*
-    
-    AttachSpec("~/AlgEt/spec");
-    Attach("PrimesAttributes.m");
-    Attach("DieudonneModules.m");
-    Attach("IsomorphismClasses.m");
-    Attach("SaveLoad.m");
-
-    PP<x>:=PolynomialRing(Integers());
-
-    hs:=[
-        x^4 + 4*x^2 + 16,
-        x^4 - 9*x^3 + 36*x^2 - 72*x + 64, // 1 iso
-        x^2 - 3*x + 9,
-        x^2 + 9,
-        PP![ 16, 8, 8, 2, 1 ] //4 classes
-        ];
-
-    for h in hs do
-        q:=Truncate(ConstantCoefficient(h)^(2/Degree(h)));
-        E:=EtaleAlgebra(h);
-        pi:=PrimitiveElement(E);
-        R:=Order([pi,q/pi]);
-        time iso:=IsomorphismClassesAbelianVarieties(R);
-
-        str:=save_isom_classes(iso);
-        delete q,E,pi,R;
-        iso_test:=load_isom_classes(str);
-        assert #iso eq #iso_test;
-        for i in [1..#iso_test] do
-            cl:=iso[i];
-            cl_test:=iso_test[i];
-            I:=cl[1]; _:=I eq 2*I; //to assign the Hash
-            I_test:=cl_test[1]; _:=I_test eq 2*I_test; //to assign the Hash
-            assert I_test`Hash eq I`Hash;
-            I:=cl[2]; _:=I eq 2*I; //to assign the Hash
-            I_test:=cl_test[2]; _:=I_test eq 2*I_test; //to assign the Hash
-            assert I_test`Hash eq I`Hash;
-            I:=cl[3]; _:=I eq 2*I; //to assign the Hash
-            I_test:=cl_test[3]; _:=I_test eq 2*I_test; //to assign the Hash
-            assert I_test`Hash eq I`Hash;
-            assert cl_test[4]`Hash eq cl[4]`Hash;
-        end for;
-        R:=Order(iso_test[1,1]);
-        _,J,dJ,Q,qm,F,V:=Explode(R`SemilinearOperators);
-        assert #Q eq #Quotient(J,dJ);
-        for cl in iso_test do
-            M:=cl[2];
-            assert M subset J;
-            MQ:=sub<Q|[qm(z):z in ZBasis(M)]>;
-            FMQ:=sub<Q|[F(MQ.i):i in [1..Ngens(MQ)]]>;
-            VMQ:=sub<Q|[V(MQ.i):i in [1..Ngens(MQ)]]>;
-            assert FMQ+VMQ subset MQ;
-        end for;
-    end for;
-
-*/
-
-
-
-
-
 

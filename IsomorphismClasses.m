@@ -1,19 +1,36 @@
 /* vim: set syntax=magma : */
 
-declare verbose IsomClTate, 3;
+/////////////////////////////////////////////////////
+// Stefano Marseglia, stefano.marseglia89@gmail.com
+// https://stmar89.github.io/index.html
+// 
+// Distributed under the terms of the GNU Lesser General Public License (L-GPL)
+//      http://www.gnu.org/licenses/
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 3.0 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+// 
+// Copyright 2024, S. Marseglia
+/////////////////////////////////////////////////////
+
+declare verbose IsomClNotLocalLocal, 3;
 declare verbose IsomAbVar, 3;
 
-intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
-{ TODO }
-    // ################### 
+intrinsic IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
+{Returns a sequence of fractional ZFVOrder-ideals representing the local isomorphism classes for all primes different from the characteristic p, the local-étale part and the étale-local part of the ZFVOrder of isog.}
     // we compute the isomorphism classes of the part at ell\neq p, slope 0 and slope 1;
     // recall that these 3 parts can be done using R ideals: no need to extend;
-    
-    // we separate the singular primes of R into 4 sets:
-    // above ell\neq p; slope 0; slope in (0,1); slope 1.
-
-    //TODO if there are no sing primes then the output is empty
-   
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     R:=ZFVOrder(isog);
     E:=Algebra(R);
@@ -29,21 +46,10 @@ intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
 
     ps:=[];
     sing:=SingularPrimes(R);
-    sing_ell:=[];
-    sing_0:=[];
-    sing_1:=[];
-    for P in sing do
-        ind:=Index(R,P);
-        if IsCoprime(ind,p) then
-            Append(~sing_ell,P);
-        else
-            sP:=Slope(P : CheckMaximal:=false);
-            if sP eq 0 then
-                Append(~sing_0,P);
-                Append(~sing_1,ComplexConjugate(P));
-            end if;
-        end if;
-    end for;
+    sing_ell:=SingPrimesOfZFVAwayFrom_p(isog);
+    ppR_0,_,ppR_1:=PrimesOfZFVAbove_p(isog);
+    sing_0:=[P:P in ppR_0|P in sing];
+    sing_1:=[P:P in ppR_1|P in sing];
 
     part_ell:=[];
     for ell in sing_ell do
@@ -76,7 +82,7 @@ intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
     wk_pp_idls:=[];
     pp_pows:=[];
     t1:=Cputime();
-    vprintf IsomClTate,2 : "We make all the local parts integral\n";
+    vprintf IsomClNotLocalLocal,2 : "We make all the local parts integral\n";
     for ip->wk in wk_pp do
        wk_exps:=[];
        wk_idls:=[];
@@ -95,11 +101,11 @@ intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
        Append(~pp_pows,Pk_ip);
        Append(~wk_pp_idls,wk_idls);
     end for;
-    vprintf IsomClTate,2 : "...Done in %o secs.\n",Cputime(t1);
+    vprintf IsomClNotLocalLocal,2 : "...Done in %o secs.\n",Cputime(t1);
        
     n:=#pp;
     t0:=Cputime();
-    vprintf IsomClTate,2 : "We compute the \prod_{j \\ne i} P_j^k_j\n";
+    vprintf IsomClNotLocalLocal,2 : "We compute the \prod_{j \\ne i} P_j^k_j\n";
     prod_j_ne_i:=[ ];
     for i in [1..n] do
        if n eq 1 then
@@ -110,10 +116,10 @@ intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
        ZBasisLLL(prod);
        Append(~prod_j_ne_i,prod);
     end for;
-    vprintf IsomClTate,2 : "\t...Done in %o secs.\n",Cputime(t0);
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
 
     t0:=Cputime();
-    vprintf IsomClTate,2 : "We modify each entry of the cartesian product\n";
+    vprintf IsomClNotLocalLocal,2 : "We modify each entry of the cartesian product\n";
     for ip in [1..n] do
        for i in [1..#wk_pp_idls[ip]] do
            I:=(wk_pp_idls[ip][i]+pp_pows[ip])*prod_j_ne_i[ip];
@@ -121,12 +127,12 @@ intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
            wk_pp_idls[ip][i]:=I;
        end for;
     end for;
-    vprintf IsomClTate,2 : "\t...Done in %o secs.\n",Cputime(t0);
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
 
     t0:=Cputime();
     tot:=&*[#x : x in wk_pp_idls]; perc_old:=0; iI:=0;
     wk_pp_idls:=CartesianProduct(wk_pp_idls);
-    vprintf IsomClTate,2 : "We start patching together the local parts\n";
+    vprintf IsomClNotLocalLocal,2 : "We start patching together the local parts\n";
     wk:=[];
     for I_Ps in wk_pp_idls do
        if GetVerbose("WKICM") ge 3 then
@@ -140,15 +146,15 @@ intrinsic IsomorphismClassesTateModulesCommEndAlg(isog::IsogenyClassFq)->Any
                                        (J+I_Ps[ip]) eq J+pp[ip]*(J+I_Ps[ip])};
        Append(~wk,J);
     end for;
-    vprintf IsomClTate,2 : "\t...Done in %o secs.\n",Cputime(t0);
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
 
     t0:=Cputime();
-    vprintf IsomClTate,2 : "We LLL all the ZBasis\n";
+    vprintf IsomClNotLocalLocal,2 : "We LLL all the ZBasis\n";
     for I in wk do
        ZBasisLLL(I);
     end for;
-    vprintf IsomClTate,2 : "\t...Done in %o secs\n",Cputime(t0);
-    return wk,pp;
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs\n",Cputime(t0);
+    return wk;
 end intrinsic;
 
 glue_local_parts_orders:=function(primes,orders)
@@ -172,13 +178,14 @@ glue_local_parts_orders:=function(primes,orders)
     return S;
 end function;
 
-intrinsic IsomorphismClassesCommEndAlg(R::AlgEtQOrd : MinimumPrecisionForSemilinearFV:=0)->Any
-{ TODO 
-The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to which the semilinear operators F and V are computed while computing the isomorphism classes of the Dieudonne Modules. More precisely, the isomorphism classes of WR\{F,V\}-ideals are computed in (the (0,1)-part of) a quotient of the form J/p^m*J, with J a WR\{F,V\}-ideal with multiplicator ring OA. Setting MinimumPrecisionForSemilinearFV increses the exponend m.}
+intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AbVarFq]
+{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     output:=[];
-    isom_away_01,places_away_01:=IsomorphismClassesTateModulesCommEndAlg(R);
-    isom_DM_01,places_01:=IsomorphismClassesDieudonneModulesCommEndAlg(R);
+    places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);
+    places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_0|not IsInvertible(P)];
+    isom_away_01:=IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog);
+    isom_DM_01:=IsomorphismClassesDieudonneModulesCommEndAlg(isog);
     for dm in isom_DM_01 do
         dm_order:=dm`DeltaEndomorphismRing;
         dm_orders:=[ dm_order : P in places_01 ];
@@ -189,7 +196,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             primes:=places_away_01 cat places_01;
             assert #orders eq #primes;
             if #primes eq 0 then
-                S:=R;
+                S:=ZFVOrder(I);
             else
                 S:=glue_local_parts_orders(primes, ell_01_orders cat dm_orders);
             end if;
@@ -201,56 +208,7 @@ The Vararg MinimumPrecisionForSemilinearFV can be used to force the precision to
             end for;
         end for;
     end for;
-    if GetAssertions() ge 3 then
-        // TEST (this test is quite time consuming)
-        // SI c I and Delta(S)M c M, and S is maximal among the overorders with these properties.
-        vprintf IsomAbVar,2 : "Slow test on Ends...";
-        R:=ZFVOrder(isog);
-        E:=Algebra(R);
-        //pi:=PrimitiveElement(E);
-        //h:=DefiningPolynomial(E);
-        //g:=Dimension(isog);
-        //q:=FiniteField(isog);
-        //t,p,a:=IsPrimePower(q);
-        //assert t;
-        L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR:=DieudonneAlgebra(R);
-        places_E_0,places_E_01,places_1:=Explode(places_E);
-        OE:=MaximalOrder(E);
-        ends:={@ X[4] : X in output @};
-        for S in ends do
-            Is:=[ X[1] : X in output | X[4] eq S ];
-            Ms:=[ X[2] : X in output | X[4] eq S ];
-            for I in Is, M in Ms do
-                end_test:=[];
-                for T in OverOrders(R) do
-                    mT:=R!!OneIdeal(T);
-                    if #places_away_01 gt 0 then
-                        IT:=R!!(T!!I);
-                        I_IT:=I+IT;
-                        sendsItoI:=forall{P : P in places_away_01 | I_IT eq I + P*I_IT }; 
-                    else
-                        sendsItoI:=true; 
-                    end if;
-                    if #places_01 gt 0 then
-                        MT:=Ideal(WR,[ Delta_map(t)*m : t in ZBasis(T) , m in ZBasis(M) ]);
-                        M_MT:=M+MT;
-                        assert assigned WR`PrimesOfSlopeIn01;
-                        sendsMtoM:=forall{ P : P in WR`PrimesOfSlopeIn01 | M_MT eq M + P*(M_MT) };
-                        // M = MT at (0,1)
-                    else
-                        sendsMtoM:=true;
-                    end if;
-                    if sendsItoI and sendsMtoM then
-                        Append(~end_test,T);
-                    end if;
-                end for;
-                assert S eq Order(&cat[ ZBasis(T) : T in end_test ]);
-            end for;
-            vprintf IsomAbVar,2 : "ok.";
-        end for;
-        vprintf IsomAbVar,2 : "..all good\n";
-
-    end if;
+    output:=[AbelianVarietyCommEndAlg(isog,tup) : tup in output ];
     return output;
 end intrinsic;
 

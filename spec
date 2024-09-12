@@ -1,5 +1,8 @@
+.
 {
+CreationAbVarFq.m
+PrimesIsog.m
 DieudonneModules.m
-IsomorphismClasses.m    
+IsomorphismClasses.m
 SaveLoad.m
 }

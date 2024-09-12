@@ -24,12 +24,6 @@
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
-/*
-    TODO
-    - check types (output and input) of all intrinsics: switch from R to IsogenyClass
-      using VarArgs. But it is not clear to me how to do it, since it depends on QI, hence on I.
-*/
-
 declare verbose DieudonneModules,3;
 declare verbose DieudonneModules_L,3;
 declare verbose Algorithm_2,3;
@@ -38,10 +32,9 @@ declare verbose sigma,3;
 declare verbose alpha_at_precision,3;
 declare verbose Delta_scaling,3;
 
-declare attributes IsogenyClassFq : DieudonneAlgebra,
+declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg,
                                     SemilinearOperators;
                                
-
 declare attributes AlgEtQ         : sigma_fin_prec,
                                     PlacesAboveRationalPrime;
 
@@ -49,85 +42,33 @@ declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
                                     PrimesOfSlopeIn01;
 
 declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
-                                    PlacesOfAAbove,
-                                    Slope;
+                                    PlacesOfAAbove;
 
 ////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// Slopes of Primes ///////////////////////////////////
+///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic Slope(P::AlgEtQIdl : CheckMaximal:=true)->RngIntElt
-{Given a maximal ideal P of the maximal order of the commutative endomorphism algebra E=Q[pi] of abelian varieties over Fq, with q=p^a, it returns the slope of P, which is defined as val_P(pi)/(a*e_P) where val_P(pi) is the valuation of pi at P and e_P is the ramification index of P.
-If the vararg CheckMaximal is set to false, the instrinsic will accept as input also a P is a maximal ideal of a non-maximal order and return val_PP(pi)/(a*e_PP) where PP is a maximal ideal of the maximal order above P. If the output is not 0 or 1, then it is not well defined: it will be a rational number in the open interval (0,1), but the exact value might depend on the choice of PP above P.}
-    if not assigned P`Slope then
-        require IsPrime(P) : "The ideal is not a maximal ideal.";
-        S:=Order(P);
-        if CheckMaximal then
-            require IsMaximal(S) : "The ideal is not a maximal ideal of the maximal order. You might want to set the VarArg CheckMaximal to false.";
-        end if;
-        E:=Algebra(P);
-        pi:=PrimitiveElement(E);
-        h:=DefiningPolynomial(E);
-        g:=Degree(h) div 2;
-        q:=Truncate(ConstantCoefficient(h)^(1/g));
-        t,p,a:=IsPrimePower(q);
-        assert t;
-        if not IsMaximal(S) then
-            t:=exists(PP){ PP : PP in PlacesAboveRationalPrime(E,p) | OneIdeal(S) meet S!!PP eq P};
-            assert t;
-            P`Slope:=$$(PP);
-        else
-            val_pi:=Valuation(pi,P);
-            eP:=RamificationIndex(P);
-            P`Slope:=val_pi/(a*eP);
-        end if;
-    end if;
-    return P`Slope;
-end intrinsic;
-
-////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// DieudonneAlgebra /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-
-intrinsic DieudonneAlgebra(isog::IsogenyClassFq)->Any
-{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DieudonneAlgebra of the isogeny class, which consists of the tuple <places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision> where: 
-- places_E is a triple of sequences containing the maximal ideals with slope equal to 0, in (0,1), equal to 1, respectively;
-- L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL;
+intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,UserProgram
+{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple <L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision> where: 
+- L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OA.
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
 - Delta_inverse_ideal is a function that given a fractional WR ideal returns its preimage via Delta_map;
 - primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
 - primes_of_S_of_slope_in_01 is a function that an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
-- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 3 of the paper to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_{i=1}^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_{LE_nu/E_nu}(u)=pi_nu.}
-    if not assigned isog`DieudonneAlgebra then
+- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 3 of the paper to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.}
+    if not assigned isog`DiedudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         R:=ZFVOrder(isog);
         E:=Algebra(R);
         pi:=PrimitiveElement(E);
-        //h:=DefiningPolynomial(E);
+        h:=DefiningPolynomial(E);
         g:=Dimension(isog);
         q:=FiniteField(isog);
         t,p,a:=IsPrimePower(q);
         assert t;
-        
-        // Places of E
-        places_E:=PlacesAboveRationalPrime(E,p); //unsorted
-        plE_sl0:=[];     //slope=0
-        plE_sl_in01:=[]; //slope in (0,1)
-        plE_sl1:=[];     //slope=1
-        for P in places_E do
-            sl:=Slope(P);
-            if sl eq 0 then
-                Append(~plE_sl0,P);
-            elif sl eq 1 then
-                Append(~plE_sl1,P);
-            else
-                Append(~plE_sl_in01,P);
-            end if;
-        end for;
-        places_E:=<plE_sl0,plE_sl_in01,plE_sl1>;
-
+        _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
         // ################### 
         // Global Representatives: L and sigma_L
         // ###################
@@ -493,17 +434,28 @@ intrinsic DieudonneAlgebra(isog::IsogenyClassFq)->Any
             return alpha;
         end function;
 
-        isog`DieudonneAlgebra:=<places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
+        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
     end if;
-    return Explode(isog`DieudonneAlgebra);
+    return Explode(isog`DiedudonneAlgebraCommEndAlg);
 end intrinsic;
 
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////SemilinearOperators /////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic SemilinearOperators(isog::IsogenyClassFq)->Any
-{//TODO
-}
+intrinsic SemilinearOperators(isog::IsogenyClassFq)->RngIntElt,AlgEtQIdl,AlgEtQIdl,GrpAb,Map,Map,Map
+{Returns the homonymous attribute of the isogeny class, which constist of the following informations: m0,J,den_ideal,Qm0,qm0,FQm0,VQm0, where (see DieudonneAlgebraCommEndAlg for the missing definitions):
+- m0 is a positive integer;
+- J is a WR-ideal with maximal endomorphism ring OA which is stable under the action of F and V=pF^-1, for some semilinear operator F with the Frobenius property of and of W-type;
+- den_ideal = p^m0*J+P01^M*J, where P01 is the product of the maximal ideals of WR which are above the unique local-local maximal ideal of R, and M is chosen so that P01^MJ c J locally at every such maximal ideal;
+- Qm0 is the abelian group J/den_ideal and qm0 is the quotient map J->Qm0;
+- FQm0 and Vm0 are additive maps induced by semilinear operators F and V as above. They represent the Frobenius and Verschiebung acting on Dieudonne modules.
+The attribute SemilinearOperators needs to be computed beforehand, during a run of IsomorphismClassesDieudonneModulesCommEndAlg. During this run, the integer m0 is automatically computed by the program to guarantee that every fractional W'R-ideal I' whose extension to OA is F and V stable ideal J and den_ideal c I'. These two conditions allow us to verify if I' is a W'R\{F,V\} ideal, that is, (the local-local-part) of a Dieudonne module of some abelian variety in isog.}
+    //TODO: in the future it would be nice to be able to increase the precision with a call of this intrinsic.
+    // This would require to choose a new alpha (as in alpha_at_precision) 'compatible' with the current choice.
+    // I might be a bit complicated to code, and it is outside of the current scope.
     require assigned isog`SemilinearOperators : "Run first IsomorphismClassesDieudonneModules(isog)";
-    return isog`SemilinearOperators;
+    return Explode(isog`SemilinearOperators);
 end intrinsic;
 
 
@@ -511,10 +463,10 @@ end intrinsic;
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->Any
-{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of th local-local parts of the Dieudonné modules of the varieteis. These representatives are given as fractional WR-ideals, where WR is defined as in DieudonneAlgebra, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
+intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of th local-local parts of the Dieudonné modules of the varieteis. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
-    vprintf DieudonneModules,1 : "Computing DieudonneAlgebra...";
+    vprintf DieudonneModules,1 : "Computing DiedudonneAlgebraCommEndAlg...";
     R:=ZFVOrder(isog);
     E:=Algebra(R);
     pi:=PrimitiveElement(E);
@@ -523,10 +475,11 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
-    places_E,L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebra(R);
+    L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
-    _,plE_sl_in01,_:=Explode(places_E);
+    _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
+    _,pl_01_R,_:=PrimesOfZFVAbove_p(isog);
     pl_01_R:=Setseq({ OneIdeal(R) meet (R!!P) : P in plE_sl_in01 });
     if #plE_sl_in01 ne 0 then
         assert #pl_01_R eq 1;
@@ -647,7 +600,6 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
 
     vprintf Algorithm_2,1 : "\n\n################\nAlgorithm 2\n################\n";
 
-    // Can add DUALITY here
     exps_nus:=[];
     pp_A_nus:=[];
     for P in plE_sl_in01 do
@@ -665,7 +617,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_2,2 : "nice_unifs_01 = %o\n", PrintSeqAlgEtQElt(nice_unifs_01);
 
     vprintf Algorithm_2,1 : "Defining WR_01...";
-    // We compute the W'_R-isomorpshim classes of W'_R-ideals.
+    // We compute the W'_R-isomorphim classes of W'_R-ideals.
     k:=Valuation(Index(OA,WR),p);
     WR_01:=Order( ZBasis(WR) cat ZBasis(OA!!&*[ P^(k*RamificationIndex(P)) : P in pp_A_01 ]));
     // WR_01 order is locally equal to WR' at every place of slope 01 and to OA everywhere else
@@ -673,22 +625,8 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_2,1 : "[OA:WR] = %o\n",Index(OA,WR);
     vprintf Algorithm_2,1 : "[OA:WR_01] = %o\n",Index(OA,WR_01);
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
-
-    // to speed-up debuggin. from here to XXX to be removed.
-    if Coefficients(DefiningPolynomial(E)) eq [ 256, 64, 16, 16, -4, 4, 1, 1, 1 ] then
-        tmp_file:="tmp_20240821.txt";
-        file_already_exists:=eval(Pipe("if test -f " cat tmp_file cat "; then echo 1; else echo 0; fi;",""));
-        if file_already_exists eq 0 then
-        "\nWARNING printing WKICM for test_purposes: don't forget to delete the tmp file";
-            for I in WKICM(WR_01) do
-                fprintf tmp_file,"%o\n",&cat(Split(strI)) where _,strI:=PrintSeqAlgEtQElt(ZBasis(I));
-            end for;
-        else
-        "\nWARNING loading WKICM for test_purposes: don't forget to delete the tmp file";
-            WR_01`WKICM:=[ Ideal(WR_01,[ A!z : z in eval(strI) ]) : strI in Split(Read(tmp_file)) ];
-        end if;
-    end if;
-
+    // DUALITY could speed up the next computation. 
+    // It would have to run for all pp_A_01 of slope <1/2 and =1/2, and deduce the output for >1/2 from the first.
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk_01;
@@ -817,10 +755,10 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     end for;
     vprintf Algorithm_3,1 : "done\n";
 
-    //TODO change how the VarArg works. Increase the m0 computed above by the value of the VarArg.
-    if MinimumPrecisionForSemilinearFV gt m0 then
-        m0:=MinimumPrecisionForSemilinearFV;
-        vprintf Algorithm_3 : "Incresing m0 to %o, using MinimumPrecisionForSemilinearFV\n",m0;
+    if IncreaseMinimumPrecisionForSemilinearFVBy gt 0 then
+        m0_old:=m0;
+        m0+:=IncreaseMinimumPrecisionForSemilinearFVBy;
+        vprintf Algorithm_3:"Incresing m0 from to %o, using IncreaseMinimumPrecisionForSemilinearFVBy\n",m0_old,m0;
     end if;
 
     vprintf Algorithm_3 : "m0 = %o\n",m0;
@@ -947,24 +885,6 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     end for;
     vprintf Algorithm_3,2 : "\n";
 
-    return Delta_isom_classes_WR_F_V,pl_01_R;
+    return Delta_isom_classes_WR_F_V;
 end intrinsic;
-
-
-/*
- 
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
 

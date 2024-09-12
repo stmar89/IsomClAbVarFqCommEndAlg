@@ -4,32 +4,39 @@
 
     AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClassesAbVarFqComEnd/spec");
 
     PP<x>:=PolynomialRing(Integers());
+
+    h:=x^8+x^7+x^6+4*x^5-4*x^4+16*x^3+16*x^2+64*x + 256;
+    assert IsSquarefree(h);
+    isog:=IsogenyClass(h);
+    g:=Dimension(isog);
+    q:=FiniteField(isog);
+    t,p,a:=IsPrimePower(q); assert t;
+    //iso:=IsomorphismClasses(isog); // this could take up to a couple of hours. 
+                                     // we have precomputed the data which we load in the next 5 lines of code
 
     fld:="~/IsomClassesAbVarFqComEnd/examples/";
     input_ls:=Pipe("ls " cat fld,"");
     file:="4.4.b_b_e_ae";
     str:=Read(fld cat file);
-    iso:=load_isom_classes(str);
-    R:=Order(iso[1,1]);
-    m0,J,dJ,Q,mQ,F,V:=Explode(R`SemilinearOperators);
+    iso:=LoadAbVarFqCommEndAlg(isog,str);
+    R:=ZFVOrder(isog);
+    m0,J,dJ,Q,mQ,F,V:=SemilinearOperators(isog);
     E:=Algebra(R);
-    h:=DefiningPolynomial(E);
-    g:=Degree(h) div 2;
-    assert IsSquarefree(h);
-    q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
-    t,p,a:=IsPrimePower(q); assert t;
 
     oo:=OverOrders(R);
     OE:=MaximalOrder(E);
-    P:=Setseq({OneIdeal(R) meet R!!P:P in [P:P in PlacesAboveRationalPrime(E,p)|Slope(P) notin {0,1}]});
-    
+    _,P,_:=PrimesOfZFVAbove_p(isog);
     assert #P eq 1;
     P:=P[1];
+    // P is the local-local maximal ideal of R above p
 
     is_maximal_at_01:=function(S)
+    // check if the overorder S of R is maximal locally at its local-local part.
         return S!!OneIdeal(OE) eq OneIdeal(S) + S!!OE!!P;
     end function;
 
@@ -43,10 +50,10 @@
     ind:=[Index(OE,S):S in oo];
     ParallelSort(~ind,~oo);
     Reverse(~oo);
-    ends:={@ X[4] : X in iso @};
+    ends:=[ EndomorphismRing(A) : A in iso ];
     printf "For each overorder S, we print the following string of data:\niS = which overorder of Z[pi,q/pi]\n[OE:S]\nd(S) = #Dieudonné modules with End S\n#Pic(S)\na numbers of the DM with End S\nis S maximal at (0,1)\ndoes S contain O_{E^+}\nindices of minimal overorders\n\n";
     for iS->S in oo do
-        dmS:={@ X[2] : X in iso | X[4] eq S @};
+        dmS:={@ dmA where _,dmA:=IsomDataCommEndAlg(A) : A in iso | EndomorphismRing(A) eq S @};
         // a-numbers
         a_nums:=[];
         for dm in dmS do
