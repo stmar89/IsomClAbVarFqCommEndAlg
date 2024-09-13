@@ -15,7 +15,7 @@ Details
 --
 
 For complete descriptions and more details we refer to the [`List of commands`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/blob/main/doc/ListOfCommands.md).
-To use them, use the magma command `AttachSpec("spec")`, after opening magma in the folder where you have downloaded the repo.
+Use the magma command `AttachSpec("spec")`, after opening magma in the folder where you have downloaded the repo.
 
 In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tree/main/examples), you will find files containing the code to reproduce the examples from the papers in the reference below, which should be of help to get a quick start on the functionalities.
 
