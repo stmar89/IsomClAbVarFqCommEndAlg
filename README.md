@@ -3,7 +3,7 @@
 Description
 --
 
-A Magma package to compute (unpolarized) Fq-isomorphism classes of abelian varieties over Fq belonging to an isogeny class with commutative Fq-endomorphism ring.
+A Magma package to compute (unpolarized) Fq-isomorphism classes of abelian varieties over Fq belonging to an isogeny class with commutative Fq-endomorphism ring, for any finite field Fq.
 
 For the theory on which this code is based, see the `References` section at the bottom.
 
