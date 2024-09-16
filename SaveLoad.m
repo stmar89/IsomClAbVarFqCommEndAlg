@@ -100,17 +100,13 @@ intrinsic LoadAbVarFqCommEndAlg(isog::IsogenyClassFq,input::MonStgElt)->SeqEnum[
 {Given an isogeny class of abelian varieties over Fq with commutative Fq-endomorphism algebra and the string produced by SaveAbVarFqCommEndAlg, returns the sequence of abelian varieties which is stored in the string. The SemilinearOperator attribute of isog is populated (see SemilinearOperators for details).}
     input:=eval(input);
     PP<x>:=PolynomialRing(Integers());
-    /*
-    E:=EtaleAlgebra([NumberField(PP!f) : f in input[1]]);
-    h:=DefiningPolynomial(E);
-    pi:=PrimitiveElement(E);
-    q:=Round(ConstantCoefficient(h)^(2/Degree(h)));
-    R:=Order([pi,q/pi]);
-    */
     R:=ZFVOrder(isog);
     E:=Algebra(R);
-    A:=EtaleAlgebra([NumberField(PP!f) : f in input[2]]);
-    WR:=Order([A!z : z in input[3]]);
+    _,_,_,_,A,_,_,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+    A_test:=EtaleAlgebra([NumberField(PP!f) : f in input[2]]);
+    //WR:=Order([A!z : z in input[3]]);
+    assert input[2] eq [Coefficients(DefiningPolynomial(K)):K in Components(A_test)];
+    assert input[3] eq PrintSeqAlgEtQElt(ZBasis(WR));
     ends:=[Order([E!z : z in S]) : S in input[4]];
     pics:=[* [ Ideal(ends[i_picS],[E!z : z in L]) : L in input[5,i_picS] ] : i_picS in [1..#input[5]] *];
     Is:=[ Ideal(R,[E!z:z in I]) : I in input[6] ];
