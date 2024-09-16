@@ -6,7 +6,7 @@
     AttachSpec("~/AlgEt/spec");
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/IsomClassesAbVarFqComEnd/spec");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
 
     PP<x>:=PolynomialRing(Integers());
 
@@ -19,7 +19,7 @@
     //iso:=IsomorphismClasses(isog); // this could take up to a couple of hours. 
                                      // we have precomputed the data which we load in the next 5 lines of code
 
-    fld:="~/IsomClassesAbVarFqComEnd/examples/";
+    fld:="~/IsomClAbVarFqCommEndAlg/examples/";
     input_ls:=Pipe("ls " cat fld,"");
     file:="2.4.a_e";
     str:=Read(fld cat file);
