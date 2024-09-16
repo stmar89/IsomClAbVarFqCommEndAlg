@@ -21,7 +21,10 @@ In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tr
 
 As in [`AbVarFq`](https://github.com/stmar89/AbVarFq), the abelian varieties have type `AbelianVarietyFq`.
 In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S>`, where `I` is a `Z[pi,q/pi]`-ideal which encodes the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
-This representation is slightly different from what we have in `Algorithm 7` in the paper. There we represent each isomorphism class by a 5-tuple `(I0,M,I1,(I^l)_l,J)` where `I0` is the étale-local part of the Dieudonné module, `M` its local-local part, `I1` its local-étale, `I^l` represents the l-Tate modules (l \neq p), and `J` is an invertible ideal of the endomorphism ring. So, `I` in the code is equivalent to the combined information of `I0`,`I1` and all the `I^l`, while `M` and `J` are the same. See `Remark 7.6` in the paper for further discussion.
+
+One can compute the action of the semilinear Frobenius and Verschiebung on each `M` (in an appropriate finite quotient) using `SemilinearOperators`. We refer to the documentation of that intrinsic for details.
+
+The representation `IsomDataCommEndAlg=<I,M,J,S>` is slightly different from what we have in `Algorithm 7` in the paper. There we represent each isomorphism class by a 5-tuple `(I0,M,I1,(I^l)_l,J)` where `I0` is the étale-local part of the Dieudonné module, `M` its local-local part, `I1` its local-étale, `I^l` represents the l-Tate modules (l \neq p), and `J` is an invertible ideal of the endomorphism ring. So, `I` in the code is equivalent to the combined information of `I0`,`I1` and all the `I^l`, while `M` and `J` are the same. See `Remark 7.6` in the paper for further discussion.
 
 
 References
