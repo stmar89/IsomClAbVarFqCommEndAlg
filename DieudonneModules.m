@@ -42,6 +42,7 @@ declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
                                     PrimesOfSlopeIn01;
 
 declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
+                                    DeltaInverse,
                                     PlacesOfAAbove;
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +55,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OA.
-- sigma_OA_mod_I is a function that given and OA ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of L\otimes_Q Qp/Qp;
+- sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of L\otimes_Q Qp/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
 - Delta_inverse_ideal is a function that given a fractional WR ideal returns its preimage via Delta_map;
 - primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
@@ -189,16 +190,19 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 
         Delta_inverse_ideal:=function(I)
         // given a fractional-WR ideal returns Delta^{-1}(I), which is a fractional R-ideal
-            assert Order(I) eq WR;
-            dI,d:=MakeIntegral(I);
-            ZBasisLLL(dI);
-            dI_inFOA:=sub<FOA | [fOA(z) : z in ZBasis(dI) ]>;
-            // the next line can be very memory consuming
-            meet_id:=dI_inFOA meet imageDeltaOE_inFOA;
-            gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
-            J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
-            assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
-            return J;
+            if not assigned I`DeltaInverse then
+                assert Order(I) eq WR;
+                dI,d:=MakeIntegral(I);
+                ZBasisLLL(dI);
+                dI_inFOA:=sub<FOA | [fOA(z) : z in ZBasis(dI) ]>;
+                // the next line can be very memory consuming
+                meet_id:=dI_inFOA meet imageDeltaOE_inFOA;
+                gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
+                J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
+                assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
+                I`DeltaInverse:=J;
+            end if;
+            return I`DeltaInverse;
         end function;
    
         // #######################
