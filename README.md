@@ -33,4 +33,4 @@ Check my webpage for more up-to-date bibliography info.
 
 Jonas Bergström, Valentijn Karemaker, and Stefano Marseglia,<br>
 *Abelian varieties over finite fields with commutative endomorphism algebra: theory and algorithms*,<br>
-TODO ADD ARXIV LINK
+[https://arxiv.org/abs/2409.08865](https://arxiv.org/abs/2409.08865)
