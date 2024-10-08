@@ -31,7 +31,7 @@ declare attributes IsogenyClassFq : glueing_gen_deligne_module_data;
 declare attributes AlgEtQIdl : Delta_ideal;
 
 Delta_inverse_ppart:=function(isog,DM)
-// given an ideal DM in A, computes and ideal J such that J_p = Delta^-1(DM_p)
+// given an ideal DM in A, computes an R-ideal J such that J_p = Delta^-1(DM_p)
     R:=ZFVOrder(isog);
     E:=Algebra(R);
     _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
@@ -51,10 +51,10 @@ Delta_inverse_ppart:=function(isog,DM)
     assert IsCoprime(d,p);
     d:=dp*d;
     dDM:=Delta_map(d)*DM;
+    assert dDM subset WR!!OneIdeal(OA);
 
     vp_ind:=Valuation(Index(oOA,dDM),p);
     dDM_ppart:=dDM+p^vp_ind*oOA;
-    // TODO DOUBLE CHECK this
     return (1/d)*Delta_inverse_ideal(dDM_ppart);
 end function;
 
@@ -95,8 +95,9 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
         already_done,data:=IsDefined(isog`glueing_gen_deligne_module_data,<J,DM>);
         if already_done then
         // early exit
-            I:=data[1]*(R!!L);
-            M:=data[2]*Delta_ideal(isog,L);
+            K,N:=Explode(data);
+            I:=K*(R!!L);
+            M:=N*Delta_ideal(isog,L);
             AV`GeneralizedDeligneModule:=<I,M>;
             return Explode(AV`GeneralizedDeligneModule);
         end if;
@@ -108,7 +109,8 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
         k:=Valuation(Index(DeltaJ+DM,DeltaJ meet DM),p);
         mm0,mm01,mm1:=PrimesOfZFVAbove_p(isog);
         m_k:=#mm01 eq 1 select Ideal(WR,[Delta_map(z):z in ZBasis(mm01[1]^k)]) else OneIdeal(WR);
-        nn_k:=Ideal(WR,[Delta_map(z):z in ZBasis((&*(mm0 cat mm1))^k)]);
+        nn_k:=#mm0+#mm1 eq 0 select OneIdeal(WR) 
+                else Ideal(WR,[Delta_map(z):z in ZBasis(&*([P^k:P in mm0 cat mm1]))]);
         N:=m_k*DeltaJ+nn_k*DM;
         // TODO add assert or assert2.
 
