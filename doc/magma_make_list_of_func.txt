@@ -62,13 +62,15 @@
         repeat
             desc_in:=find_next(inp,name_out,"{");
         until inp[desc_in-1] ne "\\";
+        desc_out:=desc_in;
         repeat
-            desc_out:=find_next(inp,desc_in,"}");
-        until inp[desc_out-1] ne "\\";
-        descr_out:=desc_out-2;
+            desc_out:=find_next(inp,desc_out,"}");
+        until inp[desc_out-2] ne "\\";
+        inp[desc_out-2..desc_out+1];
+        desc_out:=desc_out-2;
         desc:=clean(inp[desc_in..desc_out]);
         desc:=SubstituteString(desc,"*","\\*");
-        end_int:=find_next(inp,desc_out+1,"intrinsic");
+        end_int:=find_next(inp,desc_out+1,"end intrinsic;");
         return name,name_2,desc,end_int; 
     end function;
 

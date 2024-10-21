@@ -10,7 +10,7 @@ all: clean_old magma_script
 
 clean_old:
 	@echo "Removing old ListOfCommands.md..."
-	-rm ${outfil}
+	rm ${outfile}
 	@echo "...Done"
 
 magma_script:
