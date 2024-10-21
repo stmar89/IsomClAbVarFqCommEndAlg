@@ -26,11 +26,10 @@ One can compute the action of the semilinear Frobenius and Verschiebung on each 
 
 The representation `IsomDataCommEndAlg=<I,M,J,S>` is slightly different from what we have in `Algorithm 7` in the paper. There we represent each isomorphism class by a 5-tuple `(I0,M,I1,(I^l)_l,J)` where `I0` is the étale-local part of the Dieudonné module, `M` its local-local part, `I1` its local-étale, `I^l` represents the l-Tate modules (l \neq p), and `J` is an invertible ideal of the endomorphism ring. So, `I` in the code is equivalent to the combined information of `I0`,`I1` and all the `I^l`, while `M` and `J` are the same. See `Remark 7.6` in the paper for further discussion.
 
-We provide a second way to represnet abelian varieties over Fq with commutative endomorphism algebra, which we call `Generalized Deligne Module`.
-A `Generalized Deligne Module` is a pair `<II,MM>` such that `<II,M ⊗~ℤ~ℤ~p~>`.
-For each abelian variety over Fq with the attribute IsomDataCommEndAlg assigned, one can recover a representation 
-of the form `<II,MM>` with `II` a `Z[pi,q/pi]`-ideal and  
-
+We provide a second way to represent abelian varieties over `Fq` with commutative endomorphism algebra, which we call `Generalized Deligne Module`.
+A `Generalized Deligne Module` is a pair `<II,MM>` which belongs to the category defined in Definition 5.1 of the reference below (after tensoring `MM` with the p-adic integers).
+The ideal `II` encodes the local information away from the characteristic of `Fq`, `MM` is the Dieudonné module and the p-part of `II` and `MM` are compatible.
+This representation can be computed using the intrinsic `GeneralizedDeligneModule` on any abelian variety whose attribute `IsomDataCommEndAlg` is assigned.
 
 References
 --
