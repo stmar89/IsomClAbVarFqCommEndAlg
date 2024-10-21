@@ -4,5 +4,6 @@ CreationAbVarFq.m
 PrimesIsog.m
 DieudonneModules.m
 IsomorphismClasses.m
+GenDeligneModules.m
 SaveLoad.m
 }
