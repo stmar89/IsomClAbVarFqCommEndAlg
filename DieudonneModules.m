@@ -55,12 +55,12 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OA.
-- sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of L\otimes_Q Qp/Qp;
+- sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of (L\otimes_Q Qp)/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
-- Delta_inverse_ideal is a function that given a fractional WR ideal returns its preimage via Delta_map;
+- Delta_inverse_ideal is a function that given a fractional WR-ideal returns its preimage via Delta_map;
 - primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
-- primes_of_S_of_slope_in_01 is a function that an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
-- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 3 of the paper to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.}
+- primes_of_S_of_slope_in_01 is a function that given an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, the P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
+- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.}
     if not assigned isog`DiedudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         R:=ZFVOrder(isog);
@@ -455,8 +455,8 @@ intrinsic SemilinearOperators(isog::IsogenyClassFq)->RngIntElt,AlgEtQIdl,AlgEtQI
 - J is a WR-ideal with maximal endomorphism ring OA which is stable under the action of F and V=pF^-1, for some semilinear operator F with the Frobenius property of and of W-type;
 - den_ideal = p^m0*J+P01^M*J, where P01 is the product of the maximal ideals of WR which are above the unique local-local maximal ideal of R, and M is chosen so that P01^MJ c J locally at every such maximal ideal;
 - Qm0 is the abelian group J/den_ideal and qm0 is the quotient map J->Qm0;
-- FQm0 and Vm0 are additive maps induced by semilinear operators F and V as above. They represent the Frobenius and Verschiebung acting on Dieudonne modules.
-The attribute SemilinearOperators needs to be computed beforehand, during a run of IsomorphismClassesDieudonneModulesCommEndAlg. During this run, the integer m0 is automatically computed by the program to guarantee that every fractional W'R-ideal I' whose extension to OA is F and V stable ideal J and den_ideal c I'. These two conditions allow us to verify if I' is a W'R\{F,V\} ideal, that is, (the local-local-part) of a Dieudonne module of some abelian variety in isog.}
+- FQm0 and Vm0 are additive maps induced by semilinear operators F and V as above. They represent the Frobenius and Verschiebung acting on Dieudonné modules.
+The attribute SemilinearOperators needs to be computed beforehand, during a run of IsomorphismClassesDieudonneModulesCommEndAlg. During this run, the integer m0 is automatically computed by the program to guarantee that every fractional W'R-ideal I' whose extension to OA is F and V stable such that I' c J and den_ideal c I'. These two conditions allow us to verify if I' is a W'R\{F,V\} ideal, that is, (the local-local-part) of a Dieudonne module of some abelian variety in isog.}
     //TODO: in the future it would be nice to be able to increase the precision with a call of this intrinsic.
     // This would require to choose a new alpha (as in alpha_at_precision) 'compatible' with the current choice.
     // I might be a bit complicated to code, and it is outside of the current scope.
@@ -470,7 +470,7 @@ end intrinsic;
 ////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
-{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of th local-local parts of the Dieudonné modules of the varieteis. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     vprintf DieudonneModules,1 : "Computing DiedudonneAlgebraCommEndAlg...";
     R:=ZFVOrder(isog);

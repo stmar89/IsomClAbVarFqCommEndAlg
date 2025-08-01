@@ -31,7 +31,7 @@ declare attributes AbelianVarietyFq : IsomDataCommEndAlg;
 /////////////////////////////////////////////////////
 
 intrinsic IsomDataCommEndAlg(A::AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl,AlgEtQIdl,AlgEtQOrd
-{Given an abelian variety over Fq with commutative Fq-endomorphism algebra, returns the tuple <I,M,S,L> as defined in AbelianVarietyCommEndAlg.}
+{Given an abelian variety over Fq with commutative Fq-endomorphism algebra, returns the tuple <I,M,L,S> as defined in AbelianVarietyCommEndAlg.}
     return Explode(A`IsomDataCommEndAlg);
 end intrinsic;
 
@@ -40,12 +40,12 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 intrinsic AbelianVarietyCommEndAlg(isog::IsogenyClassFq,tup:Tup)->AbelianVarietyFq
-{Given an isogeny class of abelian varieties over Fq with commutative Fq-endomorphism algebra, i.e. whose Weil polynomial is squarefree, and tuple <I,M,L,S> where
+{Given an isogeny class of abelian varieties over Fq with commutative Fq-endomorphism algebra, i.e. whose Weil polynomial is squarefree, and a tuple <I,M,L,S> where
 - I is a fractional ideal over the ZFVOrder of isog;
 - M is a WR\{F,V\}-ideal (see DieudonneAlgebraCommEndAlg for definitions);
 - S in an overorder of the ZFVOrder;
 - L is an invertible fractional S-ideal;
-returns the unique abelian variety in isog with EndomorphismRing S whose l-Tate modules are isomorphic to I (for all l neq p), the étale-local and local-étale part of the Dieudonné module are determined by I, while the local-local part is determined by M, and L determines is position in the orbit of the class group of S acting on the local information just described.}
+returns the unique abelian variety in isog with EndomorphismRing S whose l-Tate modules are isomorphic to I (for all l neq p), the étale-local and local-étale part of the Dieudonné module are determined by I, while the local-local part is determined by M, and L determines its position in the orbit of the class group of S acting on the local information just described.}
     require IsSquarefree(isog) : "The isogeny class needs to have squarefree Weil polynomial.";
     R:=ZFVOrder(isog);
     I,M,L,S:=Explode(tup);
