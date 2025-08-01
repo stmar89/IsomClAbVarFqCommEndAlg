@@ -6,7 +6,7 @@ Description
 A Magma package to compute (unpolarized) Fq-isomorphism classes of abelian varieties over Fq belonging to an isogeny class with commutative Fq-endomorphism ring, for any finite field Fq.
 
 For the theory on which this code is based, see the `References` section at the bottom.
-The package contains the implementation of the algorithms in th paper, together with the ones contained in the [`accompanying appendix`](Computational_Appendix.pdf).
+The package contains the implementation of the algorithms in the paper, together with the ones contained in the [`accompanying appendix`](Computational_Appendix.pdf).
 The appendix contains also several technical intermediate lemmas.
 
 This package requires the packages [`AlgEt`](https://github.com/stmar89/AlgEt) (all spec files) and [`AbVarFq`](https://github.com/stmar89/AbVarFq).
