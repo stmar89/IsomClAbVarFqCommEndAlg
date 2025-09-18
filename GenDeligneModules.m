@@ -121,7 +121,8 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
         k:=Valuation(ind,p);
         pk:=p^k;
         ind_coprime_p:=ind div pk;
-        K:=pk*K_p+ind_coprime_p*K_coprime_p;
+        //K:=pk*K_p+ind_coprime_p*K_coprime_p;
+        K:=pk*K_coprime_p+ind_coprime_p*K_p;
         isog`glueing_gen_deligne_module_data[<J,DM>]:=<K,N>;
         I:=K*(R!!L);
         M:=N*Delta_ideal(isog,L);

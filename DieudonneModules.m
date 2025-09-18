@@ -60,7 +60,9 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 - Delta_inverse_ideal is a function that given a fractional WR-ideal returns its preimage via Delta_map;
 - primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
 - primes_of_S_of_slope_in_01 is a function that given an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, the P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
-- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.}
+- alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
+- A_as_vector_space_over_L_data //TODO
+}
     if not assigned isog`DiedudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         R:=ZFVOrder(isog);
@@ -227,6 +229,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         W:=KSpace(L,Degree(h));
         mWD:=iso< W->D | pows_pi_D >;
         mAW:=map< A->W | x:->mAD(x)@@mWD, y:-> mWD(y)@@mAD >;
+        A_as_vector_space_over_L_data:=<mAD,mWD,mAW>;
 
         // Note that OA \simeq OE \otimes ZZ[zz] locally at p.
         // We need to compute the images of a ZBasis of OE in Q.
@@ -440,7 +443,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             return alpha;
         end function;
 
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision>;
+        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data>;
     end if;
     return Explode(isog`DiedudonneAlgebraCommEndAlg);
 end intrinsic;
@@ -495,7 +498,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf DieudonneModules,2 : "places of E w/ slope in (0,1) = %o\n",Sort([ Slope(P) : P in plE_sl_in01]);
     // Early exit if no places 
     if #plE_sl_in01 eq 0 then
-        dm:=OneIdeal(R);
+        dm:=OneIdeal(WR);
         dm`DeltaEndomorphismRing:=R;
         return [dm],plE_sl_in01; 
     end if;
@@ -871,7 +874,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     delta_inverses_mult_rings:=[];
     for iI in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         vprintf Algorithm_3,3 : "\nfor the %oth ideal from WR_01_idls_with_ext_i_to_OA_F_V_stable:",iI;
-        I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
+        I:=WR!!WR_01_idls_with_ext_i_to_OA_F_V_stable[iI];
         if is_F_V_stable(I) then
             vprintf Algorithm_3,2 : "y";
             assert Order(I) eq WR;

@@ -183,7 +183,7 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPre
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     output:=[];
     places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);
-    places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_0|not IsInvertible(P)];
+    places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_1|not IsInvertible(P)];
     isom_away_01:=IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog);
     isom_DM_01:=IsomorphismClassesDieudonneModulesCommEndAlg(isog);
     for dm in isom_DM_01 do
@@ -196,7 +196,7 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPre
             primes:=places_away_01 cat places_01;
             assert #orders eq #primes;
             if #primes eq 0 then
-                S:=ZFVOrder(I);
+                S:=ZFVOrder(isog);
             else
                 S:=glue_local_parts_orders(primes, ell_01_orders cat dm_orders);
             end if;
