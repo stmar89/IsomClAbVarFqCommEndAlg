@@ -140,7 +140,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             F:=FreeAbelianGroup(n);
             zb:=ZBasis(R);
             f:=map<R->F | x:->F!AbsoluteCoordinates([x],zb),
-                          y:->SumOfProducts(Eltseq(y),zb) >;
+                          y:->DotProduct(Eltseq(y),zb) >;
             return F,f;
         end function;
 
@@ -148,7 +148,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
 
         Delta_image:=function(z)
-            out:=SumOfProducts(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A);
+            out:=DotProduct(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A);
             assert2 MinimalPolynomial(out) eq MinimalPolynomial(z);
             return out;
         end function;
@@ -160,7 +160,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             // Need to write y as a linear combination of pows_pi_A
             // Use Solution V to V*X =W
             W:=Matrix([AbsoluteCoordinates(y)]);
-            return SumOfProducts(Eltseq(Solution(mat_pows_pi_A,W)),PowerBasis(E));
+            return DotProduct(Eltseq(Solution(mat_pows_pi_A,W)),PowerBasis(E));
         end function;
 
         Delta_map:=map< E->A | z:->Delta_image(z),
