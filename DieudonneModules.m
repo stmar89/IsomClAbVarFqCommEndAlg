@@ -51,7 +51,7 @@ declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
 
 intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,UserProgram
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
-<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision> where
+<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OA.
