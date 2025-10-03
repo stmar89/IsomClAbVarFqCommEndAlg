@@ -6,6 +6,7 @@ declare attributes AbelianVarietyFq : DualAbVarFq;
 
 //TODO thsis import is not nice..I should probaly store Delta_inverse_ppart in an attribute
 import "/home/stmar/IsomClAbVarFqCommEndAlg/GenDeligneModules.m" : Delta_inverse_ppart;
+import "/home/stmar/AlgEt/AlgEtQ/Ord.m" : MatrixAtoQ, MatrixQtoA;
 
 intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
 {Given an abelian variety over Fq with commutative endomorphism algebra, returns the generalized deligne module of the dual variety.}
@@ -24,7 +25,7 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
         //      Mv = a_1^{-1} \bar{z_1}^* + ... + a_n^{-1} \bar{z_n}^*,
         // where z_1^*,...,z_n^* is the Tr_{A/L}-dual basis to z_1,...,z_n.
         // So, let's get the pseudo basis.
-        L,_,PL,_,A,pi_A,_,_,WR,_,_,_,_,_,A_as_vector_space_over_L_data:=DieudonneAlgebraCommEndAlg(isog);
+        L,_,PL,_,A,pi_A,_,_,WR,_,_,_,_,alpha_at_precision,A_as_vector_space_over_L_data:=DieudonneAlgebraCommEndAlg(isog);
         mAD,mLdD,mALd:=Explode(A_as_vector_space_over_L_data);
         Ld:=Codomain(mALd);
         // - Ld and D are both L-vector spaces of dimension d:=dim_L(A).
@@ -64,13 +65,30 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
 // Gram_M:=MatrixRing(L,d)![TrAL(x*  sigma_onLd(y)@@mALd  ):x in bM_lat_inA, y in bM_lat];
         M_lat:=NumberFieldLattice(bM_lat : Gram:=Gram_M);
         Mv_lat:=Dual(M_lat);
-        //TODO assert forall{i:i,j in [1..#Basis(M_lat)]| TrAL(Basis(M_lat)[i]
+        assert forall{i:i,j in [1..#Basis(M_lat)]| TrAL(Basis(M_lat)[i]@@mALd*Basis(Mv_lat)[j]@@mALd) eq KroneckerDelta(i,j)};
         ci:=CoefficientIdeals(Mv_lat);
         bb:=Basis(Mv_lat);
         zb_Mv_lat_inLd:=[z*bb[i]:z in Basis(ci[i]),i in [1..#bb]]; 
         gens_Mv:=[ (bar_onLd(Ld!g))@@mALd : g in zb_Mv_lat_inLd ];
 //zb_Mv_lat_inLd:=[sigma(z)*bar_onLd(bb[i]):z in Basis(ci[i]),i in [1..#bb]]; 
 //gens_Mv:=[ g@@mALd : g in zb_Mv_lat_inLd ];
+
+//20251001: new attempt...we do not use the bar anymore...
+// TODO am I allowed to 'recompute' it, or should I use the same used to compute the isomorphism classes?
+        zz:=gens_Mv;
+        aa:=alpha_at_precision(10 : all_nus:=true); // pretty arbitrary precision...for testing
+        m_aa_zz:=MatrixAtoQ([aa*z:z in zz]); // mult by aa wrt to zz.
+        m_aa_ww:=p*(m_aa_zz^-1);
+Qp:=pAdicField(p,100);
+//printf "valuation at p of difference of char polys = %o",
+//    Valuation(CharacteristicPolynomial(ChangeRing(m_aa_zz,Qp))-CharacteristicPolynomial(ChangeRing(m_aa_ww,Qp)));
+        is_conj,C:=IsSimilar(ChangeRing(m_aa_zz,Qp),ChangeRing(m_aa_ww,Qp));
+        assert is_conj;
+        assert C*m_aa_zz*C^-1 eq m_aa_ww;
+        ww:=[ DotProduct(Eltseq(Ci),zz) : Ci in Rows(Ci) ];
+        gens_Mv:=ww;
+// end new attempt
+
         Mv:=Ideal(WR,gens_Mv);
         /* OLD BROKEN CODE. DOES NOT FINISH
         got_pseudo_basis:=false;
