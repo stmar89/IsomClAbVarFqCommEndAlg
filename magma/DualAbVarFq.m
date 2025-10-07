@@ -70,24 +70,25 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
         bb:=Basis(Mv_lat);
         zb_Mv_lat_inLd:=[z*bb[i]:z in Basis(ci[i]),i in [1..#bb]]; 
         gens_Mv:=[ (bar_onLd(Ld!g))@@mALd : g in zb_Mv_lat_inLd ];
+// // An attempt with sigma...
 //zb_Mv_lat_inLd:=[sigma(z)*bar_onLd(bb[i]):z in Basis(ci[i]),i in [1..#bb]]; 
 //gens_Mv:=[ g@@mALd : g in zb_Mv_lat_inLd ];
 
-//20251001: new attempt...we do not use the bar anymore...
-// TODO am I allowed to 'recompute' it, or should I use the same used to compute the isomorphism classes?
-        zz:=gens_Mv;
-        aa:=alpha_at_precision(10 : all_nus:=true); // pretty arbitrary precision...for testing
-        m_aa_zz:=MatrixAtoQ([aa*z:z in zz]); // mult by aa wrt to zz.
-        m_aa_ww:=p*(m_aa_zz^-1);
-Qp:=pAdicField(p,100);
-//printf "valuation at p of difference of char polys = %o",
-//    Valuation(CharacteristicPolynomial(ChangeRing(m_aa_zz,Qp))-CharacteristicPolynomial(ChangeRing(m_aa_ww,Qp)));
-        is_conj,C:=IsSimilar(ChangeRing(m_aa_zz,Qp),ChangeRing(m_aa_ww,Qp));
-        assert is_conj;
-        assert C*m_aa_zz*C^-1 eq m_aa_ww;
-        ww:=[ DotProduct(Eltseq(Ci),zz) : Ci in Rows(Ci) ];
-        gens_Mv:=ww;
-// end new attempt
+////20251001: new attempt...we do not use the bar anymore...
+//// TODO am I allowed to 'recompute' it, or should I use the same used to compute the isomorphism classes?
+//        zz:=gens_Mv;
+//        aa:=alpha_at_precision(10 : all_nus:=true); // pretty arbitrary precision...for testing
+//        m_aa_zz:=MatrixAtoQ([aa*z:z in zz]); // mult by aa wrt to zz.
+//        m_aa_ww:=p*(m_aa_zz^-1);
+//Qp:=pAdicField(p,100);
+////printf "valuation at p of difference of char polys = %o",
+////    Valuation(CharacteristicPolynomial(ChangeRing(m_aa_zz,Qp))-CharacteristicPolynomial(ChangeRing(m_aa_ww,Qp)));
+//        is_conj,C:=IsSimilar(ChangeRing(m_aa_zz,Qp),ChangeRing(m_aa_ww,Qp));
+//        assert is_conj;
+//        assert C*m_aa_zz*C^-1 eq m_aa_ww;
+//        ww:=[ DotProduct(Eltseq(Ci),zz) : Ci in Rows(Ci) ];
+//        gens_Mv:=ww;
+//// end new attempt
 
         Mv:=Ideal(WR,gens_Mv);
         /* OLD BROKEN CODE. DOES NOT FINISH
