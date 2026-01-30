@@ -73,7 +73,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         q:=FiniteField(isog);
         t,p,a:=IsPrimePower(q);
         assert t;
-        _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
+        plE_sl_0,plE_sl_in01,plE_sl_1:=PlacesOfQFAbove_p(isog);
         // ################### 
         // Global Representatives: L and sigma_L
         // ###################
@@ -355,17 +355,23 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         // alpha
         // #######################
 
-        alpha_at_precision:=function(m)
+        alpha_at_precision:=function(m : all_nus:=false)
         // see the description above
         // - alpha using the unit argument
+        // - if all_nus eq true then we consider all places, not just the local local ones
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
             sigma:=sigma_OA_mod_I(QI,qI,A);
             alpha_Q_inAs:=[];
             PPs_nus_prod_powers:=[];
-            uniformizers_at_nus:=Uniformizers(plE_sl_in01);
-            for inu->nu in plE_sl_in01 do
-                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#plE_sl_in01;
+            if all_nus then
+                places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
+            else
+                places_considered:=plE_sl_in01;
+            end if;
+            uniformizers_at_nus:=Uniformizers(places_considered);
+            for inu->nu in places_considered do
+                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
                 // Can add DUALITY here
                 PPs_nu:=primes_of_A_above_place_of_E(A,nu);
                 f_nu:=InertiaDegree(nu);
