@@ -49,7 +49,7 @@ declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
 ///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,UserProgram
+intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq : DualsCompatible:=false)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,UserProgram
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
 <L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
@@ -62,6 +62,9 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 - primes_of_S_of_slope_in_01 is a function that given an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, the P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
 - alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
+- bar_onA is an involution of A = E \otimes L given by bar_E otimes id_L, where bar_E is the CM-involution of E.
+The VarArg DualsCompatible determines whether the function alpha_at_precision (used elsewhere to compute the SemilinearOperators F,V) is compatible with the action of duality on the category of WR{F,V}-ideals.
+//TODO this last sentence is a bit vague
 }
     if not assigned isog`DiedudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
@@ -226,10 +229,16 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
                          y :-> A!< nfs_A_abs[i]!(projs[i](y))@@vs[i] : i in [1..#nfs_A] > >;
         // we compute the image of pows_pi_A in D 
         pows_pi_D:=[ mAD(x) : x in pows_pi_A ];
-        W:=KSpace(L,Degree(h));
+        W:=KSpace(L,Degree(h)); // W = L^2g
         mWD:=iso< W->D | pows_pi_D >;
         mAW:=map< A->W | x:->mAD(x)@@mWD, y:-> mWD(y)@@mAD >;
         A_as_vector_space_over_L_data:=<mAD,mWD,mAW>;
+
+        // We need to apply the CM involution which is defined to be bar on E, and identity on L.
+        L_basis_ofA_bar:=[ (q/pi_A)^i : i in [0..Dimension(W)-1] ];
+        bar_onW:=iso<W->W|[mAW(b):b in L_basis_ofA_bar]>; //action of bar on L^2g
+        bar_onA:=Hom(A,A,[mWA(bar_onW(mAW(b))):AbsoluteBasis(A)] : CheckMultiplicative:=true; CheckUnital:=true; ComputeInverse:=true); //bar:A->A
+        assert2 forall{b:b in AbsoluteBasis(A) | bar_onA(bar_onA(b)) eq b }; // check that bar_onA is an involution
 
         // Note that OA \simeq OE \otimes ZZ[zz] locally at p.
         // We need to compute the images of a ZBasis of OE in Q.
@@ -354,8 +363,10 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         // #######################
         // alpha
         // #######################
+        // We define two auxiliary functions alpha_at_precision_no_duality and alpha_at_precision_yes_duality.
+        // Then the output function alpha_at_precision is assigned to one of these two, according to the VarArg DualsCompatible.
 
-        alpha_at_precision:=function(m : all_nus:=false)
+        alpha_at_precision_no_duality:=function(m : all_nus:=false)
         // see the description above
         // - alpha using the unit argument
         // - if all_nus eq true then we consider all places, not just the local local ones
@@ -372,7 +383,9 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             uniformizers_at_nus:=Uniformizers(places_considered);
             for inu->nu in places_considered do
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
-                // Can add DUALITY here
+                // Considering the action of COMPLEX CONJUGATION on the places above p could speed-up the computation here,
+                // by deducing alpha_{nu_bar} from alpha_{nu} whenever nu\neq nu_bar.
+                // Note that this consideration does not help with the places stabilized by the action of bar{}, i.e. when the slope = 1/2.
                 PPs_nu:=primes_of_A_above_place_of_E(A,nu);
                 f_nu:=InertiaDegree(nu);
                 g_nu:=GCD(a,f_nu); //q=p^a
@@ -449,7 +462,150 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             return alpha;
         end function;
 
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data>;
+        alpha_at_precision_yes_duality:=function(m : all_nus:=false)
+        // see the description above:
+        // - for each nu!=\bar{nu}, we use the unit argument at nu, and then deduce the output at nu_bar:
+        //   if alpha_nu := (1,...,1,u_nu) with 
+        //   u_nu := \sum_j \ell_j pi_nu^j then we 
+        //   set alpha_{bar{nu}} := (p,....,p,p/u_{bar{nu}}) where
+        //   u_{bar{nu}}:= \sum_j ell_j (q/pi_{bar{nu}})^j.
+        // - if all_nus eq true then we consider all places, not just the local local ones
+        //
+        // 20260202 TODO's: 
+        //           - currently only implemented for nu!=bar{nu}. see require below.
+        //             more research is needed to understand what is happening at the places of slope = 1/2
+        //           - does computgin alpha_nu at precision m guarantee that the deduced alpha_{bar{nu}} is correct at the same precision?
+        //             if not, we will need to understand how much should we increase the precision of alpha_nu.
+            require forall{nu:nu in plE_sl_in01|Slope(nu) ne 1/2} : "Currently this is implemented only for places which are NOT stable by complex conjugation";  
+
+            I:=p^m*OA;
+            QI,qI:=ResidueRing(OA,I);
+            sigma:=sigma_OA_mod_I(QI,qI,A);
+            alpha_Q_inAs:=[];
+            PPs_nus_prod_powers:=[];
+            if all_nus then
+                places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
+            else
+                places_considered:=plE_sl_in01;
+            end if;
+            uniformizers_at_nus:=Uniformizers(places_considered);
+
+            // We identify the conjugate pairs in places_considered.
+            // Then we loop over the pairs.
+            // 20260202: for the conjugate-stable places, we need something new.
+            conj_pairs_indices:=[];
+            conj_stable_indices:=[];
+            to_do:={ 1..#places_considered };
+            repeat
+                ExtractRep(~to_do,~i);
+                nu:=places_considered[i];
+                if Slope(nu) eq 1/2 then
+                    Append(~conj_stable_indices,i);
+                else
+                    test,nu_bar:=IsConjugateStable(nu);
+                    assert not test;
+                    i_bar:=Index(places_considered,nu_bar);
+                    assert i_bar ne 0;
+                    Exclude(~to_do,i_bar);
+                    Append(~conj_pairs_indices,<i,i_bar>);
+                end if;
+            until #to_do eq 0;
+            delete to_do;
+
+            for pair in conj_pairs_indices do
+                inu,inu_bar:=Explode(pair);
+                nu:=places_considered[inu];
+                nu_bar:=places_considered[inu_bar];
+                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o which is not conjugate stable...",inu,#places_considered;
+                PPs_nu:=primes_of_A_above_place_of_E(A,nu);
+                f_nu:=InertiaDegree(nu);
+                g_nu:=GCD(a,f_nu); //q=p^a
+                assert #PPs_nu eq g_nu;
+
+                Rs_nu:=[];
+                rs_nu:=<>;
+                Us_nu:=[];
+                us_nu:=<>;
+                PPs_nu_m:=[];
+                for PP in PPs_nu do
+                    PP_m:=PP^(RamificationIndex(PP)*(m));
+                    Append(~PPs_nu_m,PP_m);
+                    R,r:=ResidueRing(OA,PP_m);
+                    vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
+                    U,u:=ResidueRingUnits(OA,PP_m);
+                    vprintf alpha_at_precision,2 : "\tU,u computed\n";
+                    Append(~Rs_nu,R);
+                    Append(~rs_nu,r);
+                    Append(~Us_nu,U);
+                    Append(~us_nu,u);
+                end for;
+                PPs_nus_prod_powers[inu]:=&*PPs_nu_m;
+                PPs_nu_bar_m:=[ PP^(m*RamificationIndex(PP)): PP in primes_of_A_above_place_of_E(A,nu_bar)];
+                PPs_nus_prod_powers[inu_bar]:=&*(PPs_nu_bar_m);
+
+                Q,embs,projs:=DirectSum(Rs_nu);
+                pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
+                                           y:->CRT( PPs_nu_m ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
+                pi_Q:=pr(pi_A);
+                assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
+
+                U,U_embs,U_projs:=DirectSum(Us_nu);
+                U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
+                                             y:->CRT( PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
+                sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
+                assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+
+                vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
+
+                image_phi:=function(gamma)
+                    // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
+                    // phi does the following two steps
+                    // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
+                    // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
+                    beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+                    // Action of the Frobenius on U
+                    img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+                    vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
+                    assert2 sigma_U(img) eq img;
+                    return img;
+                end function;
+                phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
+                
+                u_nu:=uniformizers_at_nus[inu]; // in E
+                val_nu:=Valuation(pi,nu); // in E
+                w_nu:=pi/(u_nu^val_nu); // in E
+                assert Valuation(w_nu,nu) eq 0;
+                wU:=U_pr(Delta_map(w_nu)); // in E->A->U
+                gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+                gamma_A:=(&+[i lt g_nu select 
+                                        U_embs[i](One(A)@@us_nu[i]) else 
+                                        U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+                u0:=Delta_map(u_nu^(Integers()!(val_nu*g_nu/a)));
+                beta_A:=(&+[i lt g_nu select 
+                                        embs[i](rs_nu[i](One(A))) else 
+                                        embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
+                alpha_A:=gamma_A*beta_A;
+
+                alpha_Q_inAs[inu]:=alpha_A;
+                alpha_A_dual:=p/bar_onA(alpha_A);
+                assert alpha_A*bar_onA(alpha_A_dual) - p in PPs_nus_prod_powers[inu]*PPs_nus_prod_powers[inu_bar];
+                alpha_Q_inAs[inu_bar]:=alpha_A_dual;
+                vprintf alpha_at_precision,1 : "done\n";
+            end for;
+            // end of unit argument + compatibility with duality.
+            // TODO 20260202 add code for places with slope 1/2, when we understand what to do...
+            alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
+            vprintf alpha_at_precision,1 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
+            return alpha;
+        end function;
+
+        if DualsCompatible then
+            alpha_at_precision:=alpha_at_precision_yes_duality;
+        else
+            alpha_at_precision:=alpha_at_precision_no_duality;
+        end if;
+
+        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data,bar_onA>;
     end if;
     return Explode(isog`DiedudonneAlgebraCommEndAlg);
 end intrinsic;
@@ -478,8 +634,11 @@ end intrinsic;
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
-{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
+intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0, DualsCompatible:=false)->SeqEnum[AlgEtQIdl]
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.
+The VarArg DualsCompatible determines whether the SemilinearOperators F,V are computed compatibly with the action of duality on the category of WR{F,V}-ideals.
+//TODO this last sentence is a bit vague
+}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     vprintf DieudonneModules,1 : "Computing DiedudonneAlgebraCommEndAlg...";
     R:=ZFVOrder(isog);
@@ -490,7 +649,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
-    L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
+    L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog : DualsCompatible:=DualsCompatible);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
     _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
@@ -608,7 +767,9 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         end for;
         return exps;
     end function;
-    
+
+// TODO add version with duality here
+
     // ####################
     // Algorithm 2
     // ####################
@@ -640,7 +801,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_2,1 : "[OA:WR] = %o\n",Index(OA,WR);
     vprintf Algorithm_2,1 : "[OA:WR_01] = %o\n",Index(OA,WR_01);
     vprintf Algorithm_2,1 : "Computing WKICM(WR_01)...";
-    // DUALITY could speed up the next computation. 
+    // Considering the action of COMPLEX CONJUGATION on the places above p (of slope in (0,1) could speed up the next computation. 
     // It would have to run for all pp_A_01 of slope <1/2 and =1/2, and deduce the output for >1/2 from the first.
     wk_01:=[ WR!!I : I in WKICM(WR_01)];
     vprintf Algorithm_2,1 : "done\n";
@@ -671,6 +832,23 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of Delta'-isomorphism classes with FV-stable extension to O_A' = %o\n",#WR_01_idls_with_ext_i_to_OA_F_V_stable;
    
+    // ####################
+    // Algorithm 2 with Duality
+    // ####################
+
+    vprintf Algorithm_2,1 : "\n\n################\nAlgorithm 2 with duality\n################\n";
+
+
+
+
+
+
+
+
+
+
+
+
     // ####################
     // Algorithm 3
     // ####################
@@ -785,6 +963,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //for debugging
     vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m0;
     alpha:=alpha_at_precision(m0+1);
+//TODO duality version
     vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,1 : "Computing M...";
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);
