@@ -808,7 +808,7 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
             if not IsDefined(exps_nus,inu) then
                 test,nu_bar:=IsConjugateStable(nu);
                 if test then
-                    error "Implemented only for non conjugte stable places of E";
+                    error "Implemented only for non-conjugate stable places of E";
                 end if;
                 inu_bar:=Index(plE_sl_in01,nu_bar);
                 assert inu_bar ne 0;
