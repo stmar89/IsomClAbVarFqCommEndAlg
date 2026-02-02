@@ -43,7 +43,8 @@ declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
 
 declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
                                     DeltaInverse,
-                                    PlacesOfAAbove;
+                                    PlacesOfAAbove,
+                                    Wtype;
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
@@ -63,7 +64,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq : DualsCompatible:=fal
 - alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
 - bar_onA is an involution of A = E \otimes L given by bar_E otimes id_L, where bar_E is the CM-involution of E.
-The VarArg DualsCompatible determines whether the function alpha_at_precision (used elsewhere to compute the SemilinearOperators F,V) is compatible with the action of duality on the category of WR{F,V}-ideals.
+The VarArg DualsCompatible determines whether the function alpha_at_precision (used elsewhere to compute the SemilinearOperators F,V) is compatible with the action of duality on the category of WR\{F,V\}-ideals.
 //TODO this last sentence is a bit vague
 }
     if not assigned isog`DiedudonneAlgebraCommEndAlg then
@@ -237,7 +238,7 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
         // We need to apply the CM involution which is defined to be bar on E, and identity on L.
         L_basis_ofA_bar:=[ (q/pi_A)^i : i in [0..Dimension(W)-1] ];
         bar_onW:=iso<W->W|[mAW(b):b in L_basis_ofA_bar]>; //action of bar on L^2g
-        bar_onA:=Hom(A,A,[mWA(bar_onW(mAW(b))):AbsoluteBasis(A)] : CheckMultiplicative:=true; CheckUnital:=true; ComputeInverse:=true); //bar:A->A
+        bar_onA:=Hom(A,A,[b@mAW@bar_onW@@mAW:b in AbsoluteBasis(A)] : CheckMultiplicative:=true, CheckUnital:=true, ComputeInverse:=true); //bar:A->A
         assert2 forall{b:b in AbsoluteBasis(A) | bar_onA(bar_onA(b)) eq b }; // check that bar_onA is an involution
 
         // Note that OA \simeq OE \otimes ZZ[zz] locally at p.
@@ -472,11 +473,13 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
         // - if all_nus eq true then we consider all places, not just the local local ones
         //
         // 20260202 TODO's: 
-        //           - currently only implemented for nu!=bar{nu}. see require below.
+        //           - currently only implemented for nu!=bar{nu}. see error below.
         //             more research is needed to understand what is happening at the places of slope = 1/2
         //           - does computgin alpha_nu at precision m guarantee that the deduced alpha_{bar{nu}} is correct at the same precision?
         //             if not, we will need to understand how much should we increase the precision of alpha_nu.
-            require forall{nu:nu in plE_sl_in01|Slope(nu) ne 1/2} : "Currently this is implemented only for places which are NOT stable by complex conjugation";  
+            if exists{nu:nu in plE_sl_in01|Slope(nu) eq 1/2} then
+                error "Currently this is implemented only for places which are NOT stable by complex conjugation";  
+            end if;
 
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
@@ -590,6 +593,9 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
                 alpha_A_dual:=p/bar_onA(alpha_A);
                 assert alpha_A*bar_onA(alpha_A_dual) - p in PPs_nus_prod_powers[inu]*PPs_nus_prod_powers[inu_bar];
                 alpha_Q_inAs[inu_bar]:=alpha_A_dual;
+                // we need to keep track of the choice made
+                nu`Wtype:=true;
+                nu_bar`Wtype:=false;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
             // end of unit argument + compatibility with duality.
@@ -636,7 +642,7 @@ end intrinsic;
 
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0, DualsCompatible:=false)->SeqEnum[AlgEtQIdl]
 {Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.
-The VarArg DualsCompatible determines whether the SemilinearOperators F,V are computed compatibly with the action of duality on the category of WR{F,V}-ideals.
+The VarArg DualsCompatible determines whether the SemilinearOperators F,V are computed compatibly with the action of duality on the category of WR\{F,V\}-ideals.
 //TODO this last sentence is a bit vague
 }
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
@@ -768,20 +774,60 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
         return exps;
     end function;
 
-// TODO add version with duality here
+    exponents_W_bar_type:=function(P)
+        f_nu:=InertiaDegree(P);
+        g_nu:=GCD(a,f_nu); //q=p^a
+        e_nu:=RamificationIndex(P);
+        exps:=[];
+        cp:=CartesianProduct([ [-e_nu..0] : i in [1..g_nu]]);
+        for tup0 in cp do
+            tup:=[ tup0[i] : i in [1..g_nu] ];
+            if &+tup eq -Integers()!(g_nu*Valuation(pi,P)/a) then
+                exp:=Reverse([ i eq g_nu select 0 else Self(g_nu-i) - tup[i] : i in Reverse([1..g_nu])]);
+                Append(~exps,exp);
+            end if;
+        end for;
+        return exps;
+    end function;
 
+    
     // ####################
     // Algorithm 2
     // ####################
-
     vprintf Algorithm_2,1 : "\n\n################\nAlgorithm 2\n################\n";
-
     exps_nus:=[];
     pp_A_nus:=[];
-    for P in plE_sl_in01 do
-        Append(~exps_nus,exponents_from_Waterhouse(P));
-        Append(~pp_A_nus,primes_of_A_above_place_of_E(A,P));
-    end for;
+    if not DualsCompatible then
+        for nu in plE_sl_in01 do
+            Append(~exps_nus,exponents_from_Waterhouse(nu));
+            Append(~pp_A_nus,primes_of_A_above_place_of_E(A,nu));
+        end for;
+    else
+        // variant compatible with duality
+        for inu->nu in plE_sl_in01 do
+            if not IsDefined(exps_nus,inu) then
+                test,nu_bar:=IsConjugateStable(nu);
+                if test then
+                    error "Implemented only for non conjugte stable places of E";
+                end if;
+                inu_bar:=Index(plE_sl_in01,nu_bar);
+                assert inu_bar ne 0;
+                assert not IsDefined(exps_nus,inu_bar);
+                assert {nu`Wtype,nu_bar`Wtype} eq {true,false}; // Exactly one of the two has alpha_nu of W-type.
+                                                                // The other one has 'dual' to it.
+                                                                // This determines how to compute the WR{F,V}-ideals with max end ring at nu and nu_bar.
+                if nu`Wtype then
+                    exps_nus[inu]:=exponents_from_Waterhouse(nu);
+                    exps_nus[inu_bar]:=exponents_W_bar_type(nu_bar);
+                else
+                    exps_nus[inu_bar]:=exponents_from_Waterhouse(nu_bar);
+                    exps_nus[inu]:=exponents_W_bar_type(nu);
+                end if;
+                pp_A_nus[inu]:=primes_of_A_above_place_of_E(A,nu);
+                pp_A_nus[inu_bar]:=primes_of_A_above_place_of_E(A,nu_bar);
+            end if;
+        end for;
+    end if;
     exps_nus_cc:=CartesianProduct(exps_nus);
     exps_01:=[];
     for cc in exps_nus_cc do
@@ -831,23 +877,6 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
     end for;
     vprintf Algorithm_2,1 : "done\n";
     vprintf Algorithm_2,1 : "number of Delta'-isomorphism classes with FV-stable extension to O_A' = %o\n",#WR_01_idls_with_ext_i_to_OA_F_V_stable;
-   
-    // ####################
-    // Algorithm 2 with Duality
-    // ####################
-
-    vprintf Algorithm_2,1 : "\n\n################\nAlgorithm 2 with duality\n################\n";
-
-
-
-
-
-
-
-
-
-
-
 
     // ####################
     // Algorithm 3
@@ -963,7 +992,6 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
     //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //for debugging
     vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m0;
     alpha:=alpha_at_precision(m0+1);
-//TODO duality version
     vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,1 : "Computing M...";
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);

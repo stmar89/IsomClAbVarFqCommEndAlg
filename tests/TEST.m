@@ -2,7 +2,7 @@
 
     // Testing on a few classes together with saving loading.
 
-    AttachSpec("~/AlgEt/spec");
+    //AttachSpec("~/AlgEt/spec");
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/AbVarFq/spec");
