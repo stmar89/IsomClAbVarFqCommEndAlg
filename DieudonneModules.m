@@ -43,8 +43,7 @@ declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
 
 declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
                                     DeltaInverse,
-                                    PlacesOfAAbove,
-                                    Wtype;
+                                    PlacesOfAAbove;
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
@@ -386,7 +385,7 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
                 // Considering the action of COMPLEX CONJUGATION on the places above p could speed-up the computation here,
                 // by deducing alpha_{nu_bar} from alpha_{nu} whenever nu\neq nu_bar.
-                // Note that this consideration does not help with the places stabilized by the action of bar{}, i.e. when the slope = 1/2.
+                // Note that this consideration does not help with the places stabilized by the action of bar{}.
                 PPs_nu:=primes_of_A_above_place_of_E(A,nu);
                 f_nu:=InertiaDegree(nu);
                 g_nu:=GCD(a,f_nu); //q=p^a
@@ -474,10 +473,10 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
         //
         // 20260202 TODO's: 
         //           - currently only implemented for nu!=bar{nu}. see error below.
-        //             more research is needed to understand what is happening at the places of slope = 1/2
+        //             more research is needed to understand what is happening at conjugate stable places.
         //           - does computgin alpha_nu at precision m guarantee that the deduced alpha_{bar{nu}} is correct at the same precision?
         //             if not, we will need to understand how much should we increase the precision of alpha_nu.
-            if exists{nu:nu in plE_sl_in01|Slope(nu) eq 1/2} then
+            if exists{nu:nu in plE_sl_in01|IsConjugateStable(nu)} then
                 error "Currently this is implemented only for places which are NOT stable by complex conjugation";  
             end if;
 
@@ -502,7 +501,7 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
             repeat
                 ExtractRep(~to_do,~i);
                 nu:=places_considered[i];
-                if Slope(nu) eq 1/2 then
+                if IsConjugateStable(nu) then
                     Append(~conj_stable_indices,i);
                 else
                     test,nu_bar:=IsConjugateStable(nu);
@@ -517,6 +516,10 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
 
             for pair in conj_pairs_indices do
                 inu,inu_bar:=Explode(pair);
+                if not IsOfWType(places_considered[inu]) then
+                    assert IsOfWType(places_considered[inu_bar]);
+                    temp:=inu; inu:=inu_bar; inu_bar:=temp;
+                end if;
                 nu:=places_considered[inu];
                 nu_bar:=places_considered[inu_bar];
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o which is not conjugate stable...",inu,#places_considered;
@@ -589,17 +592,17 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
                                         embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
                 alpha_A:=gamma_A*beta_A;
 
-                alpha_Q_inAs[inu]:=alpha_A;
-                alpha_A_dual:=p/bar_onA(alpha_A);
+                alpha_Q_inAs[inu]:=alpha_A; 
+                // alpha_A_dual:=p/bar_onA(alpha_A);
+                alpha_A_dual:= //TODO
+                assert alpha_A in OA;
+                assert alpha_A_dual in OA;
                 assert alpha_A*bar_onA(alpha_A_dual) - p in PPs_nus_prod_powers[inu]*PPs_nus_prod_powers[inu_bar];
                 alpha_Q_inAs[inu_bar]:=alpha_A_dual;
-                // we need to keep track of the choice made
-                nu`Wtype:=true;
-                nu_bar`Wtype:=false;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
             // end of unit argument + compatibility with duality.
-            // TODO 20260202 add code for places with slope 1/2, when we understand what to do...
+            // TODO 20260202 add code for conjugate stable places
             alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
             vprintf alpha_at_precision,1 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
             return alpha;
@@ -813,10 +816,10 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
                 inu_bar:=Index(plE_sl_in01,nu_bar);
                 assert inu_bar ne 0;
                 assert not IsDefined(exps_nus,inu_bar);
-                assert {nu`Wtype,nu_bar`Wtype} eq {true,false}; // Exactly one of the two has alpha_nu of W-type.
+                assert {IsOfWType(nu),IsOfWType(nu_bar)} eq {true,false}; // Exactly one of the two has alpha_nu of W-type.
                                                                 // The other one has 'dual' to it.
                                                                 // This determines how to compute the WR{F,V}-ideals with max end ring at nu and nu_bar.
-                if nu`Wtype then
+                if IsOfWType(nu) then
                     exps_nus[inu]:=exponents_from_Waterhouse(nu);
                     exps_nus[inu_bar]:=exponents_W_bar_type(nu_bar);
                 else

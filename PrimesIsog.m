@@ -28,7 +28,8 @@ declare attributes IsogenyClassFq : SingPrimesOfZFVAwayFrom_p,
                                     PlacesOfQFAbove_p,
                                     PrimesOfZFVAbove_p;
 
-declare attributes AlgEtQIdl :      Slope;
+declare attributes AlgEtQIdl :      Slope,
+                                    Wtype;
 
 
 intrinsic SingPrimesOfZFVAwayFrom_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl]
@@ -110,3 +111,23 @@ If the vararg CheckMaximal is set to false, the instrinsic will accept as input 
     end if;
     return P`Slope;
 end intrinsic;
+
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// IsOfWType ///////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
+intrinsic IsOfWType(nu::AlgEtQIdl)->BoolElt
+{
+//TODO
+}
+    if not assigned nu`Wtype then
+        test,nu_bar:=IsConjugateStable(nu);
+        if not test then
+            assert not assigned nu_bar`Wtype;
+            nu_bar`Wtype:=false;
+        end if;
+        nu`Wtype:=true;
+    end if;
+    return nu`Wtype;
+end intrinsic;
+
