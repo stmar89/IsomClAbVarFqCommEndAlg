@@ -282,12 +282,12 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
             // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient
             if not assigned A`sigma_fin_prec or A`sigma_fin_prec[1] lt m then
                 _,moL:=quo<OL | PL^m >;
-                frob:=moL(L.1); // L.1 generates F_q = OL/pOL, by the way L is constructed above.
+                frob:=moL(L.1); // L.1 generates F_q^* = (OL/pOL)^*, by the way L is constructed above.
                 repeat
                     old:=frob;
                     frob:=frob^q;
                 until frob eq old;
-                zeta:=frob@@moL; // zeta is congruent to an inertial element mod m
+                zeta:=frob@@moL; // zeta is congruent to an inertial element mod PL^m
                 LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true);
                 assert Degree(LL) eq Degree(L);
                 LLtoL:=iso<LL->L | [ zeta ] >;
@@ -479,6 +479,9 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
             if exists{nu:nu in plE_sl_in01|IsConjugateStable(nu)} then
                 error "Currently this is implemented only for places which are NOT stable by complex conjugation";  
             end if;
+        
+        m_orig:=m;
+        m +:= 0; // FIXME this seems to be needed for the dual
 
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
@@ -546,9 +549,7 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
                     Append(~us_nu,u);
                 end for;
                 PPs_nus_prod_powers[inu]:=&*PPs_nu_m;
-                PPs_nu_bar_m:=[ PP^(m*RamificationIndex(PP)): PP in primes_of_A_above_place_of_E(A,nu_bar)];
-                PPs_nus_prod_powers[inu_bar]:=&*(PPs_nu_bar_m);
-
+                
                 Q,embs,projs:=DirectSum(Rs_nu);
                 pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
                                            y:->CRT( PPs_nu_m ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
@@ -582,7 +583,7 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
                 w_nu:=pi/(u_nu^val_nu); // in E
                 assert Valuation(w_nu,nu) eq 0;
                 wU:=U_pr(Delta_map(w_nu)); // in E->A->U
-                gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+                gamma0:=wU@@phi; // in Us[g_nu], the last component of U
                 gamma_A:=(&+[i lt g_nu select 
                                         U_embs[i](One(A)@@us_nu[i]) else 
                                         U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
@@ -593,12 +594,23 @@ The VarArg DualsCompatible determines whether the function alpha_at_precision (u
                 alpha_A:=gamma_A*beta_A;
 
                 alpha_Q_inAs[inu]:=alpha_A; 
-                // alpha_A_dual:=p/bar_onA(alpha_A);
-                alpha_A_dual:= //TODO
+                // alpha_A_dual:=p/bar_onA(alpha_A); // this element might not be integral: we need something a bit smarter.
+                // We have Q = \prod(OA/P_i^m), where P_i ranges over the g_nu maximal ideals of OA above nu. 
+                // Let Q_bar be the analogous ring, but for the cm-conjugate nu_bar.
+                // The action of bar on the algebra A, induces an isomorphism bar:Q_bar->Q.
+                // We consider the composition bar*p.
+                // Then we define alpha_A_dual as any preimage of alpha_A.
+                // TODO do we need to increase the precision for Q to guarantee that *p has a preimage?
+                PPs_nu_bar_m_orig:=[PP^(m_orig*RamificationIndex(PP)):PP in primes_of_A_above_place_of_E(A,nu_bar)];
+                PPs_nus_prod_powers[inu_bar]:=&*(PPs_nu_bar_m_orig);
+                Q_bar,pr_bar:=ResidueRing(OA,PPs_nus_prod_powers[inu_bar]);
+                bar:=hom<Q_bar->Q|[Q_bar.i@@pr_bar@bar_onA@pr : i in [1..Ngens(Q_bar)]]>;
+                alpha_A_dual:=(p*(alpha_A^-1))@pr@@bar@@pr_bar;
+                alpha_Q_inAs[inu_bar]:=alpha_A_dual;
+                assert IsIsomorphic(Q_bar,Q);
                 assert alpha_A in OA;
                 assert alpha_A_dual in OA;
                 assert alpha_A*bar_onA(alpha_A_dual) - p in PPs_nus_prod_powers[inu]*PPs_nus_prod_powers[inu_bar];
-                alpha_Q_inAs[inu_bar]:=alpha_A_dual;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
             // end of unit argument + compatibility with duality.
