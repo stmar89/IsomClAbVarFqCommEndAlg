@@ -6,4 +6,5 @@ DieudonneModules.m
 IsomorphismClasses.m
 GenDeligneModules.m
 SaveLoad.m
+CRT_expansion.m
 }

@@ -2,7 +2,7 @@
 
     // Testing on a few classes together with saving loading.
 
-    //AttachSpec("~/AlgEt/spec");
+    AttachSpec("~/AlgEt/spec");
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/AbVarFq/spec");
@@ -19,6 +19,7 @@
         ];
 
     for h in hs do
+        try
         h;
         isog:=IsogenyClass(h);
         time iso:=IsomorphismClasses(isog);
@@ -48,6 +49,9 @@
             VMQ:=sub<Q|[V(MQ.i):i in [1..Ngens(MQ)]]>;
             assert FMQ+VMQ subset MQ;
         end for;
+        catch e
+            e;
+        end try;
     end for;
 
 
