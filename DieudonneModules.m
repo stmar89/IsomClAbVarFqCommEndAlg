@@ -364,8 +364,10 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
         // alpha
         // #######################
         alpha_at_precision_W_type_at_place:=function(m,nu,sigma,t_nu,qI)
-        // input: nu is a place of E, t_nu is a 'good' uniformizer, sigma is computed on qI:OA->OA/p^m'*OA, for m' \geq m.
-        // output: an element alpha_nu of W-type computed at precision m and \prod P^(m*e) where P runs over the places of A
+        // input: nu is a place of E, t_nu is a 'good' uniformizer, 
+        //        sigma is computed on qI:OA->OA/p^m'*OA, for m' \geq m.
+        // output: an element alpha_nu of W-type computed at precision m and 
+        //         \prod P^(m*e) where P runs over the places of A
         //         above nu and e is the ramification at nu (=ramification at P).
             PPs_nu:=primes_of_A_above_place_of_E(A,nu);
             f_nu:=InertiaDegree(nu);
@@ -436,7 +438,14 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
         end function;
 
         alpha_W_type_q_alpha_at_precision_at_place:=function(m,m2,nu,sigma,t_nu,qI)
-        // TODO description
+        // input: - m2 \geq m integers giving the precision
+        //        - nu is a place of E, 
+        //        - t_nu a 'good' uniformizer at nu 
+        //        - sigma is computed on qI:OA->OA/p^m2*OA.
+        // output: - an element alpha_nu of W-type computed at precision m2;
+        //         - the element representing q/alpha_nu at precision m; 
+        //         - \prod P^(m*e) where P runs over the places of A above nu 
+        //              and e is the ramification at nu (=ramification at P).
             PPs_nu:=primes_of_A_above_place_of_E(A,nu);
             f_nu:=InertiaDegree(nu);
             g_nu:=GCD(a,f_nu); //q=p^a
@@ -510,7 +519,6 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
                                     embs[i](rs_nu[i](One(A))) else 
                                     embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; // in A 
             alpha_nu:=gamma_A*beta_A; // in OA, at precision m2
-print "got alpha_nu";
             // now we want to construct q/alpha_nu, which is also in OA, at precision m2:
             // - change the sign of gamma0, and
             // - q_beta_A = (q,...,q,q/u0)
@@ -552,7 +560,6 @@ print "got alpha_nu";
                     error "Currently this is implemented only for places which are NOT stable by complex conjugation";  
                 end if;
                 m2:=m+a-1;
-                assert p^a eq q; //sanity check, that the letters have not been used for other things //FIXME remove this line
                 I:=p^m2*OA;
                 QI,qI:=ResidueRing(OA,I);
                 sigma_m2:=sigma_OA_mod_I(QI,qI,A);
@@ -595,208 +602,6 @@ print "got alpha_nu";
             end if;
             return output;
         end function;
-
-//        alpha_at_precision_yes_duality:=function(m : all_nus:=false)
-//            for pair in conj_pairs_indices do
-////                inu,inu_bar:=Explode(pair);
-////                if not IsOfWType(places_considered[inu]) then
-////                    assert IsOfWType(places_considered[inu_bar]);
-////                    temp:=inu; inu:=inu_bar; inu_bar:=temp;
-////                end if;
-//                nu:=places_considered[inu];
-//                nu_bar:=places_considered[inu_bar];
-//                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o which is not conjugate stable...",inu,#places_considered;
-//                PPs_nu:=primes_of_A_above_place_of_E(A,nu);
-//                f_nu:=InertiaDegree(nu);
-//                g_nu:=GCD(a,f_nu); //q=p^a
-//                assert #PPs_nu eq g_nu;
-//
-//                Rs_nu:=[];
-//                rs_nu:=<>;
-//                Us_nu:=[];
-//                us_nu:=<>;
-//                PPs_nu_m:=[];
-//                for PP in PPs_nu do
-//                    PP_m:=PP^(RamificationIndex(PP)*(m));
-//                    Append(~PPs_nu_m,PP_m);
-//                    R,r:=ResidueRing(OA,PP_m);
-//                    vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
-//                    U,u:=ResidueRingUnits(OA,PP_m);
-//                    vprintf alpha_at_precision,2 : "\tU,u computed\n";
-//                    Append(~Rs_nu,R);
-//                    Append(~rs_nu,r);
-//                    Append(~Us_nu,U);
-//                    Append(~us_nu,u);
-//                end for;
-//                PPs_nus_prod_powers[inu]:=&*PPs_nu_m;
-//                
-//                Q,embs,projs:=DirectSum(Rs_nu);
-//                pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-//                                           y:->CRT( PPs_nu_m ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
-//                pi_Q:=pr(pi_A);
-//                assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
-//
-//                U,U_embs,U_projs:=DirectSum(Us_nu);
-//                U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
-//                                             y:->CRT( PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
-//                sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
-//                assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
-//
-//                vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
-//
-//                image_phi:=function(gamma)
-//                    // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
-//                    // phi does the following two steps
-//                    // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
-//                    // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-//                    beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
-//                    // Action of the Frobenius on U
-//                    img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
-//                    vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
-//                    assert2 sigma_U(img) eq img;
-//                    return img;
-//                end function;
-//                phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
-//                
-//                u_nu:=uniformizers_at_nus[inu]; // in E
-//                val_nu:=Valuation(pi,nu); // in E
-//                w_nu:=pi/(u_nu^val_nu); // in E
-//                assert Valuation(w_nu,nu) eq 0;
-//                wU:=U_pr(Delta_map(w_nu)); // in E->A->U
-//                gamma0:=wU@@phi; // in Us[g_nu], the last component of U
-//                gamma_A:=(&+[i lt g_nu select 
-//                                        U_embs[i](One(A)@@us_nu[i]) else 
-//                                        U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
-//                u0:=Delta_map(u_nu^(Integers()!(val_nu*g_nu/a)));
-//                beta_A:=(&+[i lt g_nu select 
-//                                        embs[i](rs_nu[i](One(A))) else 
-//                                        embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
-//                alpha_A:=gamma_A*beta_A;
-//
-//                alpha_Q_inAs[inu]:=alpha_A; 
-//                // alpha_A_dual:=p/bar_onA(alpha_A); // this element might not be integral: we need something a bit smarter.
-//                // We have Q = \prod(OA/P_i^m), where P_i ranges over the g_nu maximal ideals of OA above nu. 
-//                // Let Q_bar be the analogous ring, but for the cm-conjugate nu_bar.
-//                // The action of bar on the algebra A, induces an isomorphism bar:Q_bar->Q.
-//                // We consider the composition bar*p.
-//                // Then we define alpha_A_dual as any preimage of alpha_A.
-//                // TODO do we need to increase the precision for Q to guarantee that *p has a preimage?
-//                PPs_nu_bar_m_orig:=[PP^(m_orig*RamificationIndex(PP)):PP in primes_of_A_above_place_of_E(A,nu_bar)];
-//                PPs_nus_prod_powers[inu_bar]:=&*(PPs_nu_bar_m_orig);
-//                Q_bar,pr_bar:=ResidueRing(OA,PPs_nus_prod_powers[inu_bar]);
-//                bar:=hom<Q_bar->Q|[Q_bar.i@@pr_bar@bar_onA@pr : i in [1..Ngens(Q_bar)]]>;
-//                alpha_A_dual:=(p*(alpha_A^-1))@pr@@bar@@pr_bar;
-//                alpha_Q_inAs[inu_bar]:=alpha_A_dual;
-//                assert IsIsomorphic(Q_bar,Q);
-//                assert alpha_A in OA;
-//                assert alpha_A_dual in OA;
-//                assert alpha_A*bar_onA(alpha_A_dual) - p in PPs_nus_prod_powers[inu]*PPs_nus_prod_powers[inu_bar];
-//                vprintf alpha_at_precision,1 : "done\n";
-//            end for;
-//            // end of unit argument + compatibility with duality.
-//            // TODO 20260202 add code for conjugate stable places
-//            alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
-//            vprintf alpha_at_precision,1 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
-//            return alpha;
-//        end function;
-
-
-//        alpha_at_precision_no_duality:=function(m : all_nus:=false)
-//        // see the description above TODO
-//        // - alpha using the unit argument
-//        // - if all_nus eq true then we consider all places, not just the local local ones
-//            I:=p^m*OA;
-//            QI,qI:=ResidueRing(OA,I);
-//            sigma:=sigma_OA_mod_I(QI,qI,A);
-//            alpha_Q_inAs:=[];
-//            PPs_nus_prod_powers:=[];
-//            if all_nus then
-//                places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
-//            else
-//                places_considered:=plE_sl_in01;
-//            end if;
-//            uniformizers_at_nus:=Uniformizers(places_considered);
-//            for inu->nu in places_considered do
-//                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
-//                // Considering the action of COMPLEX CONJUGATION on the places above p could speed-up the computation here,
-//                // by deducing alpha_{nu_bar} from alpha_{nu} whenever nu\neq nu_bar.
-//                // Note that this consideration does not help with the places stabilized by the action of bar{}.
-//                PPs_nu:=primes_of_A_above_place_of_E(A,nu);
-//                f_nu:=InertiaDegree(nu);
-//                g_nu:=GCD(a,f_nu); //q=p^a
-//                assert #PPs_nu eq g_nu;
-//
-//                Rs_nu:=[];
-//                rs_nu:=<>;
-//                Us_nu:=[];
-//                us_nu:=<>;
-//                PPs_nu_m:=[];
-//                for PP in PPs_nu do
-//                    PP_m:=PP^(RamificationIndex(PP)*(m));
-//                    Append(~PPs_nu_m,PP_m);
-//                    R,r:=ResidueRing(OA,PP_m);
-//                    vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
-//                    U,u:=ResidueRingUnits(OA,PP_m);
-//                    vprintf alpha_at_precision,2 : "\tU,u computed\n";
-//                    Append(~Rs_nu,R);
-//                    Append(~rs_nu,r);
-//                    Append(~Us_nu,U);
-//                    Append(~us_nu,u);
-//                end for;
-//                PPs_nu_m_prod:=&*PPs_nu_m;
-//                Append(~PPs_nus_prod_powers,PPs_nu_m_prod);
-//
-//                Q,embs,projs:=DirectSum(Rs_nu);
-//                pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-//                                           y:->CRT( PPs_nu_m ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
-//                pi_Q:=pr(pi_A);
-//                assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
-//
-//                U,U_embs,U_projs:=DirectSum(Us_nu);
-//                U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
-//                                             y:->CRT( PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
-//                sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
-//                assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
-//
-//                vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
-//
-//                image_phi:=function(gamma)
-//                    // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
-//                    // phi does the following two steps
-//                    // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
-//                    // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-//                    beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
-//                    // Action of the Frobenius on U
-//                    img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
-//                    vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
-//                    assert2 sigma_U(img) eq img;
-//                    return img;
-//                end function;
-//                phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
-//                
-//                u_nu:=uniformizers_at_nus[inu]; // in E
-//                val_nu:=Valuation(pi,nu); // in E
-//                w_nu:=pi/(u_nu^val_nu); // in E
-//                assert Valuation(w_nu,nu) eq 0;
-//                wU:=U_pr(Delta_map(w_nu)); // in E->A->U
-//                gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
-//                gamma_A:=(&+[i lt g_nu select 
-//                                        U_embs[i](One(A)@@us_nu[i]) else 
-//                                        U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
-//                u0:=Delta_map(u_nu^(Integers()!(val_nu*g_nu/a)));
-//                beta_A:=(&+[i lt g_nu select 
-//                                        embs[i](rs_nu[i](One(A))) else 
-//                                        embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; 
-//                alpha_A:=gamma_A*beta_A;
-//                Append(~alpha_Q_inAs,alpha_A);
-//                vprintf alpha_at_precision,1 : "done\n";
-//            end for;
-//            // end of unit argument
-//            alpha:=CRT( PPs_nus_prod_powers, alpha_Q_inAs );
-//            vprintf alpha_at_precision,1 : "alpha = %o\n",PrintSeqAlgEtQElt([alpha])[1];
-//            return alpha;
-//        end function;
-
         isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data,bar_onA>;
     end if;
     return Explode(isog`DiedudonneAlgebraCommEndAlg);
