@@ -427,10 +427,10 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
                                             // places above p of slope in (0,1). Why is then w_nu an integral element?
             assert Valuation(w_nu,nu) eq 0;
             wU:=U_pr(Delta_map(w_nu)); // in E->A->U
-            gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+            gamma1:=wU@@phi; // in Us[g_nu], the last componenet of U
             gamma_A:=(&+[i lt g_nu select 
                                     U_embs[i](One(A)@@us_nu[i]) else 
-                                    U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+                                    U_embs[i](gamma1) : i in [1..g_nu]])@@U_pr; // in A
             u0:=Delta_map(t_nu^(Integers()!(val_nu*g_nu/a)));
             beta_A:=(&+[i lt g_nu select 
                                     embs[i](rs_nu[i](One(A))) else 
