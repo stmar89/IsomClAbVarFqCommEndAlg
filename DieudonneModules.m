@@ -422,7 +422,9 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
             
             val_nu:=Valuation(pi,nu); // in E
-            w_nu:=pi/(t_nu^val_nu); // in E
+            w_nu:=pi/(t_nu^val_nu); // in E // FIXME 20250219: I am surprised that taking this division does not 
+                                            // trigger an error. The element t is a uniformizer at nu and a unit all other 
+                                            // places above p of slope in (0,1). Why is then w_nu an integral element?
             assert Valuation(w_nu,nu) eq 0;
             wU:=U_pr(Delta_map(w_nu)); // in E->A->U
             gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
