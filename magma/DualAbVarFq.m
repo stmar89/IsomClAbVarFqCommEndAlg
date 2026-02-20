@@ -60,7 +60,11 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
 
         // 'Correction' factor for duality
         // TODO explain better
-        delta:=isog`delta_Hilbert90;
+        if IsOrdinary(isog) then
+            delta:=A!1;
+        else
+            delta:=isog`delta_Hilbert90;
+        end if;
         Mv:=delta^-1*Ideal(WR,gens_Mv);
 
         //////////////////////////////////////////
