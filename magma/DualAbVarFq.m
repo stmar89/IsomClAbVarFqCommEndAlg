@@ -26,7 +26,6 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
         //      Mv = a_1^{-1} \bar{z_1}^* + ... + a_n^{-1} \bar{z_n}^*,
         // where z_1^*,...,z_n^* is the Tr_{A/L}-dual basis to z_1,...,z_n.
         // So, let's get the pseudo basis.
-//TODO 20260202: now the next line gives also bar_onA. no need to recompute it below!
         L,_,PL,_,A,pi_A,_,_,WR,_,_,_,_,alpha_at_precision,A_as_vector_space_over_L_data,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
         mAD,mLdD,mALd:=Explode(A_as_vector_space_over_L_data);
         Ld:=Codomain(mALd);
@@ -50,7 +49,6 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
                 where bb:=Basis(M_lat) where cc:=CoefficientIdeals(M_lat);
         bM_lat_inA:=[b@@mALd:b in bM_lat];
         Gram_M:=MatrixRing(L,Dimension(Ld))![TrAL(x*y):x,y in bM_lat_inA];
-// Gram_M:=MatrixRing(L,d)![TrAL(x*  sigma_onLd(y)@@mALd  ):x in bM_lat_inA, y in bM_lat];
         M_lat:=NumberFieldLattice(bM_lat : Gram:=Gram_M);
         Mt_lat:=Dual(M_lat);
         assert forall{i:i,j in [1..#Basis(M_lat)]| TrAL(Basis(M_lat)[i]@@mALd*Basis(Mt_lat)[j]@@mALd) eq KroneckerDelta(i,j)};
@@ -59,7 +57,11 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
         zb_Mt_lat_inLd:=[z*bb[i]:z in Basis(ci[i]),i in [1..#bb]]; 
         gens_Mt:=[ (Ld!g)@@mALd : g in zb_Mt_lat_inLd ];
         gens_Mv:=[ bar_onA(g) : g in gens_Mt ];
-        Mv:=Ideal(WR,gens_Mv);
+
+        // 'Correction' factor for duality
+        // TODO explain better
+        delta:=isog`delta_Hilbert90;
+        Mv:=delta^-1*Ideal(WR,gens_Mv);
 
         //////////////////////////////////////////
         // now we do Iv, by locally glueing \bar{I}^t at every ell neq p and Delta^-1(Mv) at p. 
