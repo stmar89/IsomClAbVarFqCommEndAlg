@@ -342,6 +342,16 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             if not assigned P`PlacesOfAAbove then
                 OA:=MaximalOrder(A);
                 P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+
+                if DualsCompatible then
+                    test,Pb:=IsConjugateStable(P);
+                    if not test then
+                        assert not assigned Pb`PlacesOfAAbove;
+                        //Pb`PlacesOfAAbove:=[ComplexConjugate(pp):pp in P`PlacesOfAAbove];
+                        //assert2 [Ideal(OA,[bar_onA(z):z in ZBasis(pp)]):pp in P`PlacesOfAAbove] eq Pb`PlacesOfAAbove;
+                        Pb`PlacesOfAAbove:=[Ideal(OA,[bar_onA(z):z in ZBasis(pp)]):pp in P`PlacesOfAAbove];
+                    end if;
+                end if;
             end if;
             return P`PlacesOfAAbove;
         end function;
@@ -424,11 +434,13 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
             
             val_nu:=Valuation(pi,nu); // in E
-            w_nu:=pi/(t_nu^val_nu); // in E // FIXME 20250219: I am surprised that taking this division does not 
-                                            // trigger an error. The element t is a uniformizer at nu and a unit all other 
-                                            // places above p of slope in (0,1). Why is then w_nu an integral element?
+            w_nu:=pi/(t_nu^val_nu); // in E 
             assert Valuation(w_nu,nu) eq 0;
-            wU:=U_pr(Delta_map(w_nu)); // in E->A->U
+            // FIXME t_nu is constructed using a CRT method. So, when dividing by it, it might not lead to the a unit mod nu.
+            // But pi is exact. So instead we construct t_nu^var(pi)/pi, pull it back, and then invert again.
+            //wU:=U_pr(Delta_map(w_nu)); // in E->A->U
+            wU:=-U_pr(Delta_map(w_nu^-1)); // in E->A->U
+"wU OK";
             gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
             gamma_A:=(&+[i lt g_nu select 
                                     U_embs[i](One(A)@@us_nu[i]) else 
@@ -438,10 +450,16 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
                                     embs[i](rs_nu[i](One(A))) else 
                                     embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; // in A 
             alpha_nu:=gamma_A*beta_A; // in A
+            
+            // it is desirable that alpha_nu is not a zero divisor of A
+            while IsZeroDivisor(alpha_nu) do
+                alpha_nu+:=Random(PPs_nu_m_prod);
+            end while;
+
             return alpha_nu,PPs_nu_m_prod,PPs_nu_m,Us_nu[g_nu],us_nu[g_nu];
         end function;
 
-        delta_nu_at_precision:=function(nu,alpha_nu,alpha_onu,sigma,qI,PPs_nu_m,U_gnu,u_gnu)
+        delta_nu_at_precision:=function(nu,alpha_nu,alpha_onu,sigma,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu)
         // TODO update this description
         // input: 
         // output: 
@@ -453,7 +471,7 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             // we construct the hom x:->tau(x)/x
             tau_over_id:=hom<U_gnu->U_gnu|[ (U_gnu.i@tau)-U_gnu.i : i in [1..Ngens(U_gnu)]]>;
 printf "conj_stable = %o , slope = %o, g_nu = %o , f_nu = %o\n",IsConjugateStable(nu),Slope(nu),g_nu,f_nu;
-
+printf "[P=bar(P):P|nu]=%o\n",[P eq Ideal(OA,[bar_onA(z):z in ZBasis(P)]):P in primes_of_A_above_place_of_E(A,nu)];
             UU:=alpha_nu*bar_onA(alpha_onu)/p^g_nu;
 [Valuation(alpha_nu,P) : P in primes_of_A_above_place_of_E(A,nu)];
 [Valuation(bar_onA(alpha_onu),P) : P in primes_of_A_above_place_of_E(A,nu)];
@@ -461,11 +479,18 @@ printf "conj_stable = %o , slope = %o, g_nu = %o , f_nu = %o\n",IsConjugateStabl
 [Valuation(A!(p^g_nu),P) : P in primes_of_A_above_place_of_E(A,nu)];
 [Valuation(UU,P) : P in primes_of_A_above_place_of_E(A,nu)];
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
-            UU:=UU@@u_gnu; // in U_gnu //FIXME 20250219 same comment as above
+            //UU:=UU@@u_gnu; // in U_gnu //FIXME 20250219 same comment as above, same workaround.
+            UU:=-(UU^-1)@@u_gnu;
+"UU OK";
             assert &+[UU@(tau^i):i in [0..(a div g_nu)-1]] eq Zero(U_gnu);
 //UU@@tau_over_id;
             delta1:=UU@u_gnu; //in A
             delta_nu:=CRT(PPs_nu_m,[delta1*p^(i-1): i in [1..g_nu]]); //in A
+
+            // to make sure that the lift is not a zero divisor
+            while IsZeroDivisor(delta_nu) do
+                delta_nu+:=Random(PPs_nu_m_prod);
+            end while;
             return delta_nu;
         end function;
         
@@ -501,11 +526,10 @@ printf "conj_stable = %o , slope = %o, g_nu = %o , f_nu = %o\n",IsConjugateStabl
                 repeat
                     ExtractRep(~to_do,~i);
                     nu:=places_considered[i];
-                    if IsConjugateStable(nu) then
+                    test,nu_bar:=IsConjugateStable(nu);
+                    if test then
                         Append(~conj_stable_indices,i);
                     else
-                        test,nu_bar:=IsConjugateStable(nu);
-                        assert not test;
                         i_bar:=Index(places_considered,nu_bar);
                         assert i_bar ne 0;
                         Exclude(~to_do,i_bar);
@@ -530,7 +554,8 @@ printf "conj_stable = %o , slope = %o, g_nu = %o , f_nu = %o\n",IsConjugateStabl
                     nu:=places_considered[inu];
                     t_nu:=uniformizers_at_nus[inu];
                     alpha_nu,PPs_nu_m_prod,PPs_nu_m,U_gnu,u_gnu:=alpha_at_precision_W_type_at_place(m,nu,sigma_m,t_nu,qI);
-                    delta_nu:=delta_nu_at_precision(nu,alpha_nu,alpha_nu,sigma_m,qI,PPs_nu_m,U_gnu,u_gnu);
+                    assert not IsZeroDivisor(alpha_nu);
+                    delta_nu:=delta_nu_at_precision(nu,alpha_nu,alpha_nu,sigma_m,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu);
                     output[nu]:=<alpha_nu,PPs_nu_m_prod,delta_nu>;
                     vprintf alpha_at_precision,1 : "done\n";
                 end for;
@@ -542,12 +567,17 @@ printf "conj_stable = %o , slope = %o, g_nu = %o , f_nu = %o\n",IsConjugateStabl
                     nu_bar:=places_considered[inu_bar];
                     t_nu_bar:=uniformizers_at_nus[inu_bar];
                     alpha_nu,PPs_nu_m_prod,PPs_nu_m,U_gnu,u_gnu:=alpha_at_precision_W_type_at_place(m,nu,sigma_m,t_nu,qI);
+                    assert not IsZeroDivisor(alpha_nu);
                     alpha_nu_bar,PPs_nu_bar_m_prod,PPs_nu_bar_m,U_gnu_bar,u_gnu_bar:=alpha_at_precision_W_type_at_place(m,nu_bar,sigma_m,t_nu_bar,qI);
-                    delta_nu:=delta_nu_at_precision(nu,alpha_nu,alpha_nu_bar,sigma_m,qI,PPs_nu_m,U_gnu,u_gnu);
+                    assert not IsZeroDivisor(alpha_nu_bar);
+                    // The places of A above nu and nu_Bar are sorted compatibly according to complex conjugation in the
+                    // calls of PlacesOfAAbove done in alpha_at_precision_W_type_at_place.
+                    // This is needed for the notion of Wtype at nu is compatible with the notion of Wtype at nu_bar.
+                    delta_nu:=delta_nu_at_precision(nu,alpha_nu,alpha_nu_bar,sigma_m,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu);
 print "delta_nu OK";
-                    delta_nu_bar:=delta_nu_at_precision(nu_bar,alpha_nu_bar,alpha_nu,sigma_m,qI,PPs_nu_bar_m,U_gnu_bar,u_gnu_bar);
+                    delta_nu_bar:=delta_nu_at_precision(nu_bar,alpha_nu_bar,alpha_nu,sigma_m,qI,PPs_nu_bar_m,PPs_nu_bar_m_prod,U_gnu_bar,u_gnu_bar);
 print "delta_nu_bar OK";
-                    assert PPs_nu_bar_m_prod eq ComplexConjugate(PPs_nu_m_prod);
+                    assert PPs_nu_bar_m_prod eq Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m_prod)]);
                     output[nu]:=<alpha_nu,PPs_nu_m_prod,delta_nu>;
                     output[nu_bar]:=<alpha_nu_bar,PPs_nu_bar_m_prod,delta_nu_bar>;
                     vprintf alpha_at_precision,1 : "done\n";
