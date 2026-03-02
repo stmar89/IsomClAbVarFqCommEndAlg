@@ -379,9 +379,9 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
         alpha_at_precision_W_type_at_place:=function(m,nu,sigma,t_nu,qI)
         // input: nu is a place of E, t_nu is a 'good' uniformizer, 
         //        sigma is computed on qI:OA->OA/p^m'*OA, for m' \geq m.
-        // output: an element alpha_nu of W-type computed at precision m and 
+        // output: an element alpha_nu of W-type computed at precision m, and 
         //         \prod P^(m*e) where P runs over the places of A
-        //         above nu and e is the ramification at nu (=ramification at P).
+        //         above nu and e is the ramification at nu (=ramification at each P).
             PPs_nu:=primes_of_A_above_place_of_E(A,nu);
             f_nu:=InertiaDegree(nu);
             g_nu:=GCD(a,f_nu); //q=p^a
@@ -391,8 +391,10 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             Us_nu:=[];
             us_nu:=<>;
             PPs_nu_m:=[];
+            e_nu:=RamificationIndex(PPs_nu[1]);
             for PP in PPs_nu do
-                PP_m:=PP^(RamificationIndex(PP)*(m));
+                assert RamificationIndex(PP) eq e_nu; // PPs is a single sigma-orbit
+                PP_m:=PP^(e_nu*(m));
                 Append(~PPs_nu_m,PP_m);
                 R,r:=ResidueRing(OA,PP_m);
                 vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
@@ -420,7 +422,7 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
 
             image_phi:=function(gamma)
-                // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
+                // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(e_nu*m))^*
                 // phi does the following two steps
                 // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
                 // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
@@ -463,21 +465,19 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             return alpha_nu,PPs_nu_m_prod,PPs_nu_m,Us_nu[g_nu],us_nu[g_nu];
         end function;
 
-        delta_nu_at_precision_conj_stable:=function(nu,alpha_nu,sigma,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu)
+        delta_nu_at_precision_conj_stable:=function(nu,g_nu,alpha_nu,sigma,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu)
         // TODO update this description
         // input: 
         // output: 
-            f_nu:=InertiaDegree(nu);
-            g_nu:=GCD(a,f_nu); //q=p^a
+            assert forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]}; // alpha_nu of W-type
             pg_nu:=p^g_nu;
+            a_div_g_nu:=Integers()!(a/g_nu);
             // sigma^g_nu = tau
             tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
-            assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(Integers()!(a/g_nu)))(U_gnu.i) eq U_gnu.i};
+            assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
             // we construct the hom x:->tau(x)/x
             tau_over_id:=hom<U_gnu->U_gnu|[ (U_gnu.i@tau)-U_gnu.i : i in [1..Ngens(U_gnu)]]>;
 
-            assert forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]};
-            // FIXME something broken here ... :-(
             u_nu:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..g_nu-1]]; // = (u_nu,...,u_nu) in A
 [Valuation(u_nu,P):P in primes_of_A_above_place_of_E(A,nu)];
             bar_u_nu:=bar_onA(u_nu);
@@ -487,10 +487,11 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
             UU:=UU@@u_gnu; // in U_gnu
             // FIXME next assertion is failing for some reason
-            assert &+[UU@(tau^i):i in [0..(a div g_nu)-1]] eq Zero(U_gnu); // Norm of UU is 1.
+            assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // Norm of UU is 1.
             delta1:=UU@@tau_over_id@u_gnu; //in A
             
             rho_g_nu:=Index(PPs_nu_m,Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m[g_nu])]));
+            assert rho_g_nu ne 0;
             delta_nu:=[delta1*p^-(i-1):i in [1..rho_g_nu]] cat [delta1*bar_u_nu*p^-(i-1):i in [rho_g_nu+1..g_nu]];
             delta_nu:=[pg_nu*x:x in delta_nu]; // to make sure that it is in OA
             assert forall{x:x in delta_nu|x in OA};
@@ -503,13 +504,12 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             return delta_nu;
         end function;
 
-        delta_nu_at_precision_conj_pair:=function(nu,alpha_nu,alpha_onu,sigma,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu)
+        delta_nu_at_precision_conj_pair:=function(nu,g_nu,alpha_nu,alpha_onu,sigma,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu)
         // TODO update this description
         // input: 
         // output: 
-            f_nu:=InertiaDegree(nu);
-            g_nu:=GCD(a,f_nu); //q=p^a
             // sigma^g_nu = tau
+            a_div_g_nu:=Integers()!(a/g_nu);
             tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
             assert2 forall{i:i in [1..Ngens(U_gnu)]|(tau^(Integers()!(a/g_nu)))(U_gnu.i) eq U_gnu.i};
             // we construct the hom x:->tau(x)/x
@@ -517,7 +517,7 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             UU:=alpha_nu*bar_onA(alpha_onu)/p^g_nu;
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
             UU:=UU@@u_gnu; // in U_gnu
-            assert &+[UU@(tau^i):i in [0..(a div g_nu)-1]] eq Zero(U_gnu);
+            assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu);
             delta1:=UU@@tau_over_id@u_gnu; //in A
             // We first multiply by p^g_nu to guarantee that the elements are in OA, apply CRT and then divide by p^g_nu.
             delta_nu:=p^-g_nu*CRT(PPs_nu_m,[delta1*p^(g_nu-(i-1)): i in [1..g_nu]]); //in A
@@ -587,12 +587,11 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
                 for inu in conj_stable_indices do
                     vprintf alpha_at_precision,1 : "Computing alpha at precision %o for the %o-th place",m,inu;
                     nu:=places_considered[inu];
-                    f_nu:=InertiaDegree(nu);
-                    g_nu:=GCD(a,f_nu); //q=p^a
                     t_nu:=uniformizers_at_nus[inu];
                     alpha_nu,PPs_nu_m_prod,PPs_nu_m,U_gnu,u_gnu:=alpha_at_precision_W_type_at_place(m,nu,sigma_m,t_nu,qI);
+                    g_nu:=#PPs_nu_m;
                     assert not IsZeroDivisor(alpha_nu);
-                    delta_nu:=delta_nu_at_precision_conj_stable(nu,alpha_nu,sigma_m,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu);
+                    delta_nu:=delta_nu_at_precision_conj_stable(nu,g_nu,alpha_nu,sigma_m,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu);
                     output[nu]:=<alpha_nu,PPs_nu_m_prod,delta_nu,g_nu>;
                     vprintf alpha_at_precision,1 : "done\n";
                 end for;
@@ -600,8 +599,6 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
                     inu,inu_bar:=Explode(pair);
                     vprintf alpha_at_precision,1 : "Computing alpha at precision %o for the (%o,%o)-th places",m,inu,inu_bar;
                     nu:=places_considered[inu];
-                    f_nu:=InertiaDegree(nu);
-                    g_nu:=GCD(a,f_nu); //q=p^a
                     t_nu:=uniformizers_at_nus[inu];
                     nu_bar:=places_considered[inu_bar];
                     t_nu_bar:=uniformizers_at_nus[inu_bar];
@@ -612,11 +609,13 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
                     // The places of A above nu and nu_Bar are sorted compatibly according to complex conjugation in the
                     // calls of PlacesOfAAbove done in alpha_at_precision_W_type_at_place.
                     // This is needed for the notion of Wtype at nu to be compatible with the notion of Wtype at nu_bar.
-                    delta_nu:=delta_nu_at_precision_conj_pair(nu,alpha_nu,alpha_nu_bar,sigma_m,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu);
+                    g_nu:=#PPs_nu_m;
+                    assert #PPs_nu_bar_m eq g_nu;
+                    assert forall{i:i in [1..g_nu]|PPs_nu_bar_m[i] eq Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m[i])])};
+                    delta_nu:=delta_nu_at_precision_conj_pair(nu,g_nu,alpha_nu,alpha_nu_bar,sigma_m,qI,PPs_nu_m,PPs_nu_m_prod,U_gnu,u_gnu);
 //print "delta_nu OK";
                     delta_nu_bar:=delta_nu_at_precision_conj_pair(nu_bar,alpha_nu_bar,alpha_nu,sigma_m,qI,PPs_nu_bar_m,PPs_nu_bar_m_prod,U_gnu_bar,u_gnu_bar);
 //print "delta_nu_bar OK";
-                    assert PPs_nu_bar_m_prod eq Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m_prod)]);
                     output[nu]:=<alpha_nu,PPs_nu_m_prod,delta_nu,g_nu>;
                     output[nu_bar]:=<alpha_nu_bar,PPs_nu_bar_m_prod,delta_nu_bar,g_nu>;
                     vprintf alpha_at_precision,1 : "done\n";
