@@ -479,11 +479,11 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             tau_over_id:=hom<U_gnu->U_gnu|[ (U_gnu.i@tau)-U_gnu.i : i in [1..Ngens(U_gnu)]]>;
 
             u_nu:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..g_nu-1]]; // = (u_nu,...,u_nu) in A
-[Valuation(u_nu,P):P in primes_of_A_above_place_of_E(A,nu)];
+//[Valuation(u_nu,P):P in primes_of_A_above_place_of_E(A,nu)];
             bar_u_nu:=bar_onA(u_nu);
-[Valuation(bar_u_nu,P):P in primes_of_A_above_place_of_E(A,nu)];
+//[Valuation(bar_u_nu,P):P in primes_of_A_above_place_of_E(A,nu)];
             UU:=u_nu*bar_u_nu/pg_nu;
-[Valuation(UU,P):P in primes_of_A_above_place_of_E(A,nu)];
+//[Valuation(UU,P):P in primes_of_A_above_place_of_E(A,nu)];
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
             UU:=UU@@u_gnu; // in U_gnu
             // FIXME next assertion is failing for some reason
