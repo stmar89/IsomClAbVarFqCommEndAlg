@@ -58,11 +58,18 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
         gens_Mt:=[ (Ld!g)@@mALd : g in zb_Mt_lat_inLd ];
         gens_Mv:=[ bar_onA(g) : g in gens_Mt ];
 
-        // 'Correction' factor for duality
-        // TODO explain better
+        // If M is a WR{F,V}-ideal representing the local-local part of the p-divisible group
+        // of the abelian variety AV, then the local-local part of the p-divisible group of the
+        // dual abelian variety AV^v is represented by the WR{F,V}-ideal M^v which is defined by
+        //      M^v = 1/delta * bar(M)^t, where ^t denotes the dual with respect to the Trace(A/L).
+        // The element delta is constructed from alpha in the intrinsic _AlphaAtPrecision, used to
+        // compute the semilinear operator F and V, at finite precision.
         if IsOrdinary(isog) then
-            delta:=A!1;
+            delta:=One(A);
         else
+            if not assigned isog`delta_Hilbert90 then
+                error : "Rerun the computation of the isomorphism classes with the DualsCompatible vararg set to true";
+            end if;
             delta:=isog`delta_Hilbert90;
         end if;
         Mv:=delta^-1*Ideal(WR,gens_Mv);
