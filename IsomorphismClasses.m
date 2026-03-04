@@ -179,7 +179,7 @@ glue_local_parts_orders:=function(primes,orders)
 end function;
 
 intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0, DualsCompatible:=false )->SeqEnum[AbVarFq]
-{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg.}
+{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg. The vararg DualsCompatible (default false) determines whether computing the SemilinearOperators computes also the elemenet delta of A needed to compute the dual of each Dieudonne module.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     output:=[];
     places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);

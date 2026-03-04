@@ -47,7 +47,7 @@ declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
 ///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq : DualsCompatible:=false)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,Tup,Map
+intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,Tup,Map
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
 <L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,A_as_vector_space_over_L_data,bar_onA> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
@@ -56,7 +56,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq : DualsCompatible:=fal
 - sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of (L\otimes_Q Qp)/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
 - Delta_inverse_ideal is a function that given a fractional WR-ideal returns its preimage via Delta_map;
-- primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
+- primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P; if the places of E is not conjugate stable, then the corresponding attribute of the 'bar' is also assigned, preserving the order;
 - primes_of_S_of_slope_in_01 is a function that given an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, the P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
 - bar_onA is an involution of A = E \otimes L given by bar_E otimes id_L, where bar_E is the CM-involution of E.}
@@ -71,6 +71,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq : DualsCompatible:=fal
         t,p,a:=IsPrimePower(q);
         assert t;
         plE_sl_0,plE_sl_in01,plE_sl_1:=PlacesOfQFAbove_p(isog);
+
         // ################### 
         // Global Representatives: L and sigma_L
         // ###################
@@ -335,14 +336,10 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq : DualsCompatible:=fal
                 OA:=MaximalOrder(A);
                 P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
 
-                if DualsCompatible then
-                    test,Pb:=IsConjugateStable(P);
-                    if not test then
-                        assert not assigned Pb`PlacesOfAAbove;
-                        //Pb`PlacesOfAAbove:=[ComplexConjugate(pp):pp in P`PlacesOfAAbove];
-                        //assert2 [Ideal(OA,[bar_onA(z):z in ZBasis(pp)]):pp in P`PlacesOfAAbove] eq Pb`PlacesOfAAbove;
-                        Pb`PlacesOfAAbove:=[Ideal(OA,[bar_onA(z):z in ZBasis(pp)]):pp in P`PlacesOfAAbove];
-                    end if;
+                test,Pb:=IsConjugateStable(P);
+                if not test then
+                    assert not assigned Pb`PlacesOfAAbove;
+                    Pb`PlacesOfAAbove:=[Ideal(OA,[bar_onA(z):z in ZBasis(pp)]):pp in P`PlacesOfAAbove];
                 end if;
             end if;
             return P`PlacesOfAAbove;
@@ -375,8 +372,7 @@ end intrinsic;
 
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0, DualsCompatible:=false)->SeqEnum[AlgEtQIdl]
 {Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.
-//TODO update this last sentence
-The VarArg DualsCompatible determines whether the SemilinearOperators F,V are computed compatibly with the action of duality on the category of WR\{F,V\}-ideals. See the description of alpha_at_precision in DieudonneAlgebraCommEndAlg for more details.}
+The vararg DualsCompatible (default false) determines whether computing the SemilinearOperators computes also the element delta of A required to construct the dual of each Dieudonne module.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     vprintf DieudonneModules,1 : "Computing DiedudonneAlgebraCommEndAlg...";
     R:=ZFVOrder(isog);
@@ -387,7 +383,7 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
-    L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01:=DieudonneAlgebraCommEndAlg(isog : DualsCompatible:=DualsCompatible);
+    L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01:=DieudonneAlgebraCommEndAlg(isog);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
     _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
@@ -717,7 +713,7 @@ The VarArg DualsCompatible determines whether the SemilinearOperators F,V are co
 
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
     vprintf Algorithm_3,1 : "\talpha at precision %o...",m0;
-    alpha:=_AlphaAtPrecision(isog,m0+1);
+    alpha:=_AlphaAtPrecision(isog,m0+1:DualsCompatible:=DualsCompatible);
     vprintf Algorithm_3,1 : "done\n";
 
     FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;

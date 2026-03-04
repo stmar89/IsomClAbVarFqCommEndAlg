@@ -30,6 +30,8 @@ declare attributes IsogenyClassFq : glueing_gen_deligne_module_data;
 
 declare attributes AlgEtQIdl : Delta_ideal;
 
+// FIXME Delta_inverse_ppart and Delta_ideal should be easier to access. Make them intrinsics ?
+
 Delta_inverse_ppart:=function(isog,DM)
 // given an ideal DM in A, computes an R-ideal J such that J_p = Delta^-1(DM_p)
     R:=ZFVOrder(isog);

@@ -7,5 +7,6 @@ IsomorphismClasses.m
 GenDeligneModules.m
 SemilinearOperators.m
 DualAbVarFq.m
+Pols.m
 SaveLoad.m
 }

@@ -32,7 +32,7 @@ declare attributes IsogenyClassFq : alpha,
 
 declare attributes AlgEtQIdl :      finite_quotients;
 
-intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false, all_nus:=false)->AlgEtQElt
+intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false, all_nus:=true)->AlgEtQElt
 {
     Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi].
 //TODO update description here
@@ -44,7 +44,12 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
     require m ge 0: "m needs to be a non-negative integer";
     if not assigned isog`alpha then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
-        _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_:=DieudonneAlgebraCommEndAlg(isog : DualsCompatible:=DualsCompatible);
+        _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_,_,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
+        q:=FiniteField(isog);
+        _,p,a:=IsPrimePower(q);
+        E:=DeligneAlgebra(isog);
+        pi:=PrimitiveElement(E);
+        plE_sl_0,plE_sl_in01,plE_sl_1:=PlacesOfQFAbove_p(isog);
 
         finite_quotients:=function(m,nu)
         // input:  - nu = a place of E
@@ -96,11 +101,14 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
         end function;
 
         alpha_at_precision_W_type_at_place:=function(m,nu,g_nu,sigma,t_nu,qI)
-        // input: nu is a place of E, t_nu is a 'good' uniformizer, 
-        //        sigma is computed on qI:OA->OA/p^m'*OA, for m' \geq m.
-        // output: an element alpha_nu of W-type computed at precision m, and 
-        //         \prod P^(m*e) where P runs over the places of A
-        //         above nu and e is the ramification at nu (=ramification at each P).
+        // input:  - nu is a place of E;
+        //         - m is a positive integer 
+        //         - t_nu is an element of E, which is a uniformizer at nu and a unit at every other place above p;
+        //         - sigma is computed on qI:OA->OA/p^m'*OA, for some m' \geq m.
+        // output: - an element alpha_nu of W-type computed at precision m, that is,
+        //           in OA/PP where PP:=\prod P^(m*e) where P runs over the places of A
+        //           above nu and e_nu is the ramification at nu (=ramification at each P)
+        //         - PP is also returned.
             PPs_nu_m,PPs_nu_m_prod,Rs_nu,rs_nu,Q,embs,projs,pr,Us_nu,us_nu,U,U_embs,U_projs,U_pr:=finite_quotients(m,nu);
             sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
             image_phi:=function(gamma)
@@ -117,37 +125,11 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             end function;
             phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
             val_nu:=Valuation(pi,nu); // in E
-//printf "wU ... ";
             pE:=PlacesAboveRationalPrime(E,p);
             // w_nu is in OE and congrunent to t_nu^val_nu/pi at nu and 1 at every other place above p
-//printf "m=%o,val_nu=%o,Dimension(E)*a=%o\n",m,val_nu,Dimension(E)*a;
-//print Valuation(pi,ComplexConjugate(nu));
             // TODO Double check this CRT; is the precision ok?
-            w_nu:=CRT([pp^(Dimension(E)*(m+a)):pp in pE],[pp eq nu select t_nu^val_nu else pi : pp in pE])/pi; // w_nu i in E 
-//assert w_nu in OE;
+            w_nu:=CRT([pp^(Dimension(E)*(m+a)):pp in pE],[pp eq nu select t_nu^val_nu else pi : pp in pE])/pi; // in OE
             wU:=-U_pr(Delta_map(w_nu)); // in E->A->U
-//printf "OK\n";
-//            val_nu:=Valuation(pi,nu); // in E
-//            w_nu:=(t_nu^val_nu)/pi; // in E 
-//assert t_nu in OE;
-//printf "wU ... ";
-//assert w_nu in OE;
-//assert Delta_map(w_nu) in OA;
-//            wU:=-U_pr(Delta_map(w_nu)); // in E->A->U
-//printf "OK\n";
-//            val_nu:=Valuation(pi_A,primes_of_A_above_place_of_E(A,nu)[1]); // in A 
-////val_nu;
-////assert forall{P:P in primes_of_A_above_place_of_E(A,nu)|Valuation(Delta_map(t_nu),P) eq 1};
-//            Delta_t_nu_val_nu:=Delta_map(t_nu^val_nu);
-////assert forall{P:P in primes_of_A_above_place_of_E(A,nu)|Valuation(Delta_t_nu_val_nu,P) eq val_nu};
-////[Valuation(pi_A,P):P in primes_of_A_above_place_of_E(A,nu)];
-//            wU:=pi_A@pr@@(hom<Q->Q|[pr(Delta_t_nu_val_nu*(Q.i@@pr)):i in [1..Ngens(Q)]]>)@@pr;
-//            assert wU in OA;
-////[Valuation(wU,P):P in primes_of_A_above_place_of_E(A,nu)];
-////assert forall{P:P in primes_of_A_above_place_of_E(A,nu)|Valuation(wU,P) eq 0};
-////"3";
-//            wU:=wU@U_pr;
-//// with this preimage approach something goes wrong in the next line...is there a precision loss?
             gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
             gamma_A:=(&+[i lt g_nu select 
                                     U_embs[i](One(A)@@us_nu[i]) else 
@@ -162,15 +144,22 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             while IsZeroDivisor(alpha_nu) do
                 alpha_nu+:=Random(PPs_nu_m_prod);
             end while;
-            assert forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]}; // alpha_nu of W-type
-            assert forall{i:i in [1..g_nu]|X - pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..a-1]];
+            // Check that alpha_nu of W-type: 1 in all components but the last one, and with sigma-norm = pi_nu
+            assert2 forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]}; 
+            assert2 forall{i:i in [1..g_nu]|X - pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..a-1]];
             return alpha_nu,PPs_nu_m_prod;
         end function;
 
         delta_nu_at_precision_conj_stable:=function(m,nu,g_nu,alpha_nu,sigma,qI)
-        // TODO update this description
-        // input: 
-        // output: 
+        // input:  - m is a positive integer
+        //         - nu is a place of E which is conjugate stable;
+        //         - g_nu is the number of primes of A above nu;
+        //         - alpha_nu is an element of W-type for pi_nu, computed at precision at least m+g_nu.
+        //         - sigma is computed on qI:OA->OA/p^m'*OA, for some m' \geq m.
+        // output: - an element delta_nu satisfying delta_nu/sigma(delta_nu)*bar(alpha_nu) = p/alpha_nu  
+        //           computed at precision m, that is, in OA/PP where PP:=\prod P^(m*e) where 
+        //           P runs over the places of A above nu and e_nu is the ramification at nu (=ramification at each P)
+        //         - PP is also returned.
             pg_nu:=A!(p^g_nu);
             a_div_g_nu:=Integers()!(a/g_nu);
             U:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..g_nu-1]]; // = (u_nu,...,u_nu) in A
@@ -183,22 +172,18 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             assert bU in OA;
             assert UU in OA;
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
-"UU in OA";
             PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in primes_of_A_above_place_of_E(A,nu)];
             PPs_nu_m_prod:=&*(PPs_nu_m);
-assert forall{k:k in [1..g_nu]|&*[ bU@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - (q/pi_A) in PPs_nu_m[k]};
-assert forall{k:k in [1..g_nu]|&*[ U@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
-[ X-1 in PPs_nu_m[k] : k in [1..g_nu]] where X:=&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]];
-assert forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[ bU@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - (q/pi_A) in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[ U@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
             U_gnu,u_gnu:=ResidueRingUnits(OA,PPs_nu_m[g_nu]);
             UU:=UU@@u_gnu; // in U_gnu
-"UU in U_gnu";
 
             // tau = sigma^g_nu
             tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
             assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
             tau_over_id:=hom<U_gnu->U_gnu|[ (U_gnu.i@tau)-U_gnu.i : i in [1..Ngens(U_gnu)]]>;
-// FIXME next assertion is failing for some reason
             assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
             delta1:=UU@@tau_over_id@u_gnu; //in A
             
@@ -217,9 +202,16 @@ assert forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu
         end function;
 
         delta_nu_at_precision_conj_pair:=function(m,nu,onu,g_nu,alpha_nu,alpha_onu,sigma,qI)
-        // TODO update this description
-        // input: 
-        // output: 
+        // input:  - m is a positive integer
+        //         - nu is a place of E which is not conjugate stable;
+        //         - g_nu is the number of primes of A above nu;
+        //         - alpha_nu is an element of W-type for pi_nu, computed at precision at least m+g_nu.
+        //         - alpha_onu is an element of W-type for pi_bar(nu), computed at precision at least m+g_nu.
+        //         - sigma is computed on qI:OA->OA/p^m'*OA, for some m' \geq m.
+        // output: - an element delta_nu satisfying delta_nu/sigma(delta_nu)*bar(alpha_nu) = p/alpha_nu  
+        //           computed at precision m, that is, in OA/PP where PP:=\prod P^(m*e) where 
+        //           P runs over the places of A above nu and e_nu is the ramification at nu (=ramification at each P)
+        //         - PP is also returned.
             // sigma^g_nu = tau
             a_div_g_nu:=Integers()!(a/g_nu);
             pg_nu:=A!p^g_nu;
@@ -232,26 +224,20 @@ assert forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu
             UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],[PP in pA_nu select UbU else pg_nu:PP in pA])/pg_nu;
             assert U in OA;
             assert bU in OA;
-//[Valuation(UbU,PP):PP in pA];
-//[Valuation(pg_nu,PP):PP in pA];
-//[Valuation(UU,PP):PP in pA];
             assert UU in OA;
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
-//"UU in OA";
             PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in primes_of_A_above_place_of_E(A,nu)];
             PPs_nu_m_prod:=&*(PPs_nu_m);
-//assert forall{k:k in [1..g_nu]|&*[ bU@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - (q/pi_A) in PPs_nu_m[k]};
-//assert forall{k:k in [1..g_nu]|&*[ U@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
-//[ X-1 in PPs_nu_m[k] : k in [1..g_nu]] where X:=&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]];
-//assert forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[ bU@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - (q/pi_A) in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[ U@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
             U_gnu,u_gnu:=ResidueRingUnits(OA,PPs_nu_m[g_nu]);
             UU:=UU@@u_gnu; // in U_gnu
-//"UU in U_gnu";
             // tau = sigma^g_nu
             tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
-            assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
+            assert2 forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
             tau_over_id:=hom<U_gnu->U_gnu|[ (U_gnu.i@tau)-U_gnu.i : i in [1..Ngens(U_gnu)]]>;
-            assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
+            assert2 &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
             delta1:=UU@@tau_over_id@u_gnu; //in A
             // We first multiply by p^g_nu to guarantee that the elements are in OA, apply CRT and then divide by p^g_nu.
             delta_nu:=p^-g_nu*CRT(PPs_nu_m,[delta1*p^(g_nu-(i-1)): i in [1..g_nu]]); //in A
@@ -270,7 +256,6 @@ assert forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu
             places_considered:=plE_sl_in01;
             uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#places_considered];
         end if;
-printf "number of places of E of slope in (0,1) = %o\n",#places_considered;
         g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
 
         if not DualsCompatible then
@@ -290,7 +275,6 @@ printf "number of places of E of slope in (0,1) = %o\n",#places_considered;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
             alpha:=CRT(prime_powers,alphas); // each alpha_nu is integral and of W-type
-            isog`alpha[m]:=alpha;
         else // with DualsCompatible
             output:=AssociativeArray();
             // We identify the conjugate pairs in places_considered.
@@ -320,6 +304,7 @@ printf "number of places of E of slope in (0,1) = %o\n",#places_considered;
                     : nu in places_considered ]);
             m:=Max(m,m2);
             // In order to compute delta_nu at precision m, we need to compute alpha_nu at precision m+g_nu
+            // ( we divide by p^g_nu at a certain point )
             // Since we compute sigma once for all nu's, we do it at precision m+Max(g_nu).
             QI,qI:=ResidueRing(OA,p^(m+Max(g_nus))*OA);
             sigma:=sigma_OA_mod_I(QI,qI,A);
@@ -349,9 +334,7 @@ printf "number of places of E of slope in (0,1) = %o\n",#places_considered;
                 // This is needed for the notion of Wtype at nu to be compatible with the notion of Wtype at nu_bar.
                 assert prod_primes_alpha_bar eq Ideal(OA,[bar_onA(z):z in ZBasis(prod_primes_alpha)]);
                 delta_nu,prod_primes_delta:=delta_nu_at_precision_conj_pair(m,nu,nu_bar,g_nu,alpha_nu,alpha_nu_bar,sigma,qI);
-//print "delta_nu OK";
                 delta_nu_bar,prod_primes_delta_bar:=delta_nu_at_precision_conj_pair(m,nu_bar,nu,g_nu,alpha_nu_bar,alpha_nu,sigma,qI);
-//print "delta_nu_bar OK";
                 output[nu]:=<alpha_nu,prod_primes_alpha,delta_nu,prod_primes_delta>;
                 output[nu_bar]:=<alpha_nu_bar,prod_primes_alpha_bar,delta_nu_bar,prod_primes_delta_bar>;
                 vprintf alpha_at_precision,1 : "done\n";
@@ -359,15 +342,11 @@ printf "number of places of E of slope in (0,1) = %o\n",#places_considered;
             alpha:=CRT([nu[2]:inu->nu in output],[nu[1]:inu->nu in output]);
             p_max_g_nu:=p^Max(g_nus); //p^N*delta_nu is integral, for every nu
             delta:=p_max_g_nu^-1*CRT([nu[4]:inu->nu in output],[p_max_g_nu*nu[3]:inu->nu in output]);
-            isog`delta_Hilbert90[m]:=delta;
-            // In the DualsCompatible case, we compute alpha_nu at precision m+g_nu, so the 'global'
-            // alpha is correct at m+Min(g_nus).
-            isog`alpha[m+Min(g_nus)]:=alpha;
+            isog`delta_Hilbert90:=delta;
         end if;
+        isog`alpha:=alpha;
     end if;
-    M:=Max(Keys(isog`alpha));
-    assert m_input le M;
-    return isog`alpha[M];
+    return isog`alpha;
 end intrinsic;
 
 ////////////////////////////////////////////////////////////////////////////////////
