@@ -5,6 +5,7 @@ PrimesIsog.m
 DieudonneModules.m
 IsomorphismClasses.m
 GenDeligneModules.m
+SemilinearOperators.m
+DualAbVarFq.m
 SaveLoad.m
-CRT_expansion.m
 }
