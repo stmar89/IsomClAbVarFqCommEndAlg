@@ -71,13 +71,15 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
     if not test then
         return output;
     end if;
-    assert x0*I eq Iv;
 
     _,_,_,_,_,_,_,Delta_map,WR,_,_,_,primes_of_S_of_slope_in_01,_,_:=DieudonneAlgebraCommEndAlg(IsogenyClass(AV));
     N:=Delta_map(x0)*M;
-    A:=N+Mv;
     B:=N meet Mv;
-    test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A eq P*A+B}; // are the local-local parts of A and B equal?
+    test:=((Index(N,B) mod p ne 0) and (Index(Mv,B) mod p ne 0)); //faster then the next
+    if not test then
+        A:=N+Mv;
+        test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // are local-local parts of A and B equal?
+    end if;
     if not test then
         return output;
     end if;

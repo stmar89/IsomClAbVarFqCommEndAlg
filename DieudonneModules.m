@@ -271,7 +271,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             // - in OL, find an element 'zeta' congruent mod PL^m to an inertial element (=uniformizer) of OLp
             //   by taking successive q-powers of the image 'frob' of a generator of (OL/PL)^*
             //   until the sequence stabilizes (this approximation method seems well known 
-            //   TODO add references to Magma documentation).
+            //   See Example RngLoc_unram-ext (H49E13) for an reference.
             // - We create an auxiliary number field LL<zz>, isomorphic to L via zz:->zeta.
             // - We have an isomorphism OL/PL^m = ZZ[zz]/p^m*ZZ[zz].
             // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient

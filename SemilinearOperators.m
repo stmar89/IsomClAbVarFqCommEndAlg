@@ -121,7 +121,8 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             val_nu:=Valuation(pi,nu); // in E
             pE:=PlacesAboveRationalPrime(E,p);
             // w_nu is in OE and congrunent to t_nu^val_nu/pi at nu and 1 at every other place above p
-            // TODO Double check this CRT; is the precision ok?
+            // The precision is chosen to be a majorative of RamificationIndex(pp)*m [to match the quotient we are using]
+            // plus Valuation(PP,pi) leq Valuation(PP,q)=RamificationIndex(pp)*a.
             w_nu:=CRT([pp^(Dimension(E)*(m+a)):pp in pE],[pp eq nu select t_nu^val_nu else pi : pp in pE])/pi; // in OE
             wU:=-U_pr(Delta_map(w_nu)); // in E->A->U
             gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
@@ -160,7 +161,8 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             bU:=bar_onA(U);
             pA:=PlacesAboveRationalPrime(A,p);
             UbU:=U*bU;
-            // TODO Double check this CRT; is the precision ok?
+            // The precision is chosen to match the one of the quotients we are using, plus the fact that we are dividing 
+            // by p^g_nu
             UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],[PP in primes_of_A_above_place_of_E(A,nu) select UbU else pg_nu:PP in pA])/pg_nu;
             assert U in OA;
             assert bU in OA;
@@ -214,7 +216,8 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             pA:=PlacesAboveRationalPrime(A,p);
             pA_nu:=primes_of_A_above_place_of_E(A,nu);
             UbU:=U*bU;
-            // TODO Double check this CRT; is the precision ok?
+            // The precision is chosen to match the one of the quotients we are using, plus the fact that we are dividing 
+            // by p^g_nu
             UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],[PP in pA_nu select UbU else pg_nu:PP in pA])/pg_nu;
             assert U in OA;
             assert bU in OA;
