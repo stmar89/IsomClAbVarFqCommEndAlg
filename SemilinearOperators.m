@@ -32,15 +32,9 @@ declare attributes IsogenyClassFq : alpha,
 
 declare attributes AlgEtQIdl :      finite_quotients;
 
-intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false, all_nus:=true)->AlgEtQElt
-{
-    Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi].
-//TODO update description here
-- alpha_at_precision is a function that given ,bar_onAa positive integer m returns an associative array indexed by places above p of slope in (0,1) (or all slopes when used with the VarArg all_nus:=true). The entries at each key are elements alpha_nu of A.
-If the VarArg DualsCompatible is false, then all alpha_nu's are of W-type.
-If the VarArg DualsCompatible is true, then for each conjugate pair nu,nu_bar exactly one of the entries is of W-type, while the other is p divided by the complex conjugate of the first. This is implemented only when there are no conjugate-stable places.
-element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
-}
+intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false)->AlgEtQElt
+{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi], and m a non-negative integer. The intrinsic returns an approximation of an element alpha in the DieudonneAlgebra A of W-type, that is, the completion alpha_nu at a place nu of E of slope in (0,1) is of the form (1,...,1,u_nu) for u_nu satisfying N_(LE_nu/E_nu)(u_nu)=pi_nu. This is using the identification A_nu = oplus LE_nu. The output is guaranteed to be correct at precision m, meaning that the images of the approximation and of alpha coincide in OA/prod_nu prod_PP PP^(e_nu*m) where the double product is taken over all places nu of E of slope in (0,1) and PP runs over the primes of A above nu.
+If the VarArg DualsCompatible is true (default false), then the attribute delta_Hilbert90 of isog is assigned with an approximation at precision m of an element delta satisfying p/alpha=delta/sigma(delta)*bar(alpha), where bar is the involution induced on A by the CM-involution of E.}
     require m ge 0: "m needs to be a non-negative integer";
     if not assigned isog`alpha then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
@@ -248,7 +242,11 @@ element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reduc
             end while;
             return delta_nu,PPs_nu_m_prod;
         end function;
-       
+     
+        // setting all_nus:=true force the computation of alpha (and delta if DualsCompatible:=true)
+        // locally at each place nu of E above p.
+        // all_nus:=false runs the computation only for places of slope in (0,1).
+        all_nus:=false;
         if all_nus then
             places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
             uniformizers_at_nus:=Uniformizers(places_considered);
