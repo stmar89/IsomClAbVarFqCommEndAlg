@@ -22,6 +22,8 @@
 // Copyright 2026, S. Marseglia
 /////////////////////////////////////////////////////
 
+declare verbose Pols,3;
+
 // taken from AbVarFqIsogenies
 declare attributes AlgEtQOrd:UnitsModTotPos,TotPosUnitsModUbarU;
 
@@ -64,13 +66,21 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
     
     S:=EndomorphismRing(AV);
     output:=[Algebra(S)|]; //empty list
+    //FIXME is this really correct?
     if not IsConjugateStable(S) then
+        vprintf Pols,1: "End is not conjugate stable.\n";
         return output;
     end if;
     test,x0:=IsIsomorphic(Iv,I);
+
+//debug
+assert {IsIsomorphic(Iv,I):i in [1..100]} eq {test}; //need always the same result
+
     if not test then
+        vprintf Pols,1: "Selfduality fails at the non-local-local part.\n";
         return output;
     end if;
+    assert x0*I eq Iv;
 
     _,_,_,_,_,_,_,Delta_map,WR,_,_,_,primes_of_S_of_slope_in_01,_,_:=DieudonneAlgebraCommEndAlg(IsogenyClass(AV));
     N:=Delta_map(x0)*M;
@@ -81,16 +91,21 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
         test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // are local-local parts of A and B equal?
     end if;
     if not test then
+        vprintf Pols,1: "Selfduality fails at the local-local part.\n";
         return output;
     end if;
+    vprintf Pols,1: "We have selfduality.\n";
 
     homs:=Homs(PHI);
     trans:=UnitsModTotPos(S);
+    vprintf Pols,1 : "is there a symmetric selfduality?\t%o\n",exists{t:t in trans|lambda eq -ComplexConjugate(lambda) where lambda:=x0*t};
+    vprintf Pols,1 : "is there a PHI-positive selfduality?\t%o\n",exists{t:t in trans|forall{phi:phi in homs| Im(phi(lambda)) gt 0 where lambda:=x0*t}};
+    vprintf Pols,1 : "do we a principal polarization?\t\t%o\n",exists{t:t in trans|lambda eq -ComplexConjugate(lambda) and forall{phi:phi in homs| Im(phi(lambda)) gt 0} where lambda:=x0*t};
     for t in trans do
         lambda:=x0*t;
         if lambda eq -ComplexConjugate(lambda) and forall{phi:phi in homs| Im(phi(lambda)) gt 0} then
             output cat:=[lambda*u : u in TotPosUnitsModUbarU(S)];
-            break t;
+            //break t;
         end if;
     end for;
     return output;

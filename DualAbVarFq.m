@@ -52,7 +52,7 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
 
             q:=FiniteField(AV);
             p:=CharacteristicFiniteField(AV);
-            L,_,PL,_,A,pi_A,_,_,WR,_,_,_,_,A_as_vector_space_over_L_data,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
+            L,_,PL,_,A,pi_A,_,_,WR,_,Delta_inverse_ideal,_,_,A_as_vector_space_over_L_data,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
             mAD,mLdD,mALd:=Explode(A_as_vector_space_over_L_data);
             Ld:=Codomain(mALd);
             // - Ld and D are both L-vector spaces of dimension d:=dim_L(A).
