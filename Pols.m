@@ -24,8 +24,8 @@
 
 declare verbose Pols,3;
 
-// taken from AbVarFqIsogenies
-declare attributes AlgEtQOrd:UnitsModTotPos,TotPosUnitsModUbarU;
+// the first 2 are taken from AbVarFqIsogenies
+declare attributes AlgEtQOrd:UnitsModTotPos,TotPosUnitsModUbarU,TransversalQuotientUnitGroups;
 
 // taken from AbVarFqIsogenies
 intrinsic UnitsModTotPos(S::AlgEtQOrd)->SeqEnum[AlgEtQElt]
@@ -58,6 +58,26 @@ intrinsic TotPosUnitsModUbarU(S::AlgEtQOrd)->SeqEnum[AlgEtQElt]
     return S`TotPosUnitsModUbarU;
 end intrinsic;
 
+intrinsic TransversalQuotientUnitGroups(T::AlgEtQOrd,S::AlgEtQOrd)->SeqEnum[AlgEtQElt]
+{Returns a transversal of T^*/(S^* meet T^*). The ouput is stored in an attribute populated on demand.}
+    hS:=myHash(S);
+    if not assigned T`TransversalQuotientUnitGroups then
+        T`TransversalQuotientUnitGroups:=AssociativeArray();
+    end if;
+    if not IsDefined(T`TransversalQuotientUnitGroups,hS) then
+        if T subset S then
+            T`TransversalQuotientUnitGroups[hS]:=[One(Algebra(T))];
+        else
+            UT,uT:=UnitGroup(T);
+            US,uS:=UnitGroup(S);
+            V:=UT meet US;
+            assert V subset UT;
+            T`TransversalQuotientUnitGroups[hS]:=[uT(x):x in Transversal(UT,V)];
+        end if;
+    end if;
+    return T`TransversalQuotientUnitGroups[hS];
+end intrinsic;
+
 intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQCMType)->SeqEnum[AlgEtQElts]
 {Given an abelian variety AV over a finite field Fq with commutative endomorphism algebra E and a CM-type PHI of E, it returns a sequence of totally imaginary elements of E representing the isomorphism classes of PHI-principal polarizations of AV, that is, we required them to be PHI-positive.}
     p:=CharacteristicFiniteField(AV);
@@ -71,43 +91,51 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
         vprintf Pols,1: "End is not conjugate stable.\n";
         return output;
     end if;
+
     test,x0:=IsIsomorphic(Iv,I);
-
-//debug
-assert {IsIsomorphic(Iv,I):i in [1..100]} eq {test}; //need always the same result
-
     if not test then
         vprintf Pols,1: "Selfduality fails at the non-local-local part.\n";
         return output;
     end if;
-    assert x0*I eq Iv;
-
-    _,_,_,_,_,_,_,Delta_map,WR,_,_,_,primes_of_S_of_slope_in_01,_,_:=DieudonneAlgebraCommEndAlg(IsogenyClass(AV));
-    N:=Delta_map(x0)*M;
-    B:=N meet Mv;
-    test:=((Index(N,B) mod p ne 0) and (Index(Mv,B) mod p ne 0)); //faster then the next
-    if not test then
-        A:=N+Mv;
-        test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // are local-local parts of A and B equal?
+    if test then
+        assert x0*I eq Iv;
+        T:=MultiplicatorRing(I);
+        T_S:=TransversalQuotientUnitGroups(T,S);
+        x0s:=[];
+        _,_,_,_,_,_,_,Delta_map,WR,_,_,_,primes_of_S_of_slope_in_01,_,_:=DieudonneAlgebraCommEndAlg(IsogenyClass(AV));
+        for v in T_S do
+            x1:=x0*v;
+            N:=Delta_map(x1)*M;
+            B:=N meet Mv;
+            test:=((Index(N,B) mod p ne 0) and (Index(Mv,B) mod p ne 0)); //faster then the next
+            if not test then
+                A:=N+Mv;
+                test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // A=B at local-local parts?
+            end if;
+            if test then
+                Append(~x0s,x1);
+            end if;
+        end for;
     end if;
-    if not test then
+    if #x0s eq 0 then
         vprintf Pols,1: "Selfduality fails at the local-local part.\n";
         return output;
     end if;
-    vprintf Pols,1: "We have selfduality.\n";
+    vprintf Pols,1: "We have %o selfduality.\n",#x0s;
 
     homs:=Homs(PHI);
     trans:=UnitsModTotPos(S);
-    vprintf Pols,1 : "is there a symmetric selfduality?\t%o\n",exists{t:t in trans|lambda eq -ComplexConjugate(lambda) where lambda:=x0*t};
-    vprintf Pols,1 : "is there a PHI-positive selfduality?\t%o\n",exists{t:t in trans|forall{phi:phi in homs| Im(phi(lambda)) gt 0 where lambda:=x0*t}};
-    vprintf Pols,1 : "do we a principal polarization?\t\t%o\n",exists{t:t in trans|lambda eq -ComplexConjugate(lambda) and forall{phi:phi in homs| Im(phi(lambda)) gt 0} where lambda:=x0*t};
-    for t in trans do
-        lambda:=x0*t;
-        if lambda eq -ComplexConjugate(lambda) and forall{phi:phi in homs| Im(phi(lambda)) gt 0} then
-            output cat:=[lambda*u : u in TotPosUnitsModUbarU(S)];
-            //break t;
-        end if;
+    vprintf Pols,1 : "is there a symmetric selfduality?\t%o\n",exists{t:t in trans,x0 in x0s|lambda eq -ComplexConjugate(lambda) where lambda:=x0*t};
+    vprintf Pols,1 : "is there a PHI-positive selfduality?\t%o\n",exists{t:t in trans,x0 in x0s|forall{phi:phi in homs| Im(phi(lambda)) gt 0 where lambda:=x0*t}};
+    vprintf Pols,1 : "do we a principal polarization?\t\t%o\n",exists{t:t in trans,x0 in x0s|lambda eq -ComplexConjugate(lambda) and forall{phi:phi in homs| Im(phi(lambda)) gt 0} where lambda:=x0*t};
+    for x0 in x0s do
+        for t in trans do
+            lambda:=x0*t;
+            if lambda eq -ComplexConjugate(lambda) and forall{phi:phi in homs| Im(phi(lambda)) gt 0} then
+                output cat:=[lambda*u : u in TotPosUnitsModUbarU(S)];
+                break t;
+            end if;
+        end for;
     end for;
     return output;
 end intrinsic;
-
