@@ -25,7 +25,7 @@
 /////////////////////////////////////////////////////
 
 intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
-{Given a sequence of abelian vareities belonging to an isogney class over Fq with commutative Fq-endomorphism algebra, returns a string containing all the info about the isomorphism classes of the varietis. This string can be loaded using LoadAbVarFqCommEndAlg defined below.}
+{Given a sequence of abelian vareities belonging to an isogney class over Fq with commutative Fq-endomorphism algebra, returns a string containing all the info about the isomorphism classes of the varieties. This string can be loaded using LoadAbVarFqCommEndAlg defined below.}
     isog:=IsogenyClass(classes[1]);
     require forall{A:A in classes|IsogenyClass(A) eq isog} : "The abelian varieties need to belong to the same isogeny class.";
     require IsSquarefree(isog) : "The isogeny class needs to have squarefree Weil polynomial.";
@@ -91,8 +91,13 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
                 Is_str cat "," cat
                 dms_str cat "," cat
                 isom_classes_as_indices cat "," cat 
-                slinop_str cat ">"; 
-    output:=&cat(Split(output)); // remove \n
+                slinop_str cat ">";
+    if assigned isog`delta_Hilbert90 then
+        delta:=isog`delta_Hilbert90;
+        _,delta:=PrintSeqAlgEtQElt([delta]);
+        output:=Prune(output) cat delta;
+    end if;
+    output:=StripWhiteSpace(output);
     return output;
 end intrinsic;
 
@@ -139,6 +144,12 @@ intrinsic LoadAbVarFqCommEndAlg(isog::IsogenyClassFq,input::MonStgElt)->SeqEnum[
     assert forall{i:i in [1..Ngens(Qm0)] | FQm0(VQm0(Qm0.i)) eq p*Qm0.i};
     assert forall{i:i in [1..Ngens(Qm0)] | VQm0(FQm0(Qm0.i)) eq p*Qm0.i};
     isog`SemilinearOperators:=<m0,J,den_idl,Qm0,qm0,FQm0,VQm0>;
+    if #input ge 10 then //also delta
+        delta:=input[10];
+        assert #delta eq 1;
+        delta:=A!delta[1];
+        isog`delta_Hilbert90:=delta;
+    end if;
     return output;
 end intrinsic;
 

@@ -250,6 +250,7 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
         // locally at each place nu of E above p.
         // all_nus:=false runs the computation only for places of slope in (0,1).
         all_nus:=false;
+        //all_nus:=true;
         if all_nus then
             places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
             uniformizers_at_nus:=Uniformizers(places_considered);

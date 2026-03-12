@@ -31,7 +31,7 @@ declare attributes IsogenyClassFq : glueing_gen_deligne_module_data;
 declare attributes AlgEtQIdl : Delta_ideal;
 
 intrinsic pPartDeltaInverseIdeal(isog::IsogenyClassFq,DM::AlgEtQIdl)->AlgEtQIdl
-{Given an isogeny class isog with commutative endomorphism algebra and a fractional WR-ideal of the DieudonneAlgebra of isog, returns a fractional R-ideal J ideal of the DeligneAlgebra such that we have an equality J_p=Delta^-1(DM_p) of localizations at the rational prime p.}
+{Given an isogeny class isog with commutative endomorphism algebra and a fractional WR-ideal of the DieudonneAlgebra of isog, returns a fractional R-ideal J of the DeligneAlgebra such that we have an equality J_p=Delta^-1(DM_p) of localizations at the rational prime p.}
     R:=ZFVOrder(isog);
     E:=Algebra(R);
     _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
@@ -45,6 +45,7 @@ intrinsic pPartDeltaInverseIdeal(isog::IsogenyClassFq,DM::AlgEtQIdl)->AlgEtQIdl
         M_nu:=Max([Valuation(cc,P) : P in primes_of_A_above_place_of_E(A,nu)]);
         Append(~exps,M_nu);
     end for;
+    // FIXME * or CRT?
     dp:=&*[unifs[i]^exps[i]:i in [1..#nus]];
     dpDM:=Delta_map(dp)*DM;
     d:=Index(oOA+dpDM,oOA);
@@ -55,7 +56,9 @@ intrinsic pPartDeltaInverseIdeal(isog::IsogenyClassFq,DM::AlgEtQIdl)->AlgEtQIdl
 
     vp_ind:=Valuation(Index(oOA,dDM),p);
     dDM_ppart:=dDM+p^vp_ind*oOA;
-    return (1/d)*Delta_inverse_ideal(dDM_ppart);
+    output:=(1/d)*Delta_inverse_ideal(dDM_ppart);
+    assert2 Index(output+DD,output meet DD) mod p ne 0 where DD:=Delta_inverse_ideal(DM);
+    return output;
 end intrinsic;
 
 intrinsic DeltaIdeal(isog::IsogenyClassFq,J::AlgEtQIdl)->AlgEtQIdl
@@ -103,19 +106,20 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
             DeltaJ:=DeltaIdeal(isog,J);
             k:=Valuation(Index(DeltaJ+DM,DeltaJ meet DM),p);
             mm0,mm01,mm1:=PrimesOfZFVAbove_p(isog);
+//FIXME is k below ok? Do I need ramification?
             m_k:=#mm01 eq 1 select Ideal(WR,[Delta_map(z):z in ZBasis(mm01[1]^k)]) else OneIdeal(WR);
             nn_k:=#mm0+#mm1 eq 0 select OneIdeal(WR) 
                     else Ideal(WR,[Delta_map(z):z in ZBasis(&*([P^k:P in mm0 cat mm1]))]);
             N:=m_k*DeltaJ+nn_k*DM;
 
             // We create K
-            K_p:=R!!pPartDeltaInverseIdeal(isog,N);
+            //K_p:=R!!pPartDeltaInverseIdeal(isog,N);
+K_p:=R!!Delta_inverse_ideal(N);
             K_coprime_p:=J;
             ind:=Index(K_p+K_coprime_p,K_p meet K_coprime_p);
             k:=Valuation(ind,p);
             pk:=p^k;
             ind_coprime_p:=ind div pk;
-            //K:=pk*K_p+ind_coprime_p*K_coprime_p;
             K:=pk*K_coprime_p+ind_coprime_p*K_p;
             isog`glueing_gen_deligne_module_data[<J,DM>]:=<K,N>;
         end if;
