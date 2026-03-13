@@ -86,7 +86,6 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
     
     S:=EndomorphismRing(AV);
     output:=[Algebra(S)|]; //empty list
-    //FIXME is this really correct?
     if not IsConjugateStable(S) then
         vprintf Pols,1: "End is not conjugate stable.\n";
         return output;
@@ -108,10 +107,12 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
             N:=Delta_map(x1)*M;
             B:=N meet Mv;
             test:=((Index(N,B) mod p ne 0) and (Index(Mv,B) mod p ne 0)); //faster then the next
-            if not test then
-                A:=N+Mv;
-                test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // A=B at local-local parts?
-            end if;
+            //FIXME the above test checks equality at p. If I want to check only the equality at (0,1), I should
+            // uncomment the "if" below.
+//            if not test then
+//                A:=N+Mv;
+//                test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // A=B at local-local parts?
+//            end if;
             if test then
                 Append(~x0s,x1);
             end if;
@@ -137,5 +138,6 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
             end if;
         end for;
     end for;
+
     return output;
 end intrinsic;

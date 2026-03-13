@@ -37,6 +37,9 @@ intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible
 If the VarArg DualsCompatible is true (default false), then the attribute delta_Hilbert90 of isog is assigned with an approximation at precision m of an element delta satisfying p/alpha=delta/sigma(delta)*bar(alpha), where bar is the involution induced on A by the CM-involution of E.}
     require m ge 0: "m needs to be a non-negative integer";
     if not assigned isog`alpha then
+        // DEBUG forcibly increase the precision
+        //m+:=50;
+
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_,_,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
         q:=FiniteField(isog);
@@ -245,22 +248,11 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             end while;
             return delta_nu,PPs_nu_m_prod;
         end function;
-     
-        // setting all_nus:=true force the computation of alpha (and delta if DualsCompatible:=true)
-        // locally at each place nu of E above p.
-        // all_nus:=false runs the computation only for places of slope in (0,1).
-        all_nus:=false;
-        //all_nus:=true;
-        if all_nus then
-            places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
-            uniformizers_at_nus:=Uniformizers(places_considered);
-        else
+        
+        if not DualsCompatible then
             places_considered:=plE_sl_in01;
             uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#places_considered];
-        end if;
-        g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
-
-        if not DualsCompatible then
+            g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
             sigma:=sigma_OA_mod_I(QI,qI,A);
@@ -278,6 +270,10 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             end for;
             alpha:=CRT(prime_powers,alphas); // each alpha_nu is integral and of W-type
         else // with DualsCompatible
+            // delta needs to be computed correctyle at rational p. So we need to consider all places above p.
+            places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
+            uniformizers_at_nus:=Uniformizers(places_considered);
+            g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
             output:=AssociativeArray();
             // We identify the conjugate pairs in places_considered.
             conj_pairs_indices:=[];
@@ -300,7 +296,7 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             // We determine the precision m2 at which delta needs, and consequently,
             // also alpha, needs to be computed. m2 needs to satisfy the inclusion:
             //    p^(m2-g_nu+1) in (W_{R,nu}:OA_nu)=:ff_nu
-            // We can take m2=Max_nu(g_nu+1+val_P(ff) where P is any max ideal of OA above nu).
+            // We can take m2=Max_nu(g_nu-1+val_P(ff) where P is any max ideal of OA above nu).
             ff_WR:=OA!!Conductor(WR);
             m2:=Max([GCD(a,InertiaDegree(nu))-1+Valuation(ff_WR,primes_of_A_above_place_of_E(A,nu)[1])
                     : nu in places_considered ]);

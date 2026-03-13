@@ -106,6 +106,7 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
             k:=Valuation(ind,p);
             pk:=p^k;
             ind_coprime_p:=ind div pk;
+// FIXME OLD code
 //            if k eq 0 then
 //                Iv:=J;
 //            else

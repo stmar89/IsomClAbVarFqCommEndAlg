@@ -106,35 +106,36 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
             k:=Valuation(ind,p);
             pk:=p^k;
             ind_coprime_p:=ind div pk;
-            if k eq 0 then
-                Iv:=J;
-            else
-                ann:=ColonIdeal(bb+pk*aa,aa) meet OneIdeal(R); // ann of(aa/bb)_p=aa/(bb+p^k*aa)
-                supp:=PrimesAbove(ann);
-                _,P_ll,_:=PrimesOfZFVAbove_p(isog); // the unique local-local prime of R
-                assert #P_ll eq 1;
-                P_ll:=P_ll[1];
-                if P_ll notin supp then
-                    Iv_p:=J;
-                elif #supp eq 1 then // supp=[P_ll]
-                    Iv_p:=K;
-                else
-                    Exclude(~supp,P_ll);
-                    // For each P in supp we need k such that P^k*aa_P < bb_P.
-                    // k_ll is an integer satisfying P_ll^k_ll aa_(P_ll) < bb_(P_ll).
-                    // We do the same for all other Ps in supp.
-                    // 
-                    // This happens precisely when k_P geq l_P, where l_P is the length of aa/bb at P.
-                    // This can be bounded from the formula:
-                    // |aa/bb| = prod_(P in supp cup P_ll) |R/P|^l_P ,
-                    // which gives:
-                    // l_P leq (val_p(ind) / f_P) where p is the rational prime in P and f_P is the intertia degree of P.
-                    k_ll:=Ceiling(Valuation(ind,p)/f_P) where _,p,f_P:=IsPrimePower(Index(R,P_ll));
-                    ks_supp:=[Ceiling(Valuation(ind,p)/f_P) where _,p,f_P:=IsPrimePower(Index(R,P)):P in supp];
-                    Iv_p:=P_ll^k_ll * J + &*[supp[i]^ks_supp[i]:i in [1..#supp]]*K;
-                end if;
-                Iv:=pk*J+ind_coprime_p*Iv_p;
-            end if;
+//            if k eq 0 then
+//                Iv:=J;
+//            else
+//                ann:=ColonIdeal(bb+pk*aa,aa) meet OneIdeal(R); // ann of(aa/bb)_p=aa/(bb+p^k*aa)
+//                supp:=PrimesAbove(ann);
+//                _,P_ll,_:=PrimesOfZFVAbove_p(isog); // the unique local-local prime of R
+//                assert #P_ll eq 1;
+//                P_ll:=P_ll[1];
+//                if P_ll notin supp then
+//                    Iv_p:=J;
+//                elif #supp eq 1 then // supp=[P_ll]
+//                    Iv_p:=K;
+//                else
+//                    Exclude(~supp,P_ll);
+//                    // For each P in supp we need k such that P^k*aa_P < bb_P.
+//                    // k_ll is an integer satisfying P_ll^k_ll aa_(P_ll) < bb_(P_ll).
+//                    // We do the same for all other Ps in supp.
+//                    // 
+//                    // This happens precisely when k_P geq l_P, where l_P is the length of aa/bb at P.
+//                    // This can be bounded from the formula:
+//                    // |aa/bb| = prod_(P in supp cup P_ll) |R/P|^l_P ,
+//                    // which gives:
+//                    // l_P leq (val_p(ind) / f_P) where p is the rational prime in P and f_P is the intertia degree of P.
+//                    k_ll:=Ceiling(Valuation(ind,p)/f_P) where _,p,f_P:=IsPrimePower(Index(R,P_ll));
+//                    ks_supp:=[Ceiling(Valuation(ind,p)/f_P) where _,p,f_P:=IsPrimePower(Index(R,P)):P in supp];
+//                    Iv_p:=P_ll^k_ll * J + &*[supp[i]^ks_supp[i]:i in [1..#supp]]*K;
+//                end if;
+//                Iv:=pk*J+ind_coprime_p*Iv_p;
+//            end if;
+            Iv:=pk*J+ind_coprime_p*K;
 //            isog`glueing_gen_deligne_module_data_dual[<mult_part,locloc_part>]:=<Iv,Mv>;
 //        end if;
 //        Iv,Mv:=Explode(isog`glueing_gen_deligne_module_data_dual[<mult_part,locloc_part>]);

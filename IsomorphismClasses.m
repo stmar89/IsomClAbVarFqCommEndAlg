@@ -171,7 +171,7 @@ glue_local_parts_orders:=function(primes,orders)
         Pi:=primes[i];
         p:=MinimalInteger(Pi);
         Si:=orders[i];
-        k:=Valuation(Index(O,Si),p);    
+        k:=Valuation(Index(O,Si),p);
         Append(~S,Order(ZBasis(Si) cat ZBasis(O!!Pi^k)));
     end for;
     S:=&meet(S);
@@ -198,7 +198,7 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPre
             if #primes eq 0 then
                 S:=ZFVOrder(isog);
             else
-                S:=glue_local_parts_orders(primes, ell_01_orders cat dm_orders);
+                S:=glue_local_parts_orders(primes,orders);
             end if;
             PS,pS:=PicardGroup(S);
             for ll in PS do

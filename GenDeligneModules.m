@@ -106,15 +106,13 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
             DeltaJ:=DeltaIdeal(isog,J);
             k:=Valuation(Index(DeltaJ+DM,DeltaJ meet DM),p);
             mm0,mm01,mm1:=PrimesOfZFVAbove_p(isog);
-//FIXME is k below ok? Do I need ramification?
             m_k:=#mm01 eq 1 select Ideal(WR,[Delta_map(z):z in ZBasis(mm01[1]^k)]) else OneIdeal(WR);
             nn_k:=#mm0+#mm1 eq 0 select OneIdeal(WR) 
-                    else Ideal(WR,[Delta_map(z):z in ZBasis(&*([P^k:P in mm0 cat mm1]))]);
+                    else Ideal(WR,[Delta_map(z):z in ZBasis((&*([P:P in mm0 cat mm1]))^k)]);
             N:=m_k*DeltaJ+nn_k*DM;
 
             // We create K
-            //K_p:=R!!pPartDeltaInverseIdeal(isog,N);
-K_p:=R!!Delta_inverse_ideal(N);
+            K_p:=R!!pPartDeltaInverseIdeal(isog,N);
             K_coprime_p:=J;
             ind:=Index(K_p+K_coprime_p,K_p meet K_coprime_p);
             k:=Valuation(ind,p);
