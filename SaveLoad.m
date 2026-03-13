@@ -95,7 +95,7 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
     if assigned isog`delta_Hilbert90 then
         delta:=isog`delta_Hilbert90;
         _,delta:=PrintSeqAlgEtQElt([delta]);
-        output:=Prune(output) cat delta;
+        output:=Prune(output) cat "," cat delta cat ">";
     end if;
     output:=StripWhiteSpace(output);
     return output;
