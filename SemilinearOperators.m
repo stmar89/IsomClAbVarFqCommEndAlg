@@ -240,13 +240,13 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
                                     embs[i](rs_nu[i](A!q)) else 
                                     embs[i](q_u0) : i in [1..g_nu]])@@pr; // in A 
             q_alpha_nu:=q_gamma_A*q_beta_A; // in OA, at precision m2
+            assert alpha_nu*q_alpha_nu - q in PPs_nu_m_prod;
             return alpha_nu,q_alpha_nu,PPs_nu_m_prod;
         end function;
 
         output:=AssociativeArray();
         places_considered:=plE_sl_in01;
         uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#places_considered];
-        g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
         if not DualsCompatible then
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
@@ -258,7 +258,8 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             // Note that this consideration does not help with the places stabilized by the action of bar{}.
             for inu->nu in places_considered do
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
-                alpha_nu,PPs_nu_m:=alpha_at_precision_W_type_at_place(m,nu,g_nus[inu],sigma,uniformizers_at_nus[inu],qI);
+                g_nu:=GCD(a,InertiaDegree(nu));
+                alpha_nu,PPs_nu_m:=alpha_at_precision_W_type_at_place(m,nu,g_nu,sigma,uniformizers_at_nus[inu],qI);
                 output[nu]:=<alpha_nu,PPs_nu_m>;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
@@ -303,12 +304,16 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
                 if not IsOfWType(places_considered[inu]) then
                     assert IsOfWType(places_considered[inu_bar]);
                     temp:=inu; inu:=inu_bar; inu_bar:=temp;
+                    unif:=uniformizers_at_nus[inu_bar];
+                else
+                    unif:=uniformizers_at_nus[inu];
                 end if;
                 nu:=places_considered[inu];
                 nu_bar:=places_considered[inu_bar];
+                g_nu:=GCD(a,InertiaDegree(nu));
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for the conjugate pair of places <%o,%o>e of %o ...",
                                                 inu,inu_bar,#places_considered;
-                alpha_nu,q_alpha_nu,PP_nu_m:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu,sigma_m2,uniformizers_at_nus[inu],qI);
+                alpha_nu,q_alpha_nu,PP_nu_m:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu,g_nu,sigma_m2,unif,qI);
                 alpha_nu_bar:=bar_onA(q_alpha_nu)/p^(a-1); // this element is in p^-(a-1)*O_A
                 PP_nu_bar_m:=ComplexConjugate(PP_nu_m);
                 output[nu]:=<alpha_nu,PP_nu_m>;

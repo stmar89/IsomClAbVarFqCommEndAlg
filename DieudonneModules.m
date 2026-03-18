@@ -505,6 +505,7 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
     end function;
 
     exponents_W_bar_type:=function(P)
+    // FIXME Check if this is correct!
         f_nu:=InertiaDegree(P);
         g_nu:=GCD(a,f_nu); //q=p^a
         e_nu:=RamificationIndex(P);
@@ -549,7 +550,7 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
                     exps_nus[inu]:=exponents_W_type(nu);
                     exps_nus[inu_bar]:=exponents_W_bar_type(nu_bar);
                 else
-                    exps_nus[inu_bar]:=exponents_from_Waterhouse(nu_bar);
+                    exps_nus[inu_bar]:=exponents_W_type(nu_bar);
                     exps_nus[inu]:=exponents_W_bar_type(nu);
                 end if;
                 pp_A_nus[inu]:=primes_of_A_above_place_of_E(A,nu);
@@ -751,7 +752,7 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
     if DualsCompatible then
         m1+:=a-1;
     end if;
-    //m2:=m1+1000; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
+    //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
     vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
     // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
     // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
@@ -771,7 +772,7 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
         Ps_nus:=[WR!!nu[2]:nu in alpha_arr];
         a_nus:=[nu[1]:nu in alpha_arr];
         J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(J,Ps_nus);
-
+        // FIXME something fails here
         FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([a_nus[inu]*((Qm0.i@@qm0@J_Jnus)[inu])@qOA@sigma_QOA@@qOA : inu in [1..#a_nus] ]))
                              : i in [1..Ngens(Qm0)] ]>;
         FQm0_1:=hom<Qm0_1->Qm0_1|[qm0(Jnus_J([a_nus[inu]*((Qm0_1.i@@qm0_1@J_Jnus)[inu])@qOA@sigma_QOA@@qOA:inu in [1..#a_nus]]))
