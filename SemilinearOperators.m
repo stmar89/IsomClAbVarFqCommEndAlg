@@ -34,6 +34,296 @@ declare attributes AlgEtQIdl :      finite_quotients;
 
 intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false)->AlgEtQElt
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi], and m a non-negative integer. The intrinsic returns an approximation of an element alpha in the DieudonneAlgebra A of W-type, that is, the completion alpha_nu at a place nu of E of slope in (0,1) is of the form (1,...,1,u_nu) for u_nu satisfying N_(LE_nu/E_nu)(u_nu)=pi_nu. This is using the identification A_nu = oplus LE_nu. The output is guaranteed to be correct at precision m, meaning that the images of the approximation and of alpha coincide in OA/prod_nu prod_PP PP^(e_nu*m) where the double product is taken over all places nu of E of slope in (0,1) and PP runs over the primes of A above nu.
+If the VarArg DualsCompatible is true (default false), then the attribute delta_Hilbert90 of isog is assigned with an approximation at precision m of an element delta satisfying p/alpha=delta/sigma(delta)*bar(alpha), where bar is the involution induced on A by the CM-involution of E.
+// FIXME update this description
+}
+    require m ge 0: "m needs to be a non-negative integer";
+    if not assigned isog`alpha then
+        // DEBUG forcibly increase the precision
+        // m+:=50;
+
+        require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
+        _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_,_,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
+        q:=FiniteField(isog);
+        _,p,a:=IsPrimePower(q);
+        E:=DeligneAlgebra(isog);
+        pi:=PrimitiveElement(E);
+        plE_sl_0,plE_sl_in01,plE_sl_1:=PlacesOfQFAbove_p(isog);
+
+        finite_quotients:=function(m,nu)
+        // input:  - nu = a place of E
+        //         - m = a positive integer
+        // output: PPs_nu_m,PPs_nu_m_prod,Rs_nu,rs_nu,Q,pr,Us_nu,us_nu,U,U_pr
+            if not assigned nu`finite_quotients then
+                nu`finite_quotients:=AssociativeArray();
+            end if;
+            if not IsDefined(nu`finite_quotients,m) then
+                PPs_nu:=primes_of_A_above_place_of_E(A,nu);
+                f_nu:=InertiaDegree(nu);
+                g_nu:=GCD(a,f_nu); //q=p^a
+                assert #PPs_nu eq g_nu;
+                Rs_nu:=[];
+                rs_nu:=<>;
+                Us_nu:=[];
+                us_nu:=<>;
+                PPs_nu_m:=[];
+                e_nu:=RamificationIndex(PPs_nu[1]);
+                for PP in PPs_nu do
+                    assert RamificationIndex(PP) eq e_nu; // PPs is a single sigma-orbit
+                    PP_m:=PP^(e_nu*(m));
+                    Append(~PPs_nu_m,PP_m);
+                    R,r:=ResidueRing(OA,PP_m);
+                    vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
+                    U,u:=ResidueRingUnits(OA,PP_m);
+                    vprintf alpha_at_precision,2 : "\tU,u computed\n";
+                    Append(~Rs_nu,R);
+                    Append(~rs_nu,r);
+                    Append(~Us_nu,U);
+                    Append(~us_nu,u);
+                end for;
+                PPs_nu_m_prod:=&*PPs_nu_m;
+
+                Q,embs,projs:=DirectSum(Rs_nu);
+                pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
+                                           y:->CRT( PPs_nu_m ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
+                pi_Q:=pr(pi_A);
+                assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
+
+                U,U_embs,U_projs:=DirectSum(Us_nu);
+                U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
+                                             y:->CRT( PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
+                assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+                vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
+                nu`finite_quotients[m]:=<PPs_nu_m,PPs_nu_m_prod,Rs_nu,rs_nu,Q,embs,projs,pr,Us_nu,us_nu,U,U_embs,U_projs,U_pr>;
+            end if;
+            return Explode(nu`finite_quotients[m]);
+        end function;
+
+        alpha_at_precision_W_type_at_place:=function(m,nu,g_nu,sigma,t_nu,qI)
+        // input:  - nu is a place of E;
+        //         - m is a positive integer 
+        //         - t_nu is an element of E, which is a uniformizer at nu and a unit at every other place above p;
+        //         - sigma is computed on qI:OA->OA/p^m'*OA, for some m' \geq m.
+        // output: - an element alpha_nu of W-type computed at precision m, that is,
+        //           in OA/PP where PP:=\prod P^(m*e) where P runs over the places of A
+        //           above nu and e_nu is the ramification at nu (=ramification at each P)
+        //         - PP is also returned.
+            PPs_nu_m,PPs_nu_m_prod,Rs_nu,rs_nu,Q,embs,projs,pr,Us_nu,us_nu,U,U_embs,U_projs,U_pr:=finite_quotients(m,nu);
+            sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
+            image_phi:=function(gamma)
+                // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(e_nu*m))^*
+                // phi does the following two steps
+                // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
+                // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
+                beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+                // Action of the Frobenius on U
+                img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+                vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
+                assert2 sigma_U(img) eq img;
+                return img;
+            end function;
+            phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
+            val_nu:=Valuation(pi,nu); // in E
+            pE:=PlacesAboveRationalPrime(E,p);
+            // w_nu is in OE and congrunent to t_nu^val_nu/pi at nu and 1 at every other place above p
+            // The precision is chosen to be a majorative of RamificationIndex(pp)*m [to match the quotient we are using]
+            // plus Valuation(PP,pi) leq Valuation(PP,q)=RamificationIndex(pp)*a.
+            w_nu:=CRT([pp^(Dimension(E)*(m+a)):pp in pE],[pp eq nu select t_nu^val_nu else pi : pp in pE])/pi; // in OE
+            wU:=-U_pr(Delta_map(w_nu)); // in E->A->U
+            gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+            gamma_A:=(&+[i lt g_nu select 
+                                    U_embs[i](One(A)@@us_nu[i]) else 
+                                    U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+            u0:=Delta_map(t_nu^(Integers()!(val_nu*g_nu/a)));
+            beta_A:=(&+[i lt g_nu select 
+                                    embs[i](rs_nu[i](One(A))) else 
+                                    embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; // in A 
+            alpha_nu:=gamma_A*beta_A; // in A
+            
+            // it is desirable that alpha_nu is not a zero divisor of A
+            while IsZeroDivisor(alpha_nu) do
+                alpha_nu+:=Random(PPs_nu_m_prod);
+            end while;
+            // Check that alpha_nu of W-type: 1 in all components but the last one, and with sigma-norm = pi_nu
+            assert2 forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]}; 
+            assert2 forall{i:i in [1..g_nu]|X - pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..a-1]];
+            return alpha_nu,PPs_nu_m_prod;
+        end function;
+
+        alpha_W_type_q_alpha_at_precision_at_place:=function(m,m2,nu,g_nu,sigma,t_nu,qI)
+        // input: - m2 \geq m integers giving the precision
+        //        - nu is a place of E, 
+        //        - t_nu a 'good' uniformizer at nu 
+        //        - sigma is computed on qI:OA->OA/p^m2*OA.
+        // output: - an element alpha_nu of W-type computed at precision m2;
+        //         - the element representing q/alpha_nu at precision m; 
+        //         - \prod P^(m*e) where P runs over the places of A above nu 
+        //              and e is the ramification at nu (=ramification at P).
+            PPs_nu:=primes_of_A_above_place_of_E(A,nu);
+            assert #PPs_nu eq g_nu;
+
+            Rs_nu:=[];
+            rs_nu:=<>;
+            Us_nu:=[];
+            us_nu:=<>;
+            PPs_nu_m:=[];
+            PPs_nu_m2:=[];
+            for PP in PPs_nu do
+                PP_e:=PP^RamificationIndex(PP);
+                PP_m:=PP_e^m;
+                Append(~PPs_nu_m,PP_m);
+                PP_m2:=PP_e^m2;
+                Append(~PPs_nu_m2,PP_m2);
+                R,r:=ResidueRing(OA,PP_m2);
+                vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
+                U,u:=ResidueRingUnits(OA,PP_m2);
+                vprintf alpha_at_precision,2 : "\tU,u computed\n";
+                Append(~Rs_nu,R);
+                Append(~rs_nu,r);
+                Append(~Us_nu,U);
+                Append(~us_nu,u);
+            end for;
+            PPs_nu_m2_prod:=&*PPs_nu_m2;
+            PPs_nu_m_prod:=&*PPs_nu_m;
+
+            Q,embs,projs:=DirectSum(Rs_nu);
+            pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
+                                       y:->CRT( PPs_nu_m2 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
+            pi_Q:=pr(pi_A);
+            assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
+
+            U,U_embs,U_projs:=DirectSum(Us_nu);
+            U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
+                                         y:->CRT( PPs_nu_m2 ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
+            sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
+            assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+
+            vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
+
+            image_phi:=function(gamma)
+                // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
+                // phi does the following two steps
+                // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
+                // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
+                beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+                // Action of the Frobenius on U
+                img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+                vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
+                assert2 sigma_U(img) eq img;
+                return img;
+            end function;
+            phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
+            
+            val_nu:=Valuation(pi,nu); // in E
+            w_nu:=pi/(t_nu^val_nu); // in E
+            assert Valuation(w_nu,nu) eq 0;
+            wU:=U_pr(Delta_map(w_nu)); // in E->A->U
+            gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+            gamma_A:=(&+[i lt g_nu select 
+                                    U_embs[i](One(A)@@us_nu[i]) else 
+                                    U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+
+            u0:=Delta_map(t_nu^(Integers()!(val_nu*g_nu/a)));
+            mult:=hom<RR->RR|[((RR.i@@r)*u0)@r : i in [1..Ngens(RR)]]> where RR:=Rs_nu[g_nu] where r:=rs_nu[g_nu];
+            q_u0:=(rs_nu[g_nu](A!q))@@mult;
+            beta_A:=(&+[i lt g_nu select 
+                                    embs[i](rs_nu[i](One(A))) else 
+                                    embs[i](rs_nu[i](u0)) : i in [1..g_nu]])@@pr; // in A 
+            alpha_nu:=gamma_A*beta_A; // in OA, at precision m2
+            // now we want to construct q/alpha_nu, which is also in OA, at precision m2:
+            // - change the sign of gamma0, and
+            // - q_beta_A = (q,...,q,q/u0)
+            q_gamma_A:=(&+[i lt g_nu select 
+                                    U_embs[i](One(A)@@us_nu[i]) else 
+                                    -U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
+            q_beta_A:=(&+[i lt g_nu select 
+                                    embs[i](rs_nu[i](A!q)) else 
+                                    embs[i](q_u0) : i in [1..g_nu]])@@pr; // in A 
+            q_alpha_nu:=q_gamma_A*q_beta_A; // in OA, at precision m2
+            return alpha_nu,q_alpha_nu,PPs_nu_m_prod;
+        end function;
+
+        output:=AssociativeArray();
+        places_considered:=plE_sl_in01;
+        uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#places_considered];
+        g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
+        if not DualsCompatible then
+            I:=p^m*OA;
+            QI,qI:=ResidueRing(OA,I);
+            sigma:=sigma_OA_mod_I(QI,qI,A);
+            alphas:=[];
+            prime_powers:=[];
+            // Considering the action of COMPLEX CONJUGATION on the places above p could speed-up the computation here,
+            // by deducing alpha_{nu_bar} from alpha_{nu} whenever nu\neq nu_bar.
+            // Note that this consideration does not help with the places stabilized by the action of bar{}.
+            for inu->nu in places_considered do
+                vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
+                alpha_nu,PPs_nu_m:=alpha_at_precision_W_type_at_place(m,nu,g_nus[inu],sigma,uniformizers_at_nus[inu],qI);
+                output[nu]:=<alpha_nu,PPs_nu_m>;
+                vprintf alpha_at_precision,1 : "done\n";
+            end for;
+        else // with DualsCompatible
+            if exists{nu:nu in plE_sl_in01|IsConjugateStable(nu)} then
+                error "Currently this is implemented only for places which are NOT stable by complex conjugation";
+            end if;
+            // We identify the conjugate pairs in places_considered.
+            conj_pairs_indices:=[];
+            conj_stable_indices:=[];
+            to_do:={ 1..#places_considered };
+            repeat
+                ExtractRep(~to_do,~i);
+                nu:=places_considered[i];
+                test,nu_bar:=IsConjugateStable(nu);
+                if test then
+                    Append(~conj_stable_indices,i);
+                else
+                    i_bar:=Index(places_considered,nu_bar);
+                    assert i_bar ne 0;
+                    Exclude(~to_do,i_bar);
+                    Append(~conj_pairs_indices,<i,i_bar>);
+                end if;
+            until #to_do eq 0;
+            delete to_do;
+            // We determine the precision m2 at which delta needs, and consequently,
+            // also alpha, needs to be computed. m2 needs to satisfy the inclusion:
+            //    p^(m2-g_nu+1) in (W_{R,nu}:OA_nu)=:ff_nu
+            // We can take m2=Max_nu(g_nu-1+val_P(ff) where P is any max ideal of OA above nu).
+            ff_WR:=OA!!Conductor(WR);
+            m2:=m+a-1;
+            I:=p^m2*OA;
+            QI,qI:=ResidueRing(OA,I);
+            sigma_m2:=sigma_OA_mod_I(QI,qI,A);
+            for inu in conj_stable_indices do
+                vprintf alpha_at_precision,1 : "Computing alpha at precision %o for the %o-th place",m,inu;
+                // FIXME need to figure out what to do here
+                vprintf alpha_at_precision,1 : "done\n";
+            end for;
+            for pair in conj_pairs_indices do
+                inu,inu_bar:=Explode(pair);
+                if not IsOfWType(places_considered[inu]) then
+                    assert IsOfWType(places_considered[inu_bar]);
+                    temp:=inu; inu:=inu_bar; inu_bar:=temp;
+                end if;
+                nu:=places_considered[inu];
+                nu_bar:=places_considered[inu_bar];
+                vprintf alpha_at_precision,1 : "Computing alpha_Q for the conjugate pair of places <%o,%o>e of %o ...",
+                                                inu,inu_bar,#places_considered;
+                alpha_nu,q_alpha_nu,PP_nu_m:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu,sigma_m2,uniformizers_at_nus[inu],qI);
+                alpha_nu_bar:=bar_onA(q_alpha_nu)/p^(a-1); // this element is in p^-(a-1)*O_A
+                PP_nu_bar_m:=ComplexConjugate(PP_nu_m);
+                output[nu]:=<alpha_nu,PP_nu_m>;
+                output[nu_bar]:=<alpha_nu_bar,PP_nu_bar_m>;
+                vprintf alpha_at_precision,1 : "done\n";
+                vprintf alpha_at_precision,1 : "done\n";
+            end for;
+        end if;
+        isog`alpha:=output;
+    end if;
+    return isog`alpha;
+end intrinsic;
+
+intrinsic _AlphaAtPrecision_delta(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false)->AlgEtQElt
+{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi], and m a non-negative integer. The intrinsic returns an approximation of an element alpha in the DieudonneAlgebra A of W-type, that is, the completion alpha_nu at a place nu of E of slope in (0,1) is of the form (1,...,1,u_nu) for u_nu satisfying N_(LE_nu/E_nu)(u_nu)=pi_nu. This is using the identification A_nu = oplus LE_nu. The output is guaranteed to be correct at precision m, meaning that the images of the approximation and of alpha coincide in OA/prod_nu prod_PP PP^(e_nu*m) where the double product is taken over all places nu of E of slope in (0,1) and PP runs over the primes of A above nu.
 If the VarArg DualsCompatible is true (default false), then the attribute delta_Hilbert90 of isog is assigned with an approximation at precision m of an element delta satisfying p/alpha=delta/sigma(delta)*bar(alpha), where bar is the involution induced on A by the CM-involution of E.}
     require m ge 0: "m needs to be a non-negative integer";
     if not assigned isog`alpha then
