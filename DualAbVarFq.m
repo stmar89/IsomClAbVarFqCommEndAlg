@@ -52,7 +52,7 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
 
             q:=FiniteField(AV);
             p:=CharacteristicFiniteField(AV);
-            L,_,PL,_,A,pi_A,_,_,WR,_,Delta_inverse_ideal,_,_,A_as_vector_space_over_L_data,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
+            L,_,PL,_,A,pi_A,_,Delta_map,WR,_,Delta_inverse_ideal,_,_,A_as_vector_space_over_L_data,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
             mAD,mLdD,mALd:=Explode(A_as_vector_space_over_L_data);
             Ld:=Codomain(mALd);
             // - Ld and D are both L-vector spaces of dimension d:=dim_L(A).
@@ -92,12 +92,28 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
                 end if;
                 delta:=isog`delta_Hilbert90;
             end if;
-            Mv:=delta^-1*Ideal(WR,gens_Mv);
+            Mv:=bar_onA(delta^-1)*Ideal(WR,gens_Mv);
 
             // We compute Iv by glueing K:=Delta^-1(Mv) and J:=bar(I)^t everywhere else.
             J:=TraceDualIdeal(ComplexConjugate(I));
             K:=pPartDeltaInverseIdeal(isog,Mv);
-//K:=Delta_inverse_ideal(Mv);
+
+// FIXME if J and K are locally isomorphic at p, we replace Mv and K
+// This is very hack-y...if it gives good results, we should streamline the procedure.
+cc:=ColonIdeal(J,K);
+//pp:=PrimesAbove(p*Order(J));
+//test:=forall{P:P in pp|1 in cc*ColonIdeal(K,J)+P};
+PP:=PrimesAbove(p*MultiplicatorRing(J));
+cc:=MultiplicatorRing(J)!!cc;
+test:=forall{P:P in PP|Index(Order(P),P) eq Index(cc,cc*P)};
+if test then
+    gs:=LocalGenerators(cc,PP);
+    assert #gs eq 1;
+    K:=gs[1]*K;
+    Mv:=Delta_map(gs[1])*Mv;
+    // this leads to Iv eq J
+end if;
+
             aa:=K+J;
             bb:=K meet J;
             ind:=Index(aa,bb);

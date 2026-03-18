@@ -38,7 +38,7 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
     require m ge 0: "m needs to be a non-negative integer";
     if not assigned isog`alpha then
         // DEBUG forcibly increase the precision
-        //m+:=50;
+        // m+:=50;
 
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_,_,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
@@ -270,9 +270,12 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             end for;
             alpha:=CRT(prime_powers,alphas); // each alpha_nu is integral and of W-type
         else // with DualsCompatible
-            // delta needs to be computed correctyle at rational p. So we need to consider all places above p.
-            places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
-            uniformizers_at_nus:=Uniformizers(places_considered);
+// delta needs to be computed correctyle at rational p. So we need to consider all places above p.
+//places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
+//uniformizers_at_nus:=Uniformizers(places_considered);
+// FIXME after some more thought, we think that due to the compatibility condition on I,M at p, we want delta = 1 at all places with slope not in (0,1). So we run the computation of delta only for the places with slope in (0,1) and then use CRT.
+places_considered:=plE_sl_in01;
+uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#places_considered];
             g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
             output:=AssociativeArray();
             // We identify the conjugate pairs in places_considered.
@@ -339,7 +342,13 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             end for;
             alpha:=CRT([nu[2]:inu->nu in output],[nu[1]:inu->nu in output]);
             p_max_g_nu:=p^Max(g_nus); //p^N*delta_nu is integral, for every nu
-            delta:=p_max_g_nu^-1*CRT([nu[4]:inu->nu in output],[p_max_g_nu*nu[3]:inu->nu in output]);
+            //delta:=p_max_g_nu^-1*CRT([nu[4]:inu->nu in output],[p_max_g_nu*nu[3]:inu->nu in output]);
+delta:=CRT([nu[4]:inu->nu in output],[p_max_g_nu*nu[3]:inu->nu in output]);
+plA_sl_0:=&cat[primes_of_A_above_place_of_E(A,nu):nu in plE_sl_0];
+plA_sl_1:=&cat[primes_of_A_above_place_of_E(A,nu):nu in plE_sl_1];
+plA_sl_in01:=&cat[primes_of_A_above_place_of_E(A,nu):nu in plE_sl_in01];
+delta:=[p_max_g_nu*One(A):i in [1..#plA_sl_0+#plA_sl_1]] cat [delta:i in [1..#plA_sl_in01]];
+delta:=p_max_g_nu^-1*CRT(plA_sl_0 cat plA_sl_1 cat plA_sl_in01,delta);
             isog`delta_Hilbert90:=delta;
         end if;
         isog`alpha:=alpha;

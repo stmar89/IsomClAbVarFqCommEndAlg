@@ -9,4 +9,5 @@ SemilinearOperators.m
 DualAbVarFq.m
 Pols.m
 SaveLoad.m
+CRT_expansion.m
 }

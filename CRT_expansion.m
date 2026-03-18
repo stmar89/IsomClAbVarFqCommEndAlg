@@ -59,6 +59,25 @@ intrinsic ChineseRemainderTheoremFunctions(J::AlgEtQIdl,Is::SeqEnum[AlgEtQIdl])-
     return func1,func2;
 end intrinsic;
 
+intrinsic LocalGenerators(J::AlgEtQIdl,P::AlgEtQIdl)->SeqEnum[AlgEtQElt]
+{Given a fractional R-ideal J and a maximal ideal P of R, returns a sequence of elements of J that generates the localization of J at P.}
+    Q,q:=QuotientVS(J,P*J,P);
+    return [b@@q:b in Basis(Q)];
+end intrinsic;
+
+intrinsic LocalGenerators(J::AlgEtQIdl,Ps::SeqEnum[AlgEtQIdl])->SeqEnum[AlgEtQElt]
+{Given a fractional R-ideal J and a sequence Ps of maximal ideal P of R, returns a sequence of elements of J that generates the localization of J at each P in Ps.}
+    A:=Algebra(J);
+    gs:=[LocalGenerators(J,P):P in Ps];
+    M:=Max([#g:g in gs]);
+    gs:=[g cat [Zero(A):i in [1..M-#g]]: g in gs]; // now they all have the same lenght
+    assert forall{g:g in gs|#g eq M};
+    assert #gs eq #Ps;
+    _,Js_J:=ChineseRemainderTheoremFunctions(J,Ps);
+    out:=[Js_J([g[i] :g in gs]): i in [1..M]];
+    assert2 forall{P:P in Ps|Q eq sub<Q|[q(g):g in out]> where Q,q:=QuotientVS(J,P*J,P)};
+    return out;
+end intrinsic;
 
 /* TESTS
 
