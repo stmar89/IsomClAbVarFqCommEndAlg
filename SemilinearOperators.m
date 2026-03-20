@@ -618,6 +618,117 @@ end intrinsic;
 ///////////////////////////SemilinearOperators /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
+intrinsic SemilinearOperators(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt : DualsCompatible:=false)->GrpAb,Map,Map,Map
+{Given a fractional WR\{F,\}V-ideal J and a positive integer m0, returns Qm0,qm0,FQm0,VQm0 where Qm0 is an abelian group isomorphic to the (0,1)-part of J/p^m0*J together with the projection map qm0:J->Qm0 and abelian group endomorphisms FQm0,VQm0:Qm0->Qm0 which approximate F,V having the Frobenius property.
+// FIXME the duality part is work-in-progress
+The vararg DualsCompatible (default false) determines whether FQm0,VQm0 are compatible with duality.}
+
+    //L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01:=DieudonneAlgebraCommEndAlg(isog);
+    _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01:=DieudonneAlgebraCommEndAlg(isog);
+    q:=FiniteField(isog);
+    _,p,a:=IsPrimePower(q);
+
+    JOA:=OA!!J;
+    vprintf Algorithm_3,1 : "Computing M...";
+    primes_01_WR:=primes_of_S_of_slope_in_01(WR);
+    // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
+    // By looking at the composition series, one deduces that any 
+    // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.
+    size:=(p^(m0+1))^AbsoluteDimension(A); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
+    M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in primes_01_WR] );
+    vprintf Algorithm_3,1 : "done. Got M=%o\n",M;
+
+    PP01:=(&*(primes_01_WR))^M;
+    vprintf Algorithm_3,1 : "Computing Qm0_1...";
+    Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP01*J);
+    vprintf Algorithm_3,1 : "done\n";
+    vprintf Algorithm_3,1 : "Computing Qm0...";
+    den_ideal:=p^(m0)*J+PP01*J;
+    Qm0,qm0:=Quotient(J,den_ideal);
+    vprintf Algorithm_3,1 : "done\n";
+    // these quotients are isomorphic to the (0,1)-parts of J/p^(m0+1)J and J/p^m0J
+
+    pr:=hom< Qm0_1->Qm0 | [ qm0(Qm0_1.i@@qm0_1) : i in [1..Ngens(Qm0_1)]] >;
+    assert IsSurjective(pr);
+    assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
+    
+    // ###################################
+    // Semilinear Frobenius and 
+    // Verschiebung on Qm0, Qm0_1
+    // ###################################
+    assert JOA subset OA;
+    m1:=m0+1+Valuation(Index(OA,JOA),p);
+    //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
+    vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
+    // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
+    // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
+    QOA,qOA:=ResidueRing(OA,p^(m1+a-1)*OA);
+    sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
+    vprintf Algorithm_3,1 : "done\n";
+
+    vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
+    vprintf Algorithm_3,1 : "\talpha at precision %o...",m0;
+    // // VERSION USING delta
+    // alpha:=_AlphaAtPrecision_delta(isog,m0+1:DualsCompatible:=DualsCompatible);
+    // FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
+    // FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
+    alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=DualsCompatible);
+    vprintf Algorithm_3,1 : "done\n";
+    // Qm0 and Qm0_1 are finite OA' modules. So they can be decomposed as direct sums 
+    // of nu-components, where nu runs over the places of E of slope in (0,1).
+    // The action of F_nu_bar = \alpha[nu_bar] * sigma on the nu_bar-component of Qm0 and Qm0_1 is well defined by
+    // the very way we constructed J.
+    Ps_nus:=[nu[2]:nu in alpha_arr];
+    a_nus:=[nu[1]:nu in alpha_arr];
+    J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(OA!!J,Ps_nus);
+    // FIXME something fails here
+    FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J([a_nus[inu]*((Qm0_1.i@@qm0_1@J_Jnus)[inu])@qOA@sigma_QOA@@qOA:inu in [1..#a_nus]])) : i in [1..Ngens(Qm0_1)] ]>;
+
+    FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([a_nus[inu]*((Qm0.i@@qm0@J_Jnus)[inu])@qOA@sigma_QOA@@qOA : inu in [1..#a_nus] ])) : i in [1..Ngens(Qm0)] ]>;
+
+    // This procedure is equivalent to the component-wise one:
+    assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
+    // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
+    assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
+    assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
+    vprintf Algorithm_3,2 : "\tFQ's are computed\n";
+
+    mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
+    assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
+    assert Image(mp) subset Image(FQm0_1);
+    vprintf Algorithm_3,2 : "\tmp is computed\n";
+
+    z_gamma_s:=[];
+    for i in [1..Ngens(Qm0)] do
+        vprintf Algorithm_3,2 : "\tComputing z_gamma for the %oth generator of Qm0...",i;
+        gamma:=Qm0.i;
+        x_gamma:=gamma@@pr;
+        z_gamma:=(mp(x_gamma))@@FQm0_1;
+        vprintf Algorithm_3,2 : "done\n";
+        Append(~z_gamma_s,z_gamma);
+    end for;
+    VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
+    assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
+    assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
+    vprintf Algorithm_3,2 : "\tVQ is computed\n";
+
+    // We check semilinearity for F, V: F*x = sigma(x)*F and x*V=V*sigma(x)  forall x in L?
+    // It suffices to check if for powers of zz in OA.
+    if GetAssertions() ge 2 then
+        vprintf Algorithm_3,2 : "\tTesting semilinearity of F and V...";
+        for z in powers_zz_diagonally_inOA_via_zbOE do
+            sigma_z:=z@qOA@sigma_QOA@@qOA;
+            z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+            sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(sigma_z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+            assert2 forall{i:i in [1..Ngens(Qm0)]| FQm0(z_action_Qm0(Qm0.i)) eq sigma_z_action_Qm0(FQm0(Qm0.i))};
+            assert2 forall{i:i in [1..Ngens(Qm0)]| z_action_Qm0(VQm0(Qm0.i)) eq VQm0(sigma_z_action_Qm0(Qm0.i))};
+        end for;
+        vprintf Algorithm_3,2 : "all good.\n";
+    end if;
+    isog`SemilinearOperators:=<m0,J,den_ideal,Qm0,qm0,FQm0,VQm0>;
+    return Qm0,qm0,FQm0,VQm0;
+end intrinsic;
+
 intrinsic SemilinearOperators(isog::IsogenyClassFq)->RngIntElt,AlgEtQIdl,AlgEtQIdl,GrpAb,Map,Map,Map
 {Returns the homonymous attribute of the isogeny class, which consists of the following informations: m0,J,den_ideal,Qm0,qm0,FQm0,VQm0, where (see DieudonneAlgebraCommEndAlg for the missing definitions):
 - m0 is a positive integer;
@@ -632,4 +743,5 @@ The attribute SemilinearOperators needs to be computed beforehand, during a run 
     require assigned isog`SemilinearOperators : "Run first IsomorphismClassesDieudonneModules(isog)";
     return Explode(isog`SemilinearOperators);
 end intrinsic;
+
 
