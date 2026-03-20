@@ -505,7 +505,6 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
     end function;
 
     exponents_W_bar_type:=function(P)
-    // FIXME Check if this is correct!
         f_nu:=InertiaDegree(P);
         g_nu:=GCD(a,f_nu); //q=p^a
         e_nu:=RamificationIndex(P);
@@ -514,6 +513,7 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
         for tup0 in cp do
             tup:=[ tup0[i] : i in [1..g_nu] ];
             if &+tup eq -Integers()!(g_nu*Valuation(pi,P)/a) then
+                // TODO double check the next line 
                 exp:=Reverse([ i eq g_nu select 0 else Self(g_nu-i) - tup[i] : i in Reverse([1..g_nu])]);
                 Append(~exps,exp);
             end if;
@@ -749,48 +749,44 @@ The vararg DualsCompatible (default false) determines whether computing the Semi
     // ###################################
     assert JOA subset OA;
     m1:=m0+1+Valuation(Index(OA,JOA),p);
-    if DualsCompatible then
-        m1+:=a-1;
-    end if;
     //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
     vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
     // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
     // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-    QOA,qOA:=ResidueRing(OA,p^m1*OA);
+    QOA,qOA:=ResidueRing(OA,p^(m1+a-1)*OA);
     sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
     vprintf Algorithm_3,1 : "done\n";
 
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
     vprintf Algorithm_3,1 : "\talpha at precision %o...",m0;
-    alpha_arr:=_AlphaAtPrecision(isog,m0+1:DualsCompatible:=DualsCompatible);
+    alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=DualsCompatible);
     vprintf Algorithm_3,1 : "done\n";
-    F_using_local_components:=function()
     // Qm0 and Qm0_1 are finite OA' modules. So they can be decomposed as direct sums 
     // of nu-components, where nu runs over the places of E of slope in (0,1).
     // The action of F_nu_bar = \alpha[nu_bar] * sigma on the nu_bar-component of Qm0 and Qm0_1 is well defined by
     // the very way we constructed J.
-        Ps_nus:=[WR!!nu[2]:nu in alpha_arr];
-        a_nus:=[nu[1]:nu in alpha_arr];
-        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(J,Ps_nus);
-        // FIXME something fails here
-        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([a_nus[inu]*((Qm0.i@@qm0@J_Jnus)[inu])@qOA@sigma_QOA@@qOA : inu in [1..#a_nus] ]))
-                             : i in [1..Ngens(Qm0)] ]>;
-        FQm0_1:=hom<Qm0_1->Qm0_1|[qm0(Jnus_J([a_nus[inu]*((Qm0_1.i@@qm0_1@J_Jnus)[inu])@qOA@sigma_QOA@@qOA:inu in [1..#a_nus]]))
-                             : i in [1..Ngens(Qm0_1)] ]>;
-        return FQm0,FQm0_1;
-    end function;
+    Ps_nus:=[nu[2]:nu in alpha_arr];
+    a_nus:=[nu[1]:nu in alpha_arr];
+    J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(OA!!J,Ps_nus);
+    // FIXME something fails here
+    FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J([a_nus[inu]*((Qm0_1.i@@qm0_1@J_Jnus)[inu])@qOA@sigma_QOA@@qOA:inu in [1..#a_nus]])) : i in [1..Ngens(Qm0_1)] ]>;
 
-    if forall{nu:nu in alpha_arr|nu[1] in OA} then
-        alpha:=CRT([nu[2]:inu->nu in alpha_arr],[nu[1]:inu->nu in alpha_arr]); // alpha_nu is integral and of W-type
-        FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
-        FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
-        // This procedure is equivalent to the component-wise one:
-        assert2 FQm0 eq FQm0_test and FQm0_1 eq FQm0_1_test where FQm0_test,FQm0_1_test:=F_using_local_components();
-    else 
-        // with DualsCompatible not all alpha[nu] are integral. We need to work on each nu-component of
-        // Qm0 and Qm0_1.
-        FQm0,FQm0_1:=F_using_local_components();
-    end if;
+"FQm0_1 done";
+    FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([a_nus[inu]*((Qm0.i@@qm0@J_Jnus)[inu])@qOA@sigma_QOA@@qOA : inu in [1..#a_nus] ])) : i in [1..Ngens(Qm0)] ]>;
+
+"FQm0 done";
+
+//    if forall{nu:nu in alpha_arr|nu[1] in OA} then
+//        alpha:=CRT([nu[2]:inu->nu in alpha_arr],[nu[1]:inu->nu in alpha_arr]); // alpha_nu is integral and of W-type
+//        FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
+//        FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
+//        // This procedure is equivalent to the component-wise one:
+//        assert2 FQm0 eq FQm0_test and FQm0_1 eq FQm0_1_test where FQm0_test,FQm0_1_test:=F_using_local_components();
+//    else 
+//        // with DualsCompatible not all alpha[nu] are integral. We need to work on each nu-component of
+//        // Qm0 and Qm0_1.
+//        FQm0,FQm0_1:=F_using_local_components();
+//    end if;
     // This procedure is equivalent to the component-wise one:
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
     // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A

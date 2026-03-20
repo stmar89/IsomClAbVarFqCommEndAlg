@@ -159,47 +159,10 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
         //         - the element representing q/alpha_nu at precision m; 
         //         - \prod P^(m*e) where P runs over the places of A above nu 
         //              and e is the ramification at nu (=ramification at P).
-            PPs_nu:=primes_of_A_above_place_of_E(A,nu);
-            assert #PPs_nu eq g_nu;
+            PPs_nu_m2,PPs_nu_m2_prod,Rs_nu,rs_nu,Q,embs,projs,pr,Us_nu,us_nu,U,U_embs,U_projs,U_pr:=finite_quotients(m2,nu);
+            PPs_nu_m_prod:=&*[PP^(RamificationIndex(PP)+m):PP in primes_of_A_above_place_of_E(A,nu)];
 
-            Rs_nu:=[];
-            rs_nu:=<>;
-            Us_nu:=[];
-            us_nu:=<>;
-            PPs_nu_m:=[];
-            PPs_nu_m2:=[];
-            for PP in PPs_nu do
-                PP_e:=PP^RamificationIndex(PP);
-                PP_m:=PP_e^m;
-                Append(~PPs_nu_m,PP_m);
-                PP_m2:=PP_e^m2;
-                Append(~PPs_nu_m2,PP_m2);
-                R,r:=ResidueRing(OA,PP_m2);
-                vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
-                U,u:=ResidueRingUnits(OA,PP_m2);
-                vprintf alpha_at_precision,2 : "\tU,u computed\n";
-                Append(~Rs_nu,R);
-                Append(~rs_nu,r);
-                Append(~Us_nu,U);
-                Append(~us_nu,u);
-            end for;
-            PPs_nu_m2_prod:=&*PPs_nu_m2;
-            PPs_nu_m_prod:=&*PPs_nu_m;
-
-            Q,embs,projs:=DirectSum(Rs_nu);
-            pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-                                       y:->CRT( PPs_nu_m2 ,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
-            pi_Q:=pr(pi_A);
-            assert2 forall{ x : x in Generators(Q) | pr(x@@pr) eq x};
-
-            U,U_embs,U_projs:=DirectSum(Us_nu);
-            U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
-                                         y:->CRT( PPs_nu_m2 ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
             sigma_U:=hom<U->U | [U.i@@U_pr@qI@sigma@@qI@U_pr : i in [1..Ngens(U)]]>; 
-            assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
-
-            vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
-
             image_phi:=function(gamma)
                 // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
                 // phi does the following two steps
@@ -240,7 +203,7 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
                                     embs[i](rs_nu[i](A!q)) else 
                                     embs[i](q_u0) : i in [1..g_nu]])@@pr; // in A 
             q_alpha_nu:=q_gamma_A*q_beta_A; // in OA, at precision m2
-            assert alpha_nu*q_alpha_nu - q in PPs_nu_m_prod;
+            assert alpha_nu*q_alpha_nu - q in PPs_nu_m2_prod;
             return alpha_nu,q_alpha_nu,PPs_nu_m_prod;
         end function;
 
@@ -259,8 +222,8 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             for inu->nu in places_considered do
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#places_considered;
                 g_nu:=GCD(a,InertiaDegree(nu));
-                alpha_nu,PPs_nu_m:=alpha_at_precision_W_type_at_place(m,nu,g_nu,sigma,uniformizers_at_nus[inu],qI);
-                output[nu]:=<alpha_nu,PPs_nu_m>;
+                alpha_nu,PPs_nu_m_prod:=alpha_at_precision_W_type_at_place(m,nu,g_nu,sigma,uniformizers_at_nus[inu],qI);
+                output[nu]:=<alpha_nu,PPs_nu_m_prod>;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
         else // with DualsCompatible
@@ -285,40 +248,40 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
                 end if;
             until #to_do eq 0;
             delete to_do;
-            // We determine the precision m2 at which delta needs, and consequently,
-            // also alpha, needs to be computed. m2 needs to satisfy the inclusion:
-            //    p^(m2-g_nu+1) in (W_{R,nu}:OA_nu)=:ff_nu
-            // We can take m2=Max_nu(g_nu-1+val_P(ff) where P is any max ideal of OA above nu).
-            ff_WR:=OA!!Conductor(WR);
             m2:=m+a-1;
             I:=p^m2*OA;
             QI,qI:=ResidueRing(OA,I);
             sigma_m2:=sigma_OA_mod_I(QI,qI,A);
             for inu in conj_stable_indices do
                 vprintf alpha_at_precision,1 : "Computing alpha at precision %o for the %o-th place",m,inu;
-                // FIXME need to figure out what to do here
+                // TODO need to figure out what to do here
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
             for pair in conj_pairs_indices do
                 inu,inu_bar:=Explode(pair);
-                if not IsOfWType(places_considered[inu]) then
-                    assert IsOfWType(places_considered[inu_bar]);
-                    temp:=inu; inu:=inu_bar; inu_bar:=temp;
-                    unif:=uniformizers_at_nus[inu_bar];
-                else
-                    unif:=uniformizers_at_nus[inu];
-                end if;
                 nu:=places_considered[inu];
                 nu_bar:=places_considered[inu_bar];
                 g_nu:=GCD(a,InertiaDegree(nu));
+                assert g_nu eq GCD(a,InertiaDegree(nu_bar));
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for the conjugate pair of places <%o,%o>e of %o ...",
-                                                inu,inu_bar,#places_considered;
-                alpha_nu,q_alpha_nu,PP_nu_m:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu,g_nu,sigma_m2,unif,qI);
-                alpha_nu_bar:=bar_onA(q_alpha_nu)/p^(a-1); // this element is in p^-(a-1)*O_A
-                PP_nu_bar_m:=ComplexConjugate(PP_nu_m);
-                output[nu]:=<alpha_nu,PP_nu_m>;
-                output[nu_bar]:=<alpha_nu_bar,PP_nu_bar_m>;
-                vprintf alpha_at_precision,1 : "done\n";
+                                                    inu,inu_bar,#places_considered;
+                if IsOfWType(nu) then
+                    unif:=uniformizers_at_nus[inu];
+                    alpha_nu,q_alpha_nu,PPs_nu_m_prod:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu,g_nu,sigma_m2,unif,qI);
+                    assert q_alpha_nu in OA;
+                    // FIXME I think I am not allowed to divide by p^(a-1). I should try with a preimage
+                    alpha_nu_bar:=bar_onA(q_alpha_nu)/p^(a-1); // this element is in p^-(a-1)*O_A
+                else
+                    assert IsOfWType(nu_bar);
+                    unif:=uniformizers_at_nus[inu_bar];
+                    alpha_nu_bar,q_alpha_nu_bar,PPs_nu_m_prod_bar:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu_bar,g_nu,sigma_m2,unif,qI);
+                    assert q_alpha_nu_bar in OA;
+                    // FIXME I think I am not allowed to divide by p^(a-1). I should try with a preimage
+                    alpha_nu:=bar_onA(q_alpha_nu_bar)/p^(a-1); // this element is in p^-(a-1)*O_A
+                end if;
+                PPs_nu_bar_m_prod:=Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m_prod)]);
+                output[nu]:=<alpha_nu,PPs_nu_m_prod>;
+                output[nu_bar]:=<alpha_nu_bar,PPs_nu_bar_m_prod>;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
         end if;
