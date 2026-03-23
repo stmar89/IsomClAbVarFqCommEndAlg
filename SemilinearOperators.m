@@ -32,10 +32,30 @@ declare attributes IsogenyClassFq : alpha,
 
 declare attributes AlgEtQIdl :      finite_quotients;
 
+// FIXME: there are 2 versions of the function to compute alpha: _AlphaAtPrecision and _AlphaAtPrecision_delta.
+// Their outputs are equivalent when DualsCompatible:=false, except that the first returns an array with local information,
+// while the second glues them using CRT into an element of OA.
+// When DualsCompatible:=true the two intrinsic take different approaches.
+// The first, which currently 20260320 works only when all places are not conjugate stable, does not use duality 'corrected
+// by' delta.
+// The second instead uses the correction factors for delta. But this approach as of now, does not always give a correct
+// output because of the criticality highlighted in the notes.
+// We expect that at a conjugate stable place, we will need a correcting factor delta, whose construction will be a
+// refinement of the one used in _AlphaAtPrecision_delta.
+
 intrinsic _AlphaAtPrecision(isog::IsogenyClassFq, m::RngIntElt : DualsCompatible:=false)->AlgEtQElt
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi], and m a non-negative integer. The intrinsic returns an approximation of an element alpha in the DieudonneAlgebra A of W-type, that is, the completion alpha_nu at a place nu of E of slope in (0,1) is of the form (1,...,1,u_nu) for u_nu satisfying N_(LE_nu/E_nu)(u_nu)=pi_nu. This is using the identification A_nu = oplus LE_nu. The output is guaranteed to be correct at precision m, meaning that the images of the approximation and of alpha coincide in OA/prod_nu prod_PP PP^(e_nu*m) where the double product is taken over all places nu of E of slope in (0,1) and PP runs over the primes of A above nu.
-If the VarArg DualsCompatible is true (default false), then the attribute delta_Hilbert90 of isog is assigned with an approximation at precision m of an element delta satisfying p/alpha=delta/sigma(delta)*bar(alpha), where bar is the involution induced on A by the CM-involution of E.
-// FIXME update this description
+If the VarArg DualsCompatible is true (default false), then 
+// FIXME The description below is for the DualsCompatible:=true case. Needs to be written better 
+only when all places are not conjugate stable
+the output is an array indexed by places
+for each pair nu,nu_bar, exactly one place would be of W-type.
+Say it is nu. Then the array at nu contains an element of OA approximating alpha_nu of W-type.
+At nu_bar, we put an approximation of q/alpha_nu, which is also in OA.
+To contruct F_nu_bar, we will need to take p/bar(alpha_nu), that is, aplly bar and 'divide' the output by p^(a-1).
+This cannot be done directly without breaking alpha_nu_bar at the other places above p.
+In SemilinearOperator we compute a preimage via the multiplciation-by-p^(a-1) map.
+The precision of the computation is internally increased to accomodate this preimage.
 }
     require m ge 0: "m needs to be a non-negative integer";
     if not assigned isog`alpha then
@@ -269,15 +289,15 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
                     unif:=uniformizers_at_nus[inu];
                     alpha_nu,q_alpha_nu,PPs_nu_m_prod:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu,g_nu,sigma_m2,unif,qI);
                     assert q_alpha_nu in OA;
-                    // FIXME I think I am not allowed to divide by p^(a-1). I should try with a preimage
-                    alpha_nu_bar:=bar_onA(q_alpha_nu)/p^(a-1); // this element is in p^-(a-1)*O_A
+                    // FIXME bar might induce a permutation of the places above nu (when g_nu>1) this should be takein into account when constructing alpha_nu_bar
+                    alpha_nu_bar:=bar_onA(q_alpha_nu);
                 else
                     assert IsOfWType(nu_bar);
                     unif:=uniformizers_at_nus[inu_bar];
                     alpha_nu_bar,q_alpha_nu_bar,PPs_nu_m_prod_bar:=alpha_W_type_q_alpha_at_precision_at_place(m,m2,nu_bar,g_nu,sigma_m2,unif,qI);
                     assert q_alpha_nu_bar in OA;
-                    // FIXME I think I am not allowed to divide by p^(a-1). I should try with a preimage
-                    alpha_nu:=bar_onA(q_alpha_nu_bar)/p^(a-1); // this element is in p^-(a-1)*O_A
+                    // FIXME bar might induce a permutation of the places above nu (when g_nu>1) this should be takein into account when constructing alpha_nu_bar
+                    alpha_nu:=bar_onA(q_alpha_nu_bar); 
                 end if;
                 PPs_nu_bar_m_prod:=Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m_prod)]);
                 output[nu]:=<alpha_nu,PPs_nu_m_prod>;
@@ -531,7 +551,7 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
 // delta needs to be computed correctyle at rational p. So we need to consider all places above p.
 //places_considered:=plE_sl_0 cat plE_sl_in01 cat plE_sl_1;
 //uniformizers_at_nus:=Uniformizers(places_considered);
-// FIXME after some more thought, we think that due to the compatibility condition on I,M at p, we want delta = 1 at all places with slope not in (0,1). So we run the computation of delta only for the places with slope in (0,1) and then use CRT.
+// TODO after some more thought, we think that due to the compatibility condition on I,M at p, we want delta = 1 at all places with slope not in (0,1). So we run the computation of delta only for the places with slope in (0,1) and then use CRT.
 places_considered:=plE_sl_in01;
 uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#places_considered];
             g_nus:=[GCD(a,InertiaDegree(nu)):nu in places_considered];
@@ -619,16 +639,20 @@ end intrinsic;
 ////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic SemilinearOperators(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt : DualsCompatible:=false)->GrpAb,Map,Map,Map
-{Given a fractional WR\{F,\}V-ideal J and a positive integer m0, returns Qm0,qm0,FQm0,VQm0 where Qm0 is an abelian group isomorphic to the (0,1)-part of J/p^m0*J together with the projection map qm0:J->Qm0 and abelian group endomorphisms FQm0,VQm0:Qm0->Qm0 which approximate F,V having the Frobenius property.
-// FIXME the duality part is work-in-progress
+{Given a fractional WR\{F,\}V-ideal J such that J*OA < OA and a positive integer m0, returns Qm0,qm0,FQm0,VQm0 where Qm0 is an abelian group isomorphic to the (0,1)-part of J/p^m0*J together with the projection map qm0:J->Qm0 and abelian group endomorphisms FQm0,VQm0:Qm0->Qm0 which approximate F,V having the Frobenius property.
+// TODO the duality part is work-in-progress
 The vararg DualsCompatible (default false) determines whether FQm0,VQm0 are compatible with duality.}
 
     //L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01:=DieudonneAlgebraCommEndAlg(isog);
     _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01:=DieudonneAlgebraCommEndAlg(isog);
+    JOA:=OA!!J;
+    require JOA subset OA : "The ideal J does not satisfy J*OA < OA";
     q:=FiniteField(isog);
     _,p,a:=IsPrimePower(q);
 
-    JOA:=OA!!J;
+    // ###################################
+    // The quotients Qm0, Qm0_1
+    // ###################################
     vprintf Algorithm_3,1 : "Computing M...";
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
@@ -653,46 +677,86 @@ The vararg DualsCompatible (default false) determines whether FQm0,VQm0 are comp
     assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
     
     // ###################################
-    // Semilinear Frobenius and 
-    // Verschiebung on Qm0, Qm0_1
+    // FQm0 on Qm0, Qm0_1
     // ###################################
-    assert JOA subset OA;
     m1:=m0+1+Valuation(Index(OA,JOA),p);
     //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
-    vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
-    // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
-    // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-    QOA,qOA:=ResidueRing(OA,p^(m1+a-1)*OA);
-    sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
-    vprintf Algorithm_3,1 : "done\n";
 
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
     vprintf Algorithm_3,1 : "\talpha at precision %o...",m0;
-    // // VERSION USING delta
-    // alpha:=_AlphaAtPrecision_delta(isog,m0+1:DualsCompatible:=DualsCompatible);
-    // FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
-    // FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
-    alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=DualsCompatible);
     vprintf Algorithm_3,1 : "done\n";
-    // Qm0 and Qm0_1 are finite OA' modules. So they can be decomposed as direct sums 
-    // of nu-components, where nu runs over the places of E of slope in (0,1).
-    // The action of F_nu_bar = \alpha[nu_bar] * sigma on the nu_bar-component of Qm0 and Qm0_1 is well defined by
-    // the very way we constructed J.
-    Ps_nus:=[nu[2]:nu in alpha_arr];
-    a_nus:=[nu[1]:nu in alpha_arr];
-    J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(OA!!J,Ps_nus);
-    // FIXME something fails here
-    FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J([a_nus[inu]*((Qm0_1.i@@qm0_1@J_Jnus)[inu])@qOA@sigma_QOA@@qOA:inu in [1..#a_nus]])) : i in [1..Ngens(Qm0_1)] ]>;
+    if not DualsCompatible then
+        vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
+        // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
+        // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on J/I for each I
+        QOA,qOA:=ResidueRing(OA,p^(m1)*OA);
+        sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
+        vprintf Algorithm_3,1 : "done\n";
+        // This procedure can also be done using a CRT on alpha_nu since they are all integral.
+        alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=false);
+        Ps_nus:=[nu[2]:nu in alpha_arr];
+        a_nus:=[nu[1]:nu in alpha_arr];
+        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(OA!!J,Ps_nus);
+        FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J([a_nus[inu]*((Qm0_1.i@@qm0_1@J_Jnus)[inu])@qOA@sigma_QOA@@qOA:inu in [1..#a_nus]])) : i in [1..Ngens(Qm0_1)] ]>;
+        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([a_nus[inu]*((Qm0.i@@qm0@J_Jnus)[inu])@qOA@sigma_QOA@@qOA : inu in [1..#a_nus] ])) : i in [1..Ngens(Qm0)] ]>;
+    else
+        m1:=2*m1; // in the computation of q_alpha_nu we divide by u_nu. 
+                  // Since we want both elements at precision at least m1, we need to to double this value.
+        m2:=m1+a-1;
+        vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
+        // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
+        // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on J/I for each I
+        QOA,qOA:=ResidueRing(OA,p^m2*OA);
+        sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
+        vprintf Algorithm_3,1 : "done\n";
 
-    FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([a_nus[inu]*((Qm0.i@@qm0@J_Jnus)[inu])@qOA@sigma_QOA@@qOA : inu in [1..#a_nus] ])) : i in [1..Ngens(Qm0)] ]>;
+        // // VERSION USING delta. to use this version, comment-out everything that follows
+        // // As of 20260320 there are mathematical issues with this version, discussed in Sec 17 of the notes.
+        //
+        // alpha:=_AlphaAtPrecision_delta(isog,m0+1:DualsCompatible:=DualsCompatible);
+        // FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
+        // FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
 
-    // This procedure is equivalent to the component-wise one:
+        // VERSION without delta, which on 20260320 works only when all places are NOT conjugate stable.
+        alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=true); // computed at precision m2=m1+a-1
+        nus:=Setseq(Keys(alpha_arr));
+        a_nus:=[nu[1]:nu in alpha_arr];
+        Ps_nus:=[(&*primes_of_A_above_place_of_E(A,nu))^RamificationIndex(nu):nu in nus];
+        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[P^m2:P in Ps_nus]);
+        // multiplications by p^(a-1)
+        mults:=[* *];
+        for inu in [1..#nus] do
+            Pnu:=Ps_nus[inu];
+            S,s:=Quotient(Pnu^-(a-1),Pnu^m1);
+            T,t:=ResidueRing(OA,Pnu^m2);
+            Append(~mults,<iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>,s,t>);
+        end for;
+        image_qq:=function(g,qq)
+            //qq can be either qm0 or qm0_1
+            out:=[];
+            gg:=g@@qq@qOA@sigma_QOA@@qOA@J_Jnus;
+            for inu in [1..#nus] do
+                if IsOfWType(nus[inu]) then
+                    Append(~out,a_nus[inu]*gg[inu]);
+                else
+                    mult,s,t:=Explode(mults[inu]);
+                    Append(~out,a_nus[inu]*gg[inu]@t@@mult@@s);
+                end if;
+            end for;
+            return out;
+        end function;
+        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J(image_qq(Qm0.i,qm0))) : i in [1..Ngens(Qm0)] ]>;
+        FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J(image_qq(Qm0_1.i,qm0_1))) : i in [1..Ngens(Qm0_1)] ]>;
+    end  if;
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
     // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
     assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
     assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
     vprintf Algorithm_3,2 : "\tFQ's are computed\n";
 
+    // ###################################
+    // VQm0 on Qm0, Qm0_1
+    // ###################################
     mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
     assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
     assert Image(mp) subset Image(FQm0_1);

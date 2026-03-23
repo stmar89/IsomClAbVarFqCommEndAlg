@@ -83,15 +83,6 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
             zb_Mt_lat_inLd:=[z*bb[i]:z in Basis(ci[i]),i in [1..#bb]]; 
             gens_Mt:=[ (Ld!g)@@mALd : g in zb_Mt_lat_inLd ];
             gens_Mv:=[ bar_onA(g) : g in gens_Mt ];
-
-            if IsOrdinary(isog) then
-                delta:=One(A);
-            else
-                if not assigned isog`delta_Hilbert90 then
-                    error "Rerun the computation of the isomorphism classes with the DualsCompatible vararg set to true";
-                end if;
-                delta:=isog`delta_Hilbert90;
-            end if;
             Mv:=Ideal(WR,gens_Mv);
 
             // We compute Iv by glueing K:=Delta^-1(Mv) and J:=bar(I)^t everywhere else.
