@@ -180,22 +180,6 @@ intrinsic DualAbelianVarietyCommEndAlg_delta(AV::AbelianVarietyFq)->AlgEtQIdl,Al
             J:=TraceDualIdeal(ComplexConjugate(I));
             K:=pPartDeltaInverseIdeal(isog,Mv);
 
-// FIXME if J and K are locally isomorphic at p, we replace Mv and K
-// This is very hack-y...if it gives good results, we should streamline the procedure.
-cc:=ColonIdeal(J,K);
-//pp:=PrimesAbove(p*Order(J));
-//test:=forall{P:P in pp|1 in cc*ColonIdeal(K,J)+P};
-PP:=PrimesAbove(p*MultiplicatorRing(J));
-cc:=MultiplicatorRing(J)!!cc;
-test:=forall{P:P in PP|Index(Order(P),P) eq Index(cc,cc*P)};
-if test then
-    gs:=LocalGenerators(cc,PP);
-    assert #gs eq 1;
-    K:=gs[1]*K;
-    Mv:=Delta_map(gs[1])*Mv;
-    // this leads to Iv eq J
-end if;
-
             aa:=K+J;
             bb:=K meet J;
             ind:=Index(aa,bb);

@@ -319,7 +319,7 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
         // m+:=50;
 
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
-        _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_,_,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
+        L,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,_,primes_of_A_above_place_of_E,_,_,bar_onA:=DieudonneAlgebraCommEndAlg(isog);
         q:=FiniteField(isog);
         _,p,a:=IsPrimePower(q);
         E:=DeligneAlgebra(isog);
@@ -426,6 +426,68 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             return alpha_nu,PPs_nu_m_prod;
         end function;
 
+        delta_nu_tot_real_at_precision_conj_stable:=function(m,nu,g_nu,alpha_nu,sigma,qI)
+        // input:  - m is a positive integer
+        //         - nu is a place of E which is conjugate stable;
+        //         - g_nu is the number of primes of A above nu;
+        //         - alpha_nu is an element of W-type for pi_nu, computed at precision at least m+g_nu.
+        //         - sigma is computed on qI:OA->OA/p^m'*OA, for some m' \geq m.
+        // output: - an element delta_nu satisfying delta_nu/sigma(delta_nu)*bar(alpha_nu) = p/alpha_nu  
+        //           computed at precision m, that is, in OA/PP where PP:=\prod P^(m*e) where 
+        //           P runs over the places of A above nu and e_nu is the ramification at nu (=ramification at each P)
+        //         - we pick delta_1 satisfying delta_1=bar(delta_1) 
+                     //FIXME this implies delta=bar(delta) when rho is trivial. If this is not the case, then
+                     // the output is probably non-sense.
+        //         - PP is also returned.
+            pg_nu:=A!(p^g_nu);
+            a_div_g_nu:=Integers()!(a/g_nu);
+            U:=&*[alpha_nu@qI@(sigma^i)@@qI:i in [0..g_nu-1]]; // = (u_nu,...,u_nu) in A
+            bU:=bar_onA(U);
+            pA:=PlacesAboveRationalPrime(A,p);
+            UbU:=U*bU;
+            // The precision is chosen to match the one of the quotients we are using, plus the fact that we are dividing 
+            // by p^g_nu
+            UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],
+                    [PP in primes_of_A_above_place_of_E(A,nu) select UbU else pg_nu:PP in pA])/pg_nu;
+            assert U in OA;
+            assert bU in OA;
+            assert UU in OA;
+            assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
+            PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in primes_of_A_above_place_of_E(A,nu)];
+            PPs_nu_m_prod:=&*(PPs_nu_m);
+            assert2 forall{k:k in [1..g_nu]|&*[bU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]]-(q/pi_A) in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[ U@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
+            U_gnu,u_gnu:=ResidueRingUnits(OA,PPs_nu_m[g_nu]);
+            UU:=UU@@u_gnu; // in U_gnu
+
+            rho_g_nu:=Index(PPs_nu_m,Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m[g_nu])]));
+
+            // FIXME new stuff to try to get delta = bar(delta)
+if rho_g_nu ne g_nu then printf "WARNING rho_g_nu ne g_nu\n"; end if;
+            // FIXME the next line should break exactly when rho_gnu ne rho_gnu
+            bar_onU_gnu:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@bar_onA@@u_gnu:i in [1..Ngens(U_gnu)]]>;
+            U_gnu_TP:=Kernel(bar_onU_gnu);
+            // tau = sigma^g_nu
+            tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
+            assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
+            // tau/id only on U_gnu_TP
+            tau_over_id:=hom<U_gnu_TP->U_gnu_TP|[ U_gnu_TP!((U_gnu_TP.i@tau)-U_gnu.i) : i in [1..Ngens(U_gnu_TP)]]>;
+            assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
+            delta1:=((U_gnu_TP!UU)@@tau_over_id)@u_gnu; //in A
+            
+            delta_nu:=[delta1*p^-(i-1):i in [1..rho_g_nu]] cat [delta1*bU*p^-(i-1):i in [rho_g_nu+1..g_nu]];
+            delta_nu:=[pg_nu*x:x in delta_nu]; // to make sure that it is in OA
+            assert forall{x:x in delta_nu|x in OA};
+            delta_nu:=pg_nu^-1 * CRT(PPs_nu_m,delta_nu); //in A
+
+            // to make sure that the lift is not a zero divisor
+            while IsZeroDivisor(delta_nu) do
+                delta_nu+:=Random(PPs_nu_m_prod);
+            end while;
+            return delta_nu,PPs_nu_m_prod;
+        end function;
+
         delta_nu_at_precision_conj_stable:=function(m,nu,g_nu,alpha_nu,sigma,qI)
         // input:  - m is a positive integer
         //         - nu is a place of E which is conjugate stable;
@@ -444,14 +506,15 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             UbU:=U*bU;
             // The precision is chosen to match the one of the quotients we are using, plus the fact that we are dividing 
             // by p^g_nu
-            UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],[PP in primes_of_A_above_place_of_E(A,nu) select UbU else pg_nu:PP in pA])/pg_nu;
+            UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],
+                    [PP in primes_of_A_above_place_of_E(A,nu) select UbU else pg_nu:PP in pA])/pg_nu;
             assert U in OA;
             assert bU in OA;
             assert UU in OA;
             assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
             PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in primes_of_A_above_place_of_E(A,nu)];
             PPs_nu_m_prod:=&*(PPs_nu_m);
-            assert2 forall{k:k in [1..g_nu]|&*[ bU@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - (q/pi_A) in PPs_nu_m[k]};
+            assert2 forall{k:k in [1..g_nu]|&*[bU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]]-(q/pi_A) in PPs_nu_m[k]};
             assert2 forall{k:k in [1..g_nu]|&*[ U@qI@(sigma^(g_nu*i))@@qI : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
             assert2 forall{k:k in [1..g_nu]|&*[UU@qI@(sigma^(g_nu*i))@@qI:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
             U_gnu,u_gnu:=ResidueRingUnits(OA,PPs_nu_m[g_nu]);
@@ -593,7 +656,8 @@ uniformizers_at_nus:=Uniformizers(plE_sl_in01 cat plE_sl_0 cat plE_sl_1)[1..#pla
                 t_nu:=uniformizers_at_nus[inu];
                 // note the precision increase here
                 alpha_nu,prod_primes_alpha:=alpha_at_precision_W_type_at_place(m+g_nus[inu],nu,g_nus[inu],sigma,t_nu,qI);
-                delta_nu,prod_primes_delta:=delta_nu_at_precision_conj_stable(m,nu,g_nus[inu],alpha_nu,sigma,qI);
+// FIXME TOT real
+                delta_nu,prod_primes_delta:=delta_nu_tot_real_at_precision_conj_stable(m,nu,g_nus[inu],alpha_nu,sigma,qI);
                 output[nu]:=<alpha_nu,prod_primes_alpha,delta_nu,prod_primes_delta>;
                 vprintf alpha_at_precision,1 : "done\n";
             end for;
@@ -710,43 +774,43 @@ The vararg DualsCompatible (default false) determines whether FQm0,VQm0 are comp
         sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
         vprintf Algorithm_3,1 : "done\n";
 
-        // // VERSION USING delta. to use this version, comment-out everything that follows
-        // // As of 20260320 there are mathematical issues with this version, discussed in Sec 17 of the notes.
-        //
-        // alpha:=_AlphaAtPrecision_delta(isog,m0+1:DualsCompatible:=DualsCompatible);
-        // FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
-        // FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
+        // VERSION USING delta. to use this version, comment-out everything that follows
+        // As of 20260320 there are mathematical issues with this version, discussed in Sec 17 of the notes.
+        
+        alpha:=_AlphaAtPrecision_delta(isog,m0+1:DualsCompatible:=DualsCompatible);
+        FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
+        FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
 
-        // VERSION without delta, which on 20260320 works only when all places are NOT conjugate stable.
-        alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=true); // computed at precision m2=m1+a-1
-        nus:=Setseq(Keys(alpha_arr));
-        a_nus:=[nu[1]:nu in alpha_arr];
-        Ps_nus:=[(&*primes_of_A_above_place_of_E(A,nu))^RamificationIndex(nu):nu in nus];
-        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[P^m2:P in Ps_nus]);
-        // multiplications by p^(a-1)
-        mults:=[* *];
-        for inu in [1..#nus] do
-            Pnu:=Ps_nus[inu];
-            S,s:=Quotient(Pnu^-(a-1),Pnu^m1);
-            T,t:=ResidueRing(OA,Pnu^m2);
-            Append(~mults,<iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>,s,t>);
-        end for;
-        image_qq:=function(g,qq)
-            //qq can be either qm0 or qm0_1
-            out:=[];
-            gg:=g@@qq@qOA@sigma_QOA@@qOA@J_Jnus;
-            for inu in [1..#nus] do
-                if IsOfWType(nus[inu]) then
-                    Append(~out,a_nus[inu]*gg[inu]);
-                else
-                    mult,s,t:=Explode(mults[inu]);
-                    Append(~out,a_nus[inu]*gg[inu]@t@@mult@@s);
-                end if;
-            end for;
-            return out;
-        end function;
-        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J(image_qq(Qm0.i,qm0))) : i in [1..Ngens(Qm0)] ]>;
-        FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J(image_qq(Qm0_1.i,qm0_1))) : i in [1..Ngens(Qm0_1)] ]>;
+//        // VERSION without delta, which on 20260320 works only when all places are NOT conjugate stable.
+//        alpha_arr:=_AlphaAtPrecision(isog,m1:DualsCompatible:=true); // computed at precision m2=m1+a-1
+//        nus:=Setseq(Keys(alpha_arr));
+//        a_nus:=[nu[1]:nu in alpha_arr];
+//        Ps_nus:=[(&*primes_of_A_above_place_of_E(A,nu))^RamificationIndex(nu):nu in nus];
+//        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[P^m2:P in Ps_nus]);
+//        // multiplications by p^(a-1)
+//        mults:=[* *];
+//        for inu in [1..#nus] do
+//            Pnu:=Ps_nus[inu];
+//            S,s:=Quotient(Pnu^-(a-1),Pnu^m1);
+//            T,t:=ResidueRing(OA,Pnu^m2);
+//            Append(~mults,<iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>,s,t>);
+//        end for;
+//        image_qq:=function(g,qq)
+//            //qq can be either qm0 or qm0_1
+//            out:=[];
+//            gg:=g@@qq@qOA@sigma_QOA@@qOA@J_Jnus;
+//            for inu in [1..#nus] do
+//                if IsOfWType(nus[inu]) then
+//                    Append(~out,a_nus[inu]*gg[inu]);
+//                else
+//                    mult,s,t:=Explode(mults[inu]);
+//                    Append(~out,a_nus[inu]*gg[inu]@t@@mult@@s);
+//                end if;
+//            end for;
+//            return out;
+//        end function;
+//        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J(image_qq(Qm0.i,qm0))) : i in [1..Ngens(Qm0)] ]>;
+//        FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J(image_qq(Qm0_1.i,qm0_1))) : i in [1..Ngens(Qm0_1)] ]>;
     end  if;
     assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
     // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
