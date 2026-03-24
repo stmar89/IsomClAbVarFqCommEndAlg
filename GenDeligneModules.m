@@ -57,7 +57,7 @@ intrinsic pPartDeltaInverseIdeal(isog::IsogenyClassFq,DM::AlgEtQIdl)->AlgEtQIdl
     vp_ind:=Valuation(Index(oOA,dDM),p);
     dDM_ppart:=dDM+p^vp_ind*oOA;
     output:=(1/d)*Delta_inverse_ideal(dDM_ppart);
-    assert2 Index(output+DD,output meet DD) mod p ne 0 where DD:=Delta_inverse_ideal(DM);
+    assert3 Index(output+DD,output meet DD) mod p ne 0 where DD:=Delta_inverse_ideal(DM);
     return output;
 end intrinsic;
 

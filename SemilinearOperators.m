@@ -466,8 +466,8 @@ If the VarArg DualsCompatible is true (default false), then the attribute delta_
             // FIXME new stuff to try to get delta = bar(delta)
 if rho_g_nu ne g_nu then printf "WARNING rho_g_nu ne g_nu\n"; end if;
             // FIXME the next line should break exactly when rho_gnu ne rho_gnu
-            bar_onU_gnu:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@bar_onA@@u_gnu:i in [1..Ngens(U_gnu)]]>;
-            U_gnu_TP:=Kernel(bar_onU_gnu);
+            bar_onU_gnu_over_id:=iso<U_gnu->U_gnu|[(U_gnu.i@u_gnu@bar_onA@@u_gnu)-U_gnu.i:i in [1..Ngens(U_gnu)]]>;
+            U_gnu_TP:=Kernel(bar_onU_gnu_over_id);
             // tau = sigma^g_nu
             tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
             assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
