@@ -472,7 +472,7 @@ if rho_g_nu ne g_nu then printf "WARNING rho_g_nu ne g_nu\n"; end if;
             tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qI@(sigma^g_nu)@@qI@@u_gnu : i in [1..Ngens(U_gnu)]]>;
             assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
             // tau/id only on U_gnu_TP
-            tau_over_id:=hom<U_gnu_TP->U_gnu_TP|[ U_gnu_TP!((U_gnu_TP.i@tau)-U_gnu.i) : i in [1..Ngens(U_gnu_TP)]]>;
+            tau_over_id:=hom<U_gnu_TP->U_gnu_TP|[ U_gnu_TP!((U_gnu_TP.i@tau)-U_gnu_TP.i) : i in [1..Ngens(U_gnu_TP)]]>;
             assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
             delta1:=((U_gnu_TP!UU)@@tau_over_id)@u_gnu; //in A
             
