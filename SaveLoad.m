@@ -102,11 +102,11 @@ intrinsic LoadAbVarFqCommEndAlg(isog::IsogenyClassFq,input::MonStgElt)->SeqEnum[
     PP<x>:=PolynomialRing(Integers());
     R:=ZFVOrder(isog);
     E:=Algebra(R);
-    _,_,_,_,A,_,_,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+    _,_,_,_,A,_,_,_,WR0:=DieudonneAlgebraCommEndAlg(isog);
     A_test:=EtaleAlgebra([NumberField(PP!f) : f in input[2]]);
-    //WR:=Order([A!z : z in input[3]]);
+    WR:=Order([A!z : z in input[3]]);
+    assert WR0 eq WR;
     assert input[2] eq [Coefficients(DefiningPolynomial(K)):K in Components(A_test)];
-    assert input[3] eq PrintSeqAlgEtQElt(ZBasis(WR));
     ends:=[Order([E!z : z in S]) : S in input[4]];
     pics:=[* [ Ideal(ends[i_picS],[E!z : z in L]) : L in input[5,i_picS] ] : i_picS in [1..#input[5]] *];
     Is:=[ Ideal(R,[E!z:z in I]) : I in input[6] ];

@@ -3,7 +3,7 @@
 */
 
     AttachSpec("~/AbVarFq/spec");
-    AttachSpec("~/AlgEt/spec");
+    //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
@@ -51,7 +51,7 @@
     ParallelSort(~ind,~oo);
     Reverse(~oo);
     ends:=[ EndomorphismRing(A) : A in iso ];
-    printf "For each overorder S, we print the following string of data:\niS = which overorder of Z[pi,q/pi]\n[OE:S]\nd(S) = #Dieudonné modules with End S\n#Pic(S)\na numbers of the DM with End S\nis S maximal at (0,1)\ndoes S contain O_{E^+}\nindices of minimal overorders\n\n";
+    printf "For each overorder S, we print the following string of data:\n\tiS = which overorder of Z[pi,q/pi]\n\t[OE:S]\n\td(S) = #Dieudonné modules with End S\n\th(S)=#Pic(S)\n\ta numbers of the DM with End S\n\tis S maximal at (0,1)?\n\tdoes S contain O_{E^+}?\n\tindices of minimal overorders\n\n";
     for iS->S in oo do
         dmS:={@ dmA where _,dmA:=IsomDataCommEndAlg(A) : A in iso | EndomorphismRing(A) eq S @};
         // a-numbers
