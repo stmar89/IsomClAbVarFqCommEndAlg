@@ -267,7 +267,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             // - in OL, find an element 'zeta' congruent mod PL^m to an inertial element (=uniformizer) of OLp
             //   by taking successive q-powers of the image 'frob' of a generator of (OL/PL)^*
             //   until the sequence stabilizes (this approximation method seems well known 
-            //   TODO add references to Magma documentation).
+            //   Reference: Magma Documentation, Example RngLoc_unram-ext (H49E13).
             // - We create an auxiliary number field LL<zz>, isomorphic to L via zz:->zeta.
             // - We have an isomorphism OL/PL^m = ZZ[zz]/p^m*ZZ[zz].
             // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient
@@ -330,7 +330,13 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         // see the description above
             if not assigned P`PlacesOfAAbove then
                 OA:=MaximalOrder(A);
-                P`PlacesOfAAbove:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+                // When we construct the WR{F,V}-ideals with maximal endomorphism ring,
+                // we are assuming that the primes of A above each given place are sorted according to 
+                // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
+                // like in all the examples in the paper.
+                // FIXME modify the below accordingly.
+                pp:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
+                P`PlacesOfAAbove:=pp;
             end if;
             return P`PlacesOfAAbove;
         end function;
