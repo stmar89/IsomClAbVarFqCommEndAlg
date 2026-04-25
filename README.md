@@ -35,7 +35,9 @@ This representation can be computed using the intrinsic `GeneralizedDeligneModul
 
 Versions
 --
-`v1.0.0` : version accompanying the submission of the paper.
+`v1.0.0` Version accompanying the submission of the paper.
+`v1.0.1` A bug affecting the correct loading of the examples has been fixed.
+         WORK in PROGRESS -- Bugfix: The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.
 
 References
 --
