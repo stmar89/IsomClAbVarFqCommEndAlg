@@ -33,6 +33,10 @@ A `Generalized Deligne Module` is a pair `<II,MM>` which belongs to the category
 The ideal `II` encodes the local information away from the characteristic of `Fq`, `MM` is the Dieudonné module and the p-part of `II` and `MM` are compatible.
 This representation can be computed using the intrinsic `GeneralizedDeligneModule` on any abelian variety whose attribute `IsomDataCommEndAlg` is assigned.
 
+Versions
+--
+`v1.0.0` : version accompanying the submission of the paper.
+
 References
 --
 Check my webpage for more up-to-date bibliography info.
