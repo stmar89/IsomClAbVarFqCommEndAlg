@@ -334,9 +334,29 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
                 // we are assuming that the primes of A above each given place are sorted according to 
                 // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
                 // like in all the examples in the paper.
-                // FIXME modify the below accordingly.
+                // More precisely, we will sort the ideal by [sigma^(g-1)(PP0),...,sigma(PP0),PP0],
+                // where PP0 is an arbitrarily chosen ideal.
                 pp:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
-                P`PlacesOfAAbove:=pp;
+                gP:=#pp;
+                if gP gt 2 then
+                    // the following does nothing if gP is 1 or 2
+                    PP:=&*pp;
+                    Q,mQ:=ResidueRing(PP);
+                    PP0:=pp[1];
+                    gens:=[mQ(x):x in Generators(PP0)];
+                    ss:=sigma_OA_mod_I(Q,mQ,A);
+                    output:=[PP0];
+                    for i in [1..gP-1] do
+                        gens:=[ss(x):x in gens];
+                        assert exists(PP_next){id:id in pp|forall{x:x in gens|x@@mQ in id}};
+                        Append(~output,PP_next);
+                    end for;
+                    Reverse(~output);
+                    assert {myHash(id):id in pp} eq {myHash(id):id in output};
+                else
+                    output:=pp;
+                end if;
+                P`PlacesOfAAbove:=output;
             end if;
             return P`PlacesOfAAbove;
         end function;
