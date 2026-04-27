@@ -16,14 +16,16 @@
     g:=Dimension(isog);
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q); assert t;
-    //iso:=IsomorphismClasses(isog); // this could take up to a couple of hours. 
-                                     // we have precomputed the data which we load in the next 5 lines of code
 
+    // loading precomputed data
     fld:="~/IsomClAbVarFqCommEndAlg/examples/";
     input_ls:=Pipe("ls " cat fld,"");
     file:="4.4.ag_s_abk_cq";
     str:=Read(fld cat file);
     iso:=LoadAbVarFqCommEndAlg(isog,str);
+    printf "We have precomputed the isomorphism classes and we load them in the previous 5 lines of code.\nTo recompute them, which takes approximatively 2 minutes, comment the previous 5 lines out and uncomment the next line";
+    //iso:=IsomorphismClasses(isog);
+
     R:=ZFVOrder(isog);
     m0,J,dJ,Q,mQ,F,V:=SemilinearOperators(isog);
     E:=Algebra(R);

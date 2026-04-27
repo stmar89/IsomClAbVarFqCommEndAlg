@@ -353,6 +353,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
                     end for;
                     Reverse(~output);
                     assert {myHash(id):id in pp} eq {myHash(id):id in output};
+                    assert #output eq gP;
                 else
                     output:=pp;
                 end if;

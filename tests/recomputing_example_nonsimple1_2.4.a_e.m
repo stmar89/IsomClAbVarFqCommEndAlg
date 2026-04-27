@@ -2,6 +2,8 @@
 /*
 */
 
+    SetAssertions(2);
+
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
     AttachSpec("~/AlgEt/specMod");
@@ -10,21 +12,17 @@
 
     PP<x>:=PolynomialRing(Integers());
 
-    h:=x^8+x^7+x^6+4*x^5-4*x^4+16*x^3+16*x^2+64*x + 256;
+    h:=(x^2-2*x+4)*(x^2+2*x+4);
     assert IsSquarefree(h);
     isog:=IsogenyClass(h);
     g:=Dimension(isog);
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q); assert t;
 
-    // loading precomputed data
-    fld:="~/IsomClAbVarFqCommEndAlg/examples/";
-    input_ls:=Pipe("ls " cat fld,"");
-    file:="4.4.b_b_e_ae";
-    str:=Read(fld cat file);
-    iso:=LoadAbVarFqCommEndAlg(isog,str);
-    printf "We have precomputed the isomorphism classes and we load them in the previous 5 lines of code.\nTo recompute them, which takes approximatively 5 minutes, comment the previous 5 lines out and uncomment the next line";
-    //iso:=IsomorphismClasses(isog);
+    t0:=Cputime();
+    iso:=IsomorphismClasses(isog);
+    t1:=Truncate(Cputime(t0)) div 60;
+    printf "We got %o isomorphism classes in %o minutes\n",#iso,t1;
 
     R:=ZFVOrder(isog);
     m0,J,dJ,Q,mQ,F,V:=SemilinearOperators(isog);
