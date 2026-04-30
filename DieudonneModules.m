@@ -405,7 +405,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
                 us_nu:=<>;
                 PPs_nu_m:=[];
                 for PP in PPs_nu do
-                    PP_m:=PP^(RamificationIndex(PP)*(m));
+                    PP_m:=PP^(RamificationIndex(PP)*m);
                     Append(~PPs_nu_m,PP_m);
                     R,r:=ResidueRing(OA,PP_m);
                     vprintf alpha_at_precision,2 : "\n\tR,r computed\n";
@@ -434,9 +434,9 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
                 vprintf alpha_at_precision,2 : "\tQ and U are computed\n";
 
                 image_phi:=function(gamma)
-                    // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^(m))^*
+                    // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^m)^*
                     // phi does the following two steps
-                    // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_nu,i^(m)
+                    // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_{nu,i}^m
                     // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
                     beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
                     // Action of the Frobenius on U
@@ -523,13 +523,13 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     assert t;
     L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
     vprintf DieudonneModules,1 : "done\n";
+    vprintf DieudonneModules,1 : "sing primes of R = %o\n",[Index(R,PP):PP in SingularPrimes(R)];
     vprintf DieudonneModules,1 : "[OE:R] = %o\ndim_Q(L)=%o\ndim_Q(A)=%o\n",Index(MaximalOrder(E),R),Degree(L),Dimension(A);
     _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
     _,pl_01_R,_:=PrimesOfZFVAbove_p(isog);
     pl_01_R:=Setseq({ OneIdeal(R) meet (R!!P) : P in plE_sl_in01 });
     if #plE_sl_in01 ne 0 then
         assert #pl_01_R eq 1;
-        vprintf DieudonneModules,1 : "[OE':R'] = %o\n",Index(MaximalOrder(E),Order(ZBasis(R) cat ZBasis(MaximalOrder(E)!!pl_01_R[1])));
     end if;
 
     vprintf DieudonneModules,2 : "places of E w/ slope in (0,1) = %o\n",Sort([ Slope(P) : P in plE_sl_in01]);
@@ -723,7 +723,8 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     unifs:=Uniformizers(nus);
 
     pExponent:=function(A,B)
-    // given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B)
+    // Given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B),
+    // but only a quotient isomorphic to its p-part.
         vp_ind:=Valuation(Index(A,B),p);
         // now I only compute the quotient of the p-part.
         vp_exp:=Valuation(Exponent(Quotient(A,B+p^vp_ind*A)),p);
@@ -731,7 +732,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     end function;
 
     Delta_scale_inside:=function(I,J)
-    // given an OA-ideal WR!!J and a WR-ideal I, it find an element x in E^* such that Delta(x)I c J.
+    // given an OA-ideal WR!!J and a WR-ideal I, it finds an element x in E^* such that Delta(x)I c J.
     // This element is chosen so that [J:xI] will have a small p-adic valuation.
         vprintf Delta_scaling,1 : "Computing: colon ideal...";
         cc:=OA!!ColonIdeal(J,I);
@@ -755,36 +756,36 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         assert yxI subset J;
         vprintf Delta_scaling,1 : "ZBasisLLL...";
         ZBasisLLL(yxI);
-        vprintf Delta_scaling,1 : "pExponent=";
-        vpN:=pExponent(J,yxI);
-        vprintf Delta_scaling,1 : "%o...",vpN;
         vprintf Delta_scaling,1 : "done";
-        return yxI,vpN;
+        return yxI;
     end function;
 
-    // We need to scale all I's by an element of Delta(E) inside J, so that the max value of vp(exp(J/I)) 
-    // is as small as possible.
+    // We need to replace each ideal I in WR_01_idls_with_ext_i_to_OA_F_V_stable with a Delta(E)-equivalent 
+    // ideal s*I such that s*I < J so that the maximal value m0 of vp(exp(J/s*I)) is as small as possible.
+    // The optimal s can be obtained by the function Delta_scale_inside above, which requires to compute the 
+    // colon ideal (J:I) and its valuations at the places of A above p. This can be expensive.
+    // So we first try to take s=p^ss where ss=pExponent(I+J,J) which is faster.
+    // If this scaling does not increase m0, ther are good. Otherwise we use Delta_scale_inside.
     m0:=0; 
     for i in [1..#WR_01_idls_with_ext_i_to_OA_F_V_stable] do
         I:=WR_01_idls_with_ext_i_to_OA_F_V_stable[i];
         ZBasisLLL(I);
         D_scale:=true;
         if I subset J then
-            vpN:=pExponent(J,I);
-            if vpN le m0 then
+            if pExponent(J,I) le m0 then
                 D_scale:=false;
             end if;
         else
-            // we first try to push I in J by multiplying by the pExponent 
-            vp_x:=pExponent(I+J,J);
-            if vp_x le m0 then
-                vprintf Delta_scaling,1 : "\npExp-scaling the %o-th ideal into J...",i;
-                x:=p^vp_x;
-                xI:=x*I;
-                y:=Index(xI+J,J);
-                assert (y mod p) ne 0; // y coprime p
-                yxI:=y*xI;
-                assert yxI subset J;
+            vprintf Delta_scaling,1 : "\nAttempting to pExp-scaling the %o-th ideal into J...",i;
+            ss:=pExponent(I+J,J);
+            x:=p^ss;
+            xI:=x*I;
+            y:=Index(xI+J,J);
+            assert (y mod p) ne 0; // y coprime p
+            yxI:=y*xI;
+            assert yxI subset J;
+            if pExponent(J,yxI) le m0 then
+                vprintf Delta_scaling,1 : "\nsuccess...",i;
                 D_scale:=false;
                 vprintf Delta_scaling,1 : "ZBasisLLL...";
                 ZBasisLLL(yxI);
@@ -794,11 +795,15 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         end if;
         if D_scale then
             vprintf Delta_scaling,1 : "\nDelta-scaling the %o-th ideal into J...",i;
-            I,vpN:=Delta_scale_inside(I,J);
+            I:=Delta_scale_inside(I,J);
+            vpN:=pExponent(J,I);
             m0:=Max(m0,vpN);
             WR_01_idls_with_ext_i_to_OA_F_V_stable[i]:=I;
         end if;
     end for;
+    assert2 forall{I:I in WR_01_idls_with_ext_i_to_OA_F_V_stable|I subset J};
+    // The next assert tests that p^m0*J < I locally at p. Since I < J, this is equivalent to m0 ge val_p(exp(J/I))
+    assert2 forall{I:I in WR_01_idls_with_ext_i_to_OA_F_V_stable|Valuation(Index((p^m0)*J+I,I),p) eq 0};
     vprintf Algorithm_3,1 : "done\n";
 
     if IncreaseMinimumPrecisionForSemilinearFVBy gt 0 then
@@ -806,6 +811,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         m0+:=IncreaseMinimumPrecisionForSemilinearFVBy;
         vprintf Algorithm_3:"Incresing m0 from to %o, using IncreaseMinimumPrecisionForSemilinearFVBy\n",m0_old,m0;
     end if;
+    //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //for debugging
 
     vprintf Algorithm_3 : "m0 = %o\n",m0;
     vprintf Algorithm_3,2 : "v_nu(pi) for all nu's = %o\n",[ Valuation( pi, P ) : P in plE_sl_in01 ];
@@ -813,10 +819,6 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_3,2 : "f_nu for all nu's = %o\n",[ InertiaDegree(P) : P in plE_sl_in01 ];
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
-    //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //for debugging
-    vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m0;
-    alpha:=alpha_at_precision(m0+1);
-    vprintf Algorithm_3,1 : "done\n";
     vprintf Algorithm_3,1 : "Computing M...";
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
@@ -824,9 +826,10 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.
     size:=(p^(m0+1))^AbsoluteDimension(A); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
     M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in primes_01_WR] );
+    //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
     vprintf Algorithm_3,1 : "done. Got M=%o\n",M;
-
     PP01:=(&*(primes_01_WR))^M;
+
     vprintf Algorithm_3,1 : "Computing Qm0_1...";
     Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP01*J);
     vprintf Algorithm_3,1 : "done\n";
@@ -845,12 +848,16 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     // ###################################
     assert JOA subset OA;
     m1:=m0+1+Valuation(Index(OA,JOA),p);
-    //m2:=m1+1000; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
+    //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
     vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
-    // We have the following inclusions: p^m1*OA c p^(m0+1)*J c I c J c OA.
+    // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
     // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
     QOA,qOA:=ResidueRing(OA,p^m1*OA);
     sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
+    vprintf Algorithm_3,1 : "done\n";
+
+    vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m1;
+    alpha:=alpha_at_precision(m1);
     vprintf Algorithm_3,1 : "done\n";
 
     vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";

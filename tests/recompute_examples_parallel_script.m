@@ -3,6 +3,8 @@ parallel script, to run on screen
     parallel -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
 */
 
+    //SetAssertions(2);
+
     AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
     AttachSpec("~/AlgEt/specMod");

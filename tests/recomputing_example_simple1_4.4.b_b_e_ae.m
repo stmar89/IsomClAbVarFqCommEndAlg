@@ -2,13 +2,19 @@
 /*
 */
 
-    SetAssertions(2);
+    SetColumns(0);
+    //SetAssertions(2);
 
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+
+//    SetVerbose("alpha_at_precision",2);
+//    SetVerbose("DieudonneModules",2);
+//    SetVerbose("Algorithm_2",2);
+//    SetVerbose("Algorithm_3",2);
 
     PP<x>:=PolynomialRing(Integers());
 

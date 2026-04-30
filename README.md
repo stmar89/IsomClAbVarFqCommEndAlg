@@ -33,11 +33,13 @@ A `Generalized Deligne Module` is a pair `<II,MM>` which belongs to the category
 The ideal `II` encodes the local information away from the characteristic of `Fq`, `MM` is the Dieudonné module and the p-part of `II` and `MM` are compatible.
 This representation can be computed using the intrinsic `GeneralizedDeligneModule` on any abelian variety whose attribute `IsomDataCommEndAlg` is assigned.
 
-Versions
+Changelog
 --
 `v1.0.0` Version accompanying the submission of the paper.
-`v1.0.1` A bug affecting the correct loading of the examples has been fixed.
-         WORK in PROGRESS -- Bugfix: The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.
+`v1.0.1` Bugfixes:
+         - A bug affecting the correct loading of the examples has been fixed.
+         - The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.
+         - A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}, leading to incorrect outputs, is not fixed.
 
 References
 --
