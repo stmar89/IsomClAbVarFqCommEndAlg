@@ -35,11 +35,16 @@ This representation can be computed using the intrinsic `GeneralizedDeligneModul
 
 Changelog
 --
-`v1.0.0` Version accompanying the submission of the paper.
-`v1.0.1` Bugfixes:
-         - A bug affecting the correct loading of the examples has been fixed.
-         - The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.
-         - A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}, leading to incorrect outputs, is not fixed.
+<ul>
+<li> <code>v1.0.0</code> Version accompanying the submission of the paper.</li>
+<li> <code>v1.0.1</code> Bugfixes:
+         <ul>
+         <li> A bug affecting the correct loading of the examples has been fixed.</li>
+         <li> The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.</li>
+         <li> A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}, leading to incorrect outputs, is not fixed.</li>
+         </ul>
+</li>
+</ul>
 
 References
 --
