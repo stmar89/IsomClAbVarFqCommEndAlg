@@ -9,9 +9,12 @@ For the theory on which this code is based, see the `References` section at the 
 The package contains the implementation of the algorithms in the paper, together with the ones contained in the [`accompanying appendix`](Computational_Appendix.pdf).
 The appendix contains also several technical intermediate lemmas.
 
-This package requires the packages [`AlgEt`](https://github.com/stmar89/AlgEt) (all spec files) and [`AbVarFq`](https://github.com/stmar89/AbVarFq).
-
 Please send comments and bug reports to `stefano.marseglia89@gmail.com`.
+
+Installation
+--
+- Clone the repository [`AlgEt`](https://github.com/stmar89/AlgEt). If you are on a version of Magma prior to 2.29 then attach all `spec`  files. If you are using Magma 2.29 or more recent, then attach only `specMtrx` and `specMod`.
+- Clone the repository [`AbVarFq`](https://github.com/stmar89/AbVarFq) and make sure to attach the corresponding `spec` file.
 
 Details
 --
@@ -41,8 +44,9 @@ Changelog
          <ul>
          <li> A bug affecting the correct loading of the examples has been fixed.</li>
          <li> The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.</li>
-         <li> A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}, leading to incorrect outputs, is not fixed.</li>
+         <li> A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}-ideals leading to incorrect outputs, is now fixed.</li>
          </ul>
+         This version has been tested with Magma 2.29-6.
 </li>
 </ul>
 
