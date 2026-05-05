@@ -43,8 +43,8 @@ Changelog
 <li> <code>v1.0.1</code> Bugfixes:
          <ul>
          <li> A bug affecting the correct loading of the examples has been fixed.</li>
-         <li> The primes of the DieudonneAlgebra above a place of given place of the DeligneAlgebra are now sorted according to the action of sigma.</li>
-         <li> A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}-ideals leading to incorrect outputs, is now fixed.</li>
+         <li> The primes of the DieudonneAlgebra above a given place of the DeligneAlgebra are now sorted according to the action of sigma.</li>
+         <li> A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}-ideal leading to incorrect outputs, is now fixed.</li>
          </ul>
          This version has been tested with Magma 2.29-6.
 </li>
