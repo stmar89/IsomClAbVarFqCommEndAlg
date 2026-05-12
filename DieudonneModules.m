@@ -247,7 +247,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
 
         sigma_OA_mod_I:=function(Q,mQ,A)
-        // Given mQ:OA->Q=OA/I, with I an OA-ideals and with Q being an OL/PL^m-module for some m, 
+        // Given mQ:OA->Q=OA/I, with I an OA-ideal and with Q an OL/PL^m-module for some m, 
         // where PL is the only prime of OL,
         // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
             
