@@ -4,6 +4,7 @@ CreationAbVarFq.m
 PrimesIsog.m
 DieudonneModules.m
 SemilinearOperators.m
+IsomorphismClassesDieudonneModulesCommEndAlg.m
 IsomorphismClasses.m
 GenDeligneModules.m
 SaveLoad.m
