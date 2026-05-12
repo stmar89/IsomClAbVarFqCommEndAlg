@@ -439,6 +439,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         if is_F_V_stable(I) then
             vprintf Algorithm_3,2 : "y";
             assert Order(I) eq WR;
+            //TODO what are we doing here?
             mI:=MultiplicatorRing(I);
             t:=exists(S){pair[2]:pair in delta_inverses_mult_rings|pair[1] eq mI};
             if not t then
