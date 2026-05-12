@@ -34,7 +34,8 @@ Delta_inverse_ppart:=function(isog,DM)
 // given an ideal DM in A, computes an R-ideal J such that J_p = Delta^-1(DM_p)
     R:=ZFVOrder(isog);
     E:=Algebra(R);
-    _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
+    _,_,_,_,A,_,_,Delta_map,WR,_,Delta_inverse_ideal,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
+    OA:=MaximalOrder(A);
     p:=CharacteristicFiniteField(isog);
     nus:=PlacesAboveRationalPrime(E,p);
     unifs:=Uniformizers(nus);
@@ -102,7 +103,7 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
             return Explode(AV`GeneralizedDeligneModule);
         end if;
         // not already_done     
-        _,_,_,_,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,_,_,_,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
 
         // We create N
         DeltaJ:=Delta_ideal(isog,J);
