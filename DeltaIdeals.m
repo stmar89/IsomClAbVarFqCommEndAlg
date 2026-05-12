@@ -24,11 +24,22 @@
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
-declare attributes AlgEtQIdl : DeltaInverse;
+declare attributes AlgEtQIdl : Delta_inverse_ideal,
+                               Delta_inverse_ppart,
+                               Delta_ideal;
+
+intrinsic DeltaIdeal(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
+{Given a fractional Z[pi,q/pi]-ideal I in the DeligneAlgebra of isog, returns the WR-ideal Delta(I) in the DiudonneAlgebra.}
+    if not assigned I`Delta_ideal then
+        _,_,_,_,_,_,_,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
+        I`Delta_ideal:=Ideal(WR,[Delta_map(z):z in ZBasis(I)]);
+    end if;
+    return I`Delta_ideal;
+end intrinsic;
 
 intrinsic DeltaInverseIdeal(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
-{Given a fractional WR-ideal I in the DieudonneAlgebra of isog, returns Delta^-1(I), which is a Z[F,V]-ideal in the DeligneAlgebra.}
-        if not assigned I`DeltaInverse then
+{Given a fractional WR-ideal I in the DieudonneAlgebra of isog, returns Delta^-1(I), which is a Z[pi,q/pi]-ideal in the DeligneAlgebra.}
+        if not assigned I`Delta_inverse_ideal then
             R:=ZFVOrder(isog);
             _,_,_,_,_,_,_,Delta_map,WR,_,_,_,_,_,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
             FOA,fOA,imageDeltaOE_inFOA:=Explode(OA_as_abelian_group_data);
@@ -42,8 +53,41 @@ intrinsic DeltaInverseIdeal(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
             gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
             J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
             assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
-            I`DeltaInverse:=J;
+            I`Delta_inverse_ideal:=J;
         end if;
-        return I`DeltaInverse;
+        return I`Delta_inverse_ideal;
+end intrinsic;
+
+intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
+{Given a fractional WR-ideal I in the DieudonneAlgebra of isog, returns a Z[pi,q/pi]-ideal J in the DeligneAlgebra such that J_p = Delta^-1(I_p).}
+    if not assigned I`Delta_inverse_ppart then
+        R:=ZFVOrder(isog);
+        E:=Algebra(R);
+        _,_,_,_,A,_,_,Delta_map,WR,_,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
+        OA:=MaximalOrder(A);
+        p:=CharacteristicFiniteField(isog);
+        nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
+        nus:=nus0 cat nus01 cat nus1;
+        unifs:=Uniformizers(nus);
+        oOA:=Order(I)!!OneIdeal(OA);
+        cc:=OA!!ColonIdeal(oOA,I);
+        exps:=[];
+        for nu in nus do
+            M_nu:=Max([Valuation(cc,P) : P in primes_of_A_above_place_of_E(A,nu)]);
+            Append(~exps,M_nu);
+        end for;
+        dp:=&*[unifs[i]^exps[i]:i in [1..#nus]];
+        dpI:=Delta_map(dp)*I;
+        d:=Index(oOA+dpI,oOA);
+        assert IsCoprime(d,p);
+        d:=dp*d;
+        dI:=Delta_map(d)*I;
+        assert dI subset WR!!OneIdeal(OA);
+
+        vp_ind:=Valuation(Index(oOA,dI),p);
+        dI_ppart:=dI+p^vp_ind*oOA;
+        I`Delta_inverse_ppart:=(1/d)*DeltaInverseIdeal(isog,dI_ppart);
+    end if;
+    return I`Delta_inverse_ppart;
 end intrinsic;
 

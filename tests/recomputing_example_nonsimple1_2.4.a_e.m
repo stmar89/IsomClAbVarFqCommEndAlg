@@ -68,6 +68,11 @@
         printf "%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
     end for;
 
+    printf "timing GeneralizedDeligneModule\n";
+    for iX->X in iso do
+        iX;
+        time I,M:=GeneralizedDeligneModule(X);
+    end for;
 /*
 
 */
