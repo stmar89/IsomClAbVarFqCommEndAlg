@@ -3,6 +3,7 @@
 CreationAbVarFq.m
 PrimesIsog.m
 DieudonneModules.m
+DeltaIdeals.m
 SemilinearOperators.m
 IsomorphismClassesDieudonneModulesCommEndAlg.m
 IsomorphismClasses.m

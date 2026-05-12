@@ -38,7 +38,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
-    L,_,_,_,A,pi_A,_,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
+    L,_,_,_,A,pi_A,_,Delta_map,WR,sigma_OA_mod_I,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
     OA:=MaximalOrder(A);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "sing primes of R = %o\n",[Index(R,PP):PP in SingularPrimes(R)];
@@ -444,7 +444,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
             mI:=MultiplicatorRing(I);
             t:=exists(S){pair[2]:pair in delta_inverses_mult_rings|pair[1] eq mI};
             if not t then
-                Sid:=Delta_inverse_ideal(WR!!OneIdeal(mI));
+                Sid:=DeltaInverseIdeal(isog,WR!!OneIdeal(mI));
                 S:=Order(ZBasis(Sid));
                 assert Sid eq Order(Sid)!!OneIdeal(S);
                 Append(~delta_inverses_mult_rings,<mI,S>);

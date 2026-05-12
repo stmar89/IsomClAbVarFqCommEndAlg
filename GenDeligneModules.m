@@ -34,10 +34,11 @@ Delta_inverse_ppart:=function(isog,DM)
 // given an ideal DM in A, computes an R-ideal J such that J_p = Delta^-1(DM_p)
     R:=ZFVOrder(isog);
     E:=Algebra(R);
-    _,_,_,_,A,_,_,Delta_map,WR,_,Delta_inverse_ideal,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
+    _,_,_,_,A,_,_,Delta_map,WR,_,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
     OA:=MaximalOrder(A);
     p:=CharacteristicFiniteField(isog);
-    nus:=PlacesAboveRationalPrime(E,p);
+    nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
+    nus:=nus0 cat nus01 cat nus1;
     unifs:=Uniformizers(nus);
     oOA:=Order(DM)!!OneIdeal(OA);
     cc:=OA!!ColonIdeal(oOA,DM);
@@ -56,7 +57,7 @@ Delta_inverse_ppart:=function(isog,DM)
 
     vp_ind:=Valuation(Index(oOA,dDM),p);
     dDM_ppart:=dDM+p^vp_ind*oOA;
-    return (1/d)*Delta_inverse_ideal(dDM_ppart);
+    return (1/d)*DeltaInverseIdeal(isog,dDM_ppart);
 end function;
 
 Delta_ideal:=function(isog,J)

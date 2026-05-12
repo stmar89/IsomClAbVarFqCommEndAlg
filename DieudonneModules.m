@@ -41,26 +41,41 @@ declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
                                     PrimesOfSlopeIn01;
 
 declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
-                                    DeltaInverse,
                                     PlacesOfAAbove;
+
+///////////////
+// Auxiliary //
+///////////////
+
+OrderAsFreeAbelianGroup:=function(R)
+// Returns F,f where F is a free abelian group isomorphic to R and f is an isomorphism.
+// It depends on the stored ZBasis(R)
+    n:=Dimension(Algebra(R));
+    F:=FreeAbelianGroup(n);
+    zb:=ZBasis(R);
+    f:=map<R->F | x:->F!AbsoluteCoordinates([x],zb),
+                  y:->DotProduct(Eltseq(y),zb) >;
+    return F,f;
+end function;
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,UserProgram
+//TODO check signature output
+intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,Tup,Tup
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
-<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data> where
+<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OA.
 - sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of (L\otimes_Q Qp)/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
-- Delta_inverse_ideal is a function that given a fractional WR-ideal returns its preimage via Delta_map;
 - primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
 - primes_of_S_of_slope_in_01 is a function that given an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, the P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
 - alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
+- OA_as_abelian_group_data //TODO
 }
     if not assigned isog`DiedudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
@@ -132,27 +147,11 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         // Delta: E->A, the natural embedding
         // #######################
 
-        OrderAsFreeAbelianGroup:=function(R)
-        // Returns F,f where F is a free abelian group isomorphic to R and f is an isomorphism.
-        // It depends on the stored ZBasis(R)
-            n:=Dimension(Algebra(R));
-            F:=FreeAbelianGroup(n);
-            zb:=ZBasis(R);
-            f:=map<R->F | x:->F!AbsoluteCoordinates([x],zb),
-                          y:->DotProduct(Eltseq(y),zb) >;
-            return F,f;
-        end function;
-
-        FOA,fOA:=OrderAsFreeAbelianGroup(OA);
-        assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
-
         Delta_image:=function(z)
             out:=DotProduct(AbsoluteCoordinates([z],PowerBasis(E))[1],pows_pi_A);
             assert2 MinimalPolynomial(out) eq MinimalPolynomial(z);
             return out;
         end function;
-
-        imageDeltaOE_inFOA:=sub<FOA | [fOA(Delta_image(z)) : z in ZBasis(MaximalOrder(E)) ]>;
 
         mat_pows_pi_A:=Matrix([AbsoluteCoordinates(x) : x in pows_pi_A ]);
         Delta_preimage:=function(y)
@@ -185,26 +184,6 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         assert2 Index(OA,WR) ge Index(MaximalOrder(E),R);
         // end test
 
-        // ####################
-        // Delta_inverse_ideal
-        // ####################
-
-        Delta_inverse_ideal:=function(I)
-        // given a fractional-WR ideal returns Delta^{-1}(I), which is a fractional R-ideal
-            if not assigned I`DeltaInverse then
-                assert Order(I) eq WR;
-                dI,d:=MakeIntegral(I);
-                ZBasisLLL(dI);
-                dI_inFOA:=sub<FOA | [fOA(z) : z in ZBasis(dI) ]>;
-                // the next line can be very memory consuming
-                meet_id:=dI_inFOA meet imageDeltaOE_inFOA;
-                gens_dI_meet_DeltaOE:=[ (g@@fOA)@@Delta_map : g in Generators(meet_id) ];
-                J:=(1/d)*Ideal(R,gens_dI_meet_DeltaOE);
-                assert2 forall{z : z in ZBasis(J) | Delta_map(z) in I};
-                I`DeltaInverse:=J;
-            end if;
-            return I`DeltaInverse;
-        end function;
    
         // #######################
         // tilde sigma (on A): acts as the L-Forbenius on L-coeffs when A is written as L+pi*L+...+pi^(deg(h)-1)L
@@ -244,6 +223,11 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         zbOE_in_D:=[ mAD(b) : b in zbOE_in_OA ];
         mWD_zbOE:=iso<W->D | zbOE_in_D >;
         mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
+
+        FOA,fOA:=OrderAsFreeAbelianGroup(OA);
+        assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
+        imageDeltaOE_inFOA:=sub<FOA | [fOA(Delta_image(z)) : z in ZBasis(MaximalOrder(E)) ]>;
+        OA_as_abelian_group_data:=<FOA,fOA,imageDeltaOE_inFOA>;
 
         sigma_OA_mod_I:=function(Q,mQ,A)
         // Given mQ:OA->Q=OA/I, with I an OA-ideal and with Q an OL/PL^m-module for some m, 
@@ -479,7 +463,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             return alpha;
         end function;
 
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data>;
+        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
     end if;
     return Explode(isog`DiedudonneAlgebraCommEndAlg);
 end intrinsic;
