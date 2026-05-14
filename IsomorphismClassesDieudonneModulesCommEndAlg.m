@@ -38,7 +38,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
-    L,_,_,_,A,pi_A,_,Delta_map,WR,sigma_OA_mod_I,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
+    L,_,_,_,A,pi_A,_,Delta_map,WR,sigma_OA_mod_I,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
     OA:=MaximalOrder(A);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "sing primes of R = %o\n",[Index(R,PP):PP in SingularPrimes(R)];
@@ -66,7 +66,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     units_quotient_01:=function(S)
     // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA,
     // together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).
-        primes_01_S:=primes_of_S_of_slope_in_01(S);
+        _,primes_01_S,_:=PrimesOfSAbove_p(isog,S);
         ff:=Conductor(S);
         primes_01_S_above_ff:=[ P : P in primes_01_S | ff subset P];
         assert2 forall{P : P in primes_01_S_above_ff | p in P};
@@ -168,7 +168,8 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     pp_A_nus:=[];
     for P in plE_sl_in01 do
         Append(~exps_nus,exponents_from_Waterhouse(P));
-        Append(~pp_A_nus,primes_of_A_above_place_of_E(A,P));
+        Append(~pp_A_nus,PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,P)); // here the places of A need 
+                                                                                       // to be sorted by sigma
     end for;
     exps_nus_cc:=CartesianProduct(exps_nus);
     exps_01:=[];
@@ -257,7 +258,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         exps:=[];
         vprintf Delta_scaling,1 : "M_nu's";
         for nu in nus do
-            M_nu:=Max([Valuation(cc,P) : P in primes_of_A_above_place_of_E(A,nu)]);
+            M_nu:=Max([Valuation(cc,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]);
             vprintf Delta_scaling,1 : ".";
             Append(~exps,M_nu);
         end for;
@@ -338,7 +339,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
     vprintf Algorithm_3,1 : "Computing M...";
-    primes_01_WR:=primes_of_S_of_slope_in_01(WR);
+    _,primes_01_WR,_:=PrimesOfSAbove_p(isog,WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
     // By looking at the composition series, one deduces that any 
     // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.

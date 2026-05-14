@@ -63,16 +63,14 @@ end function;
 ////////////////////////////////////////////////////////////////////////////////////
 
 //TODO check signature output
-intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,Tup,Tup
+intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,Tup
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
-<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
+<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,alpha_at_precision,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OA.
 - sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of (L\otimes_Q Qp)/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
-- primes_of_A_above_place_of_E is a function that given A and a maximal ideal P of E returns the maximal ideals of OA above P;
-- primes_of_S_of_slope_in_01 is a function that given an overorder S of WR returns its maximal ideals P with 'slope' in the open interval (0,1), that is, the P's that are below the maximal ideals of OA, which are above maximal ideals of OE of slope in (0,1); 
 - alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
 - OA_as_abelian_group_data //TODO
@@ -306,68 +304,12 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         end function;
 
         // #######################
-        // primes of orders in A above places
-        // #######################
-
-        primes_of_A_above_place_of_E:=function(A,P)
-        // see the description above
-            if not assigned P`PlacesOfAAbove then
-                OA:=MaximalOrder(A);
-                // When we construct the WR{F,V}-ideals with maximal endomorphism ring,
-                // we are assuming that the primes of A above each given place are sorted according to 
-                // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
-                // like in all the examples in the paper.
-                // More precisely, we will sort the ideal by [sigma^(g-1)(PP0),...,sigma(PP0),PP0],
-                // where PP0 is an arbitrarily chosen ideal.
-                pp:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
-                gP:=#pp;
-                if gP gt 2 then
-                    // the following does nothing if gP is 1 or 2
-                    PP:=&*pp;
-                    Q,mQ:=ResidueRing(PP);
-                    PP0:=pp[1];
-                    gens:=[mQ(x):x in Generators(PP0)];
-                    ss:=sigma_OA_mod_I(Q,mQ,A);
-                    output:=[PP0];
-                    for i in [1..gP-1] do
-                        gens:=[ss(x):x in gens];
-                        assert exists(PP_next){id:id in pp|forall{x:x in gens|x@@mQ in id}};
-                        Append(~output,PP_next);
-                    end for;
-                    Reverse(~output);
-                    assert {myHash(id):id in pp} eq {myHash(id):id in output};
-                    assert #output eq gP;
-                else
-                    output:=pp;
-                end if;
-                P`PlacesOfAAbove:=output;
-            end if;
-            return P`PlacesOfAAbove;
-        end function;
-       
-        primes_of_S_of_slope_in_01:=function(S)
-        // see the description above
-            if not assigned S`PrimesOfSlopeIn01 then
-                pp:=[];
-                oneS:=OneIdeal(S);
-                A:=Algebra(S);
-                for P in plE_sl_in01 do
-                    pp_P:=Setseq({ oneS meet (S!!Q) : Q in primes_of_A_above_place_of_E(A,P) });
-                    pp cat:= pp_P;
-                    assert2 forall{P : P in pp | IsPrime(P)};
-                end for;
-                S`PrimesOfSlopeIn01:=pp;
-            end if;
-            return S`PrimesOfSlopeIn01;
-        end function;
-
-        // #######################
         // alpha
         // #######################
 
         alpha_at_precision:=function(m)
         // see the description above
-        // alpha of W-type  using the unit argument
+        // alpha of W-type using the unit argument
             I:=p^m*OA;
             QI,qI:=ResidueRing(OA,I);
             sigma:=sigma_OA_mod_I(QI,qI,A);
@@ -377,7 +319,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             for inu->nu in plE_sl_in01 do
                 vprintf alpha_at_precision,1 : "Computing alpha_Q for %oth place of %o...",inu,#plE_sl_in01;
                 // Can add DUALITY here
-                PPs_nu:=primes_of_A_above_place_of_E(A,nu);
+                PPs_nu:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
                 f_nu:=InertiaDegree(nu);
                 g_nu:=GCD(a,f_nu); //q=p^a
                 assert #PPs_nu eq g_nu;
@@ -463,7 +405,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             return alpha;
         end function;
 
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
+        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,alpha_at_precision,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
     end if;
     return Explode(isog`DiedudonneAlgebraCommEndAlg);
 end intrinsic;

@@ -41,7 +41,7 @@ intrinsic DeltaInverseIdeal(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
 {Given a fractional WR-ideal I in the DieudonneAlgebra of isog, returns Delta^-1(I), which is a Z[pi,q/pi]-ideal in the DeligneAlgebra.}
         if not assigned I`Delta_inverse_ideal then
             R:=ZFVOrder(isog);
-            _,_,_,_,_,_,_,Delta_map,WR,_,_,_,_,_,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
+            _,_,_,_,_,_,_,Delta_map,WR,_,_,_,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
             FOA,fOA,imageDeltaOE_inFOA:=Explode(OA_as_abelian_group_data);
             require Order(I) cmpeq WR : "The input ideal is not defined over WR";
 
@@ -63,7 +63,7 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
     if not assigned I`Delta_inverse_ppart then
         R:=ZFVOrder(isog);
         E:=Algebra(R);
-        _,_,_,_,A,_,_,Delta_map,WR,_,primes_of_A_above_place_of_E:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,A,_,_,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
         OA:=MaximalOrder(A);
         p:=CharacteristicFiniteField(isog);
         nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
@@ -73,7 +73,7 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
         cc:=OA!!ColonIdeal(oOA,I);
         exps:=[];
         for nu in nus do
-            M_nu:=Max([Valuation(cc,P) : P in primes_of_A_above_place_of_E(A,nu)]);
+            M_nu:=Max([Valuation(cc,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]);
             Append(~exps,M_nu);
         end for;
         dp:=&*[unifs[i]^exps[i]:i in [1..#nus]];

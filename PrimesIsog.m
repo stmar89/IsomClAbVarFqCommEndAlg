@@ -26,10 +26,17 @@
 
 declare attributes IsogenyClassFq : SingPrimesOfZFVAwayFrom_p,
                                     PlacesOfQFAbove_p,
-                                    PrimesOfZFVAbove_p;
+                                    PrimesOfZFVAbove_p,
+                                    PlacesOfDieudonneAlgebraAbove_p,
+                                    PlacesOfDieudonneAlgebraSortedBySigmaAbove_p;
+
+declare attributes AlgEtQOrd :      PrimesOfSAbove_p;
 
 declare attributes AlgEtQIdl :      Slope;
 
+/////////////////////////////////////////////////////////////////////////
+/////////////////////// Primes in Deligna Algebra ///////////////////////
+/////////////////////////////////////////////////////////////////////////
 
 intrinsic SingPrimesOfZFVAwayFrom_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl]
 {Returns the singular maximal ideals of the ZFVOrder of isog which do not contian p.}
@@ -38,6 +45,21 @@ intrinsic SingPrimesOfZFVAwayFrom_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl]
         isog`SingPrimesOfZFVAwayFrom_p:=[ L : L in SingularPrimes(ZFVOrder(isog)) | not p in L ];
     end if;
     return isog`SingPrimesOfZFVAwayFrom_p;
+end intrinsic;
+
+intrinsic PrimesOfZFVAbove_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl]
+{Returns 3 sequences of maximal ideals of the ZFVOrder of isog consisting, respectively, of the maximal ideals of slope 0, slope in the open interval (0,1) and slope 1, where here with slope of P we mean the slope of any maximal ideal of the maximal order containing P.} 
+    if not assigned isog`PrimesOfZFVAbove_p then
+        ppOE_0,ppOE_01,ppOE_1:=PlacesOfQFAbove_p(isog);
+        R:=ZFVOrder(isog);
+        oR:=OneIdeal(R);
+        ppR_0:=Setseq({ oR meet (R!!P) : P in ppOE_0 });
+        ppR_01:=Setseq({ oR meet (R!!P) : P in ppOE_01 });
+        ppR_1:=Setseq({ oR meet (R!!P) : P in ppOE_1 });
+        assert #ppR_01 le 1 and ((#ppR_01 eq 0) eq (IsOrdinary(isog)));
+        isog`PrimesOfZFVAbove_p:=<ppR_0,ppR_01,ppR_1>;
+    end if;
+    return Explode(isog`PrimesOfZFVAbove_p);
 end intrinsic;
 
 intrinsic PlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl]
@@ -63,19 +85,78 @@ intrinsic PlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl],SeqEnum[Alg
     return Explode(isog`PlacesOfQFAbove_p);
 end intrinsic;
 
-intrinsic PrimesOfZFVAbove_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl]
-{Returns 3 sequences of maximal ideals of the ZFVOrder of isog consisting, respectively, of the maximal ideals of slope 0, slope in the open interval (0,1) and slope 1, where here with slope of P we mean the slope of any maximal ideal of the maximal order containing P.} 
-    if not assigned isog`PrimesOfZFVAbove_p then
-        ppOE_0,ppOE_01,ppOE_1:=PlacesOfQFAbove_p(isog);
-        R:=ZFVOrder(isog);
-        oR:=OneIdeal(R);
-        ppR_0:=Setseq({ oR meet (R!!P) : P in ppOE_0 });
-        ppR_01:=Setseq({ oR meet (R!!P) : P in ppOE_01 });
-        ppR_1:=Setseq({ oR meet (R!!P) : P in ppOE_1 });
-        assert #ppR_01 le 1 and ((#ppR_01 eq 0) eq (IsOrdinary(isog)));
-        isog`PrimesOfZFVAbove_p:=<ppR_0,ppR_01,ppR_1>;
+///////////////////////////////////////////////////////////////////////////
+/////////////////////// Places of Dieudonne Algebra ///////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+intrinsic PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[AlgEtQIdl]
+{Returns the places of the DieudonneAlgebra of isog above a the given place nu of the DeligneAlgebra.}
+    if not assigned isog`PlacesOfDieudonneAlgebraAbove_p then
+        isog`PlacesOfDieudonneAlgebraAbove_p:=AssociativeArray();
     end if;
-    return Explode(isog`PrimesOfZFVAbove_p);
+    nu_Hash:=myHash(nu);
+    if not IsDefined(isog`PlacesOfDieudonneAlgebraAbove_p,nu_Hash) then
+        _,_,_,_,A,_,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
+        OA:=MaximalOrder(A);
+        isog`PlacesOfDieudonneAlgebraAbove_p[nu_Hash]:=PrimesAbove(Ideal(OA,[Delta_map(z):z in ZBasis(nu)]));
+    end if;
+    return isog`PlacesOfDieudonneAlgebraAbove_p[nu_Hash];
+end intrinsic;
+
+intrinsic PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[AlgEtQIdl]
+{Returns the places of the DieudonneAlgebra of isog above a the given place nu of the DeligneAlgebra, sorted by the action of the Frobenius automorphism sigma.}
+    if not assigned isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p then
+        isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p:=AssociativeArray();
+    end if;
+    nu_Hash:=myHash(nu);
+    if not IsDefined(isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p,nu_Hash) then
+        _,_,_,_,A,_,_,Delta_map,_,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
+        // When we construct the WR{F,V}-ideals with maximal endomorphism ring,
+        // we are assuming that the primes of A above each given place are sorted according to 
+        // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
+        // like in all the examples in the paper.
+        // More precisely, we will sort the ideal by [sigma^(g-1)(PP0),...,sigma(PP0),PP0],
+        // where PP0 is an arbitrarily chosen ideal.
+        pp:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu); //unsorted
+        gP:=#pp;
+        if gP gt 2 then
+            // the following does nothing if gP is 1 or 2
+            PP:=&*pp;
+            Q,mQ:=ResidueRing(PP);
+            PP0:=pp[1];
+            gens:=[mQ(x):x in Generators(PP0)];
+            ss:=sigma_OA_mod_I(Q,mQ,A);
+            output:=[PP0];
+            for i in [1..gP-1] do
+                gens:=[ss(x):x in gens];
+                assert exists(PP_next){id:id in pp|forall{x:x in gens|x@@mQ in id}};
+                Append(~output,PP_next);
+            end for;
+            Reverse(~output);
+            assert {myHash(id):id in pp} eq {myHash(id):id in output};
+            assert #output eq gP;
+        else
+            output:=pp;
+        end if;
+        isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nu_Hash]:=output;
+    end if;
+    return isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nu_Hash];
+end intrinsic;
+
+intrinsic PrimesOfSAbove_p(isog::IsogenyClassFq,S::AlgEtQOrd)->SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl]
+{Given an order S in the DieudonneAlgebra of the isogeny class isog over a finite field of charateristic p returns three sequences consisting of the pries of S above p of slope equal to 0, in (0,1), equalt to 1, respetively.}
+    if not assigned S`PrimesOfSAbove_p then
+        oneS:=OneIdeal(S);
+        pp0,pp01,pp1:=PlacesOfQFAbove_p(isog); 
+        PP0:=Setseq(&join[{oneS meet (S!!Q):Q in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)}:nu in pp0]);
+        PP01:=Setseq(&join[{oneS meet (S!!Q):Q in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)}:nu in pp01]);
+        PP1:=Setseq(&join[{oneS meet (S!!Q):Q in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)}:nu in pp1]);
+        assert2 forall{P : P in PP0 | IsPrime(P)};
+        assert2 forall{P : P in PP01 | IsPrime(P)};
+        assert2 forall{P : P in PP1 | IsPrime(P)};
+        S`PrimesOfSAbove_p:=<PP0,PP01,PP1>;
+    end if;
+    return Explode(S`PrimesOfSAbove_p);
 end intrinsic;
 
 ////////////////////////////////////////////////////////////////////////////////////
