@@ -33,6 +33,7 @@ declare attributes AlgEtQOrd      : units_quotient_fixed_sigma;
 
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
 {Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
+//FIXME deal with vararg
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
     vprintf DieudonneModules,1 : "Computing DiedudonneAlgebraCommEndAlg...";
     R:=ZFVOrder(isog);
@@ -43,7 +44,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     q:=FiniteField(isog);
     t,p,a:=IsPrimePower(q);
     assert t;
-    L,_,_,_,A,pi_A,_,Delta_map,WR,sigma_OA_mod_I,alpha_at_precision:=DieudonneAlgebraCommEndAlg(isog);
+    L,_,_,_,A,pi_A,_,Delta_map,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
     OA:=MaximalOrder(A);
     vprintf DieudonneModules,1 : "done\n";
     vprintf DieudonneModules,1 : "sing primes of R = %o\n",[Index(R,PP):PP in SingularPrimes(R)];
@@ -170,11 +171,15 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_2,1 : "\n\n################\nAlgorithm 2\n################\n";
 
     exps_nus:=[];
-    pp_A_nus:=[];
-    for P in plE_sl_in01 do
+    pp_A_01:=[];
+    nice_unifs_01:=[];
+    Delta_unif:=[Delta_map(t):t in UniformizersInQFAt_p(isog,plE_sl_in01)];
+    for iP->P in plE_sl_in01 do
+        pp_A_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,P); // here the places of A need 
+                                                                              // to be sorted by sigma
         Append(~exps_nus,exponents_from_Waterhouse(P));
-        Append(~pp_A_nus,PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,P)); // here the places of A need 
-                                                                                       // to be sorted by sigma
+        pp_A_01 cat:=pp_A_nu;          
+        nice_unifs_01 cat:=[ Delta_unif[iP] : i in [1..#pp_A_nu] ];
     end for;
     exps_nus_cc:=CartesianProduct(exps_nus);
     exps_01:=[];
@@ -182,8 +187,6 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         Append(~exps_01,&cat[ c : c in cc ]); 
     end for;
     vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",exps_01;
-    pp_A_01:=&cat(pp_A_nus);
-    nice_unifs_01:=[Delta_map(t):t in UniformizersInQFAt_p(plE_sl_in01)];
     vprintf Algorithm_2,2 : "nice_unifs_01 = %o\n", PrintSeqAlgEtQElt(nice_unifs_01);
 
     vprintf Algorithm_2,1 : "Defining WR_01...";
@@ -243,8 +246,9 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     // We scale the ideals I by elements of Delta(E) so that they are in J
     vprintf Algorithm_3,1 : "Delta-scaling the ideals into J...";
 
-    nus:=PlacesOfQFAbove_p(isog);
-    unifs:=UniformizersInQFAt_p(nus);
+    nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
+    nus:=nus0 cat nus01 cat nus1;
+    unifs:=UniformizersInQFAt_p(isog,nus);
 
     pExponent:=function(A,B)
     // Given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B),
@@ -343,92 +347,12 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_3,2 : "f_nu for all nu's = %o\n",[ InertiaDegree(P) : P in plE_sl_in01 ];
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
-    vprintf Algorithm_3,1 : "Computing M...";
-    _,primes_01_WR,_:=PrimesOfSAbove_p(isog,WR);
-    // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
-    // By looking at the composition series, one deduces that any 
-    // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.
-    size:=(p^(m0+1))^AbsoluteDimension(A); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-    M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in primes_01_WR] );
-    //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
-    vprintf Algorithm_3,1 : "done. Got M=%o\n",M;
-    PP01:=(&*(primes_01_WR))^M;
-
-    vprintf Algorithm_3,1 : "Computing Qm0_1...";
-    Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP01*J);
-    vprintf Algorithm_3,1 : "done\n";
-    vprintf Algorithm_3,1 : "Computing Qm0...";
-    den_ideal:=p^(m0)*J+PP01*J;
-    Qm0,qm0:=Quotient(J,den_ideal);
-    vprintf Algorithm_3,1 : "done\n";
-    // these quotients are isomorphic to the (0,1)-part of J/p^(m0+1)J and J/p^m0J
-
-    pr:=hom< Qm0_1->Qm0 | [ qm0(Qm0_1.i@@qm0_1) : i in [1..Ngens(Qm0_1)]] >;
-    assert IsSurjective(pr);
-    assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
-    
-    // ###################################
-    // Semilinear Frobenius on Qm0, Qm0_1
-    // ###################################
-    assert JOA subset OA;
-    m1:=m0+1+Valuation(Index(OA,JOA),p);
-    //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
-    vprintf Algorithm_3,1 : "Computing sigma on OA/p^m1*OA for m1 = %o...",m1;
-    // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
-    // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-    QOA,qOA:=ResidueRing(OA,p^m1*OA);
-    sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
-    vprintf Algorithm_3,1 : "done\n";
-
-    vprintf Algorithm_3,1 : "Computing alpha at precision %o...",m1;
-    alpha:=alpha_at_precision(m1);
-    vprintf Algorithm_3,1 : "done\n";
-
-    vprintf Algorithm_3,1 : "Action of the semilinear Frobenius on Qm0,Qm0_1...\n";
-    FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
-    FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
-    assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
-    // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
-    assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
-    assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
-
-    vprintf Algorithm_3,2 : "\tFQ's are computed\n";
-
-    mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
-    assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
-    assert Image(mp) subset Image(FQm0_1);
-    vprintf Algorithm_3,2 : "\tmp is computed\n";
-
-    z_gamma_s:=[];
-    for i in [1..Ngens(Qm0)] do
-        vprintf Algorithm_3,2 : "\tComputing z_gamma for the %oth generator of Qm0...",i;
-        gamma:=Qm0.i;
-        x_gamma:=gamma@@pr;
-        z_gamma:=(mp(x_gamma))@@FQm0_1;
-        vprintf Algorithm_3,2 : "done\n";
-        Append(~z_gamma_s,z_gamma);
-    end for;
-    VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
-    assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
-    assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
-    vprintf Algorithm_3,2 : "\tVQ is computed\n";
-
-    // We check semilinearity for F, V: F*x = sigma(x)*F and x*V=V*sigma(x)  forall x in L?
-    // It suffices to check if for powers of zz in OA.
-    if GetAssertions() ge 2 then
-        vprintf Algorithm_3,2 : "\tTesting semilinearity of F and V...";
-        for z in powers_zz_diagonally_inOA_via_zbOE do
-            sigma_z:=z@qOA@sigma_QOA@@qOA;
-            z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-            sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(sigma_z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-            assert2 forall{i:i in [1..Ngens(Qm0)]| FQm0(z_action_Qm0(Qm0.i)) eq sigma_z_action_Qm0(FQm0(Qm0.i))};
-            assert2 forall{i:i in [1..Ngens(Qm0)]| z_action_Qm0(VQm0(Qm0.i)) eq VQm0(sigma_z_action_Qm0(Qm0.i))};
-        end for;
-        vprintf Algorithm_3,2 : "all good.\n";
-    end if;
-    isog`SemilinearOperators:=<m0,J,den_ideal,Qm0,qm0,FQm0,VQm0>;
+    vprintf Algorithm_3 : "Computing Qm0,qm0,FQm0,VQm0...";
+    Qm0,qm0,FQm0,VQm0:=SemilinearOperatorsWType(isog,J,plE_sl_in01,m0);
+    vprintf Algorithm_3 : "done\n";
 
     is_F_V_stable:=function(I)
+        assert2 I subset J;
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
         IFV_Qm0:=I_Qm0 + 
                         sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +
@@ -446,7 +370,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         if is_F_V_stable(I) then
             vprintf Algorithm_3,2 : "y";
             assert Order(I) eq WR;
-            //TODO what are we doing here?
+            //TODO Describe what are we doing here
             mI:=MultiplicatorRing(I);
             t:=exists(S){pair[2]:pair in delta_inverses_mult_rings|pair[1] eq mI};
             if not t then

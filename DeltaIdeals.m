@@ -68,7 +68,7 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
         p:=CharacteristicFiniteField(isog);
         nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
         nus:=nus0 cat nus01 cat nus1;
-        unifs:=UniformizersInQFAt_p(nus);
+        unifs:=UniformizersInQFAt_p(isog,nus);
         oOA:=Order(I)!!OneIdeal(OA);
         cc:=OA!!ColonIdeal(oOA,I);
         exps:=[];

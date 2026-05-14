@@ -3,6 +3,7 @@
 */
 
     SetAssertions(2);
+    SetDebugOnError(true);
 
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
@@ -25,7 +26,6 @@
     printf "We got %o isomorphism classes in %o minutes\n",#iso,t1;
 
     R:=ZFVOrder(isog);
-    m0,J,dJ,Q,mQ,F,V:=SemilinearOperators(isog);
     E:=Algebra(R);
 
     oo:=OverOrders(R);
@@ -47,6 +47,7 @@
     contains_OEp:=func< S | forall{z:z in OEp|z in S}>;
 
 
+    Q,mQ,F,V,_,_,J:=Explode(isog`SemilinearOperatorsWTypeCRT);
     ind:=[Index(OE,S):S in oo];
     ParallelSort(~ind,~oo);
     Reverse(~oo);

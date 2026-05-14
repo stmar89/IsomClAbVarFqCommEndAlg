@@ -90,18 +90,19 @@ end intrinsic;
 /////////////////////// Uniformizers of Deligne Algebra above p///////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic UniformizersInQFAt_p(isog:IsogenyClassFq,nus::SeqEnum[AlgEtQIdl])->SeqEnum[AlgEtQElt]
+intrinsic UniformizersInQFAt_p(isog::IsogenyClassFq,nus::SeqEnum[AlgEtQIdl])->SeqEnum[AlgEtQElt]
 {Given an isogeny class isog and a sequence of places nus of the DeligneAlgebra, returns a sequence of uniformizers t_nu of each place nu in nus such that t_nu is a unit modulo every other place above p.}
     if not assigned isog`UniformizersInQFAt_p then
         isog`UniformizersInQFAt_p:=AssociativeArray();
-        all_pl:=PlacesOfQFAbove_p(isog);
+        pl0,pl01,pl1:=PlacesOfQFAbove_p(isog);
+        all_pl:=pl0 cat pl01 cat pl1;
         all_unif:=Uniformizers(all_pl);
         for inu->nu in all_pl do
-            nu_Hash:=my_Hash(nu);
+            nu_Hash:=myHash(nu);
             isog`UniformizersInQFAt_p[nu_Hash]:=all_unif[inu];
         end for;
     end if;
-    return [isog`UniformizersInQFAt_p[nu_Hash]:nu_Hash in [my_Hash(nu):nu in nus]];
+    return [isog`UniformizersInQFAt_p[nu_Hash]:nu_Hash in [myHash(nu):nu in nus]];
 end intrinsic;
 
 ///////////////////////////////////////////////////////////////////////////
