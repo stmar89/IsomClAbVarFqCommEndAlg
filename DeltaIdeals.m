@@ -41,7 +41,7 @@ intrinsic DeltaInverseIdeal(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
 {Given a fractional WR-ideal I in the DieudonneAlgebra of isog, returns Delta^-1(I), which is a Z[pi,q/pi]-ideal in the DeligneAlgebra.}
         if not assigned I`Delta_inverse_ideal then
             R:=ZFVOrder(isog);
-            _,_,_,_,_,_,_,Delta_map,WR,_,_,_,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
+            _,_,_,_,_,_,_,Delta_map,WR,_,_,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
             FOA,fOA,imageDeltaOE_inFOA:=Explode(OA_as_abelian_group_data);
             require Order(I) cmpeq WR : "The input ideal is not defined over WR";
 
