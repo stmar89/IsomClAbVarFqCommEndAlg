@@ -26,22 +26,14 @@
 
 declare verbose DieudonneModules,3;
 declare verbose DieudonneModules_L,3;
-declare verbose Algorithm_2,3;
-declare verbose Algorithm_3,3;
 declare verbose sigma,3;
-declare verbose alpha_at_precision,3;
 declare verbose Delta_scaling,3;
 
 declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg;
                                
-declare attributes AlgEtQ         : sigma_fin_prec,
-                                    PlacesAboveRationalPrime;
+declare attributes AlgEtQ         : sigma_fin_prec;
 
-declare attributes AlgEtQOrd      : units_quotient_fixed_sigma,
-                                    PrimesOfSlopeIn01;
-
-declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
-                                    PlacesOfAAbove;
+declare attributes AlgEtQIdl      : DeltaEndomorphismRing;
 
 ///////////////
 // Auxiliary //
