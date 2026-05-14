@@ -183,7 +183,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     end for;
     vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",exps_01;
     pp_A_01:=&cat(pp_A_nus);
-    nice_unifs_01:=Uniformizers(pp_A_01);
+    nice_unifs_01:=[Delta_map(t):t in UniformizersInQFAt_p(plE_sl_in01)];
     vprintf Algorithm_2,2 : "nice_unifs_01 = %o\n", PrintSeqAlgEtQElt(nice_unifs_01);
 
     vprintf Algorithm_2,1 : "Defining WR_01...";
@@ -243,8 +243,8 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     // We scale the ideals I by elements of Delta(E) so that they are in J
     vprintf Algorithm_3,1 : "Delta-scaling the ideals into J...";
 
-    nus:=PlacesAboveRationalPrime(E,p);
-    unifs:=Uniformizers(nus);
+    nus:=PlacesOfQFAbove_p(isog);
+    unifs:=UniformizersInQFAt_p(nus);
 
     pExponent:=function(A,B)
     // Given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B),
