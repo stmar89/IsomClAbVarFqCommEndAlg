@@ -137,7 +137,11 @@ end intrinsic;
 ///////////////////////////SemilinearOperators/////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-// CRT APPROACH -- gives wrong outputs, I don't really understand why...
+// CRT APPROACH -- FIXME 4.4.ag_s_abk_cq fails
+// In the next two intrinsic we attempt to copute F and V on Qm0 and Qm0_1 by splitting the computation over 
+// the places of OE of slope in (0,1) and then taking a CRT-direct sum of the local homomorphisms.
+// It is not clear to me yet why it fails. One possibility is that the action of sigma does not preserve the
+// local components. I find this unlikely, but I will leave the investigation for a future attempt if needed.
 //
 //intrinsic SemilinearOperatorsWTypeAtPlace(isog::IsogenyClassFq,J::AlgEtQIdl,nu::AlgEtQIdl,m0::RngIntElt)->GrpAb,Map,Map,Map,AlgEtQIdl
 //{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, a place nu of the DeligneAlgebra and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to (J/p^m0*J)_nu, q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
