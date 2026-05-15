@@ -52,7 +52,7 @@
     contains_OEp:=func< S | forall{z:z in OEp|z in S}>;
 
 
-    Q,mQ,F,V,_,_,J:=Explode(isog`SemilinearOperatorsWTypeCRT);
+    Q,mQ,F,V,_,_,J:=Explode(isog`SemilinearOperatorsWType);
     ind:=[Index(OE,S):S in oo];
     ParallelSort(~ind,~oo);
     Reverse(~oo);
