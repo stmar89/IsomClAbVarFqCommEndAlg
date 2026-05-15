@@ -25,7 +25,6 @@
 declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 
-declare attributes AlgEtQOrd      : units_quotient_fixed_sigma;
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
@@ -63,84 +62,6 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         dm`DeltaEndomorphismRing:=R;
         return [dm],plE_sl_in01; 
     end if;
-
-    //////////////////
-    // Units quotient
-    //////////////////
-    // Let S be an order in A', containing R'. We want to compute OA'^*/S^*\Delta'(O_E'^*)
-
-    units_quotient_01:=function(S)
-    // Given an order S in A, representing an order S' in A' returns U=OA'^*/S'^* and a map u:U->OA,
-    // together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).
-        _,primes_01_S,_:=PrimesOfSAbove_p(isog,S);
-        ff:=Conductor(S);
-        primes_01_S_above_ff:=[ P : P in primes_01_S | ff subset P];
-        assert2 forall{P : P in primes_01_S_above_ff | p in P};
-        if #primes_01_S_above_ff eq 0 then
-            U:=FreeAbelianGroup(0);
-            // with test
-            trivial_preimage:=function(y)
-                assert2 forall{ P : P in primes_01_S_above_ff | not y in P };
-                return Zero(U);
-            end function;
-            u:=map<U->Algebra(S) | x:->One(S), y:->trivial_preimage(y)>;
-            // without test
-            //u:=map<U->Algebra(S) | x:->One(S), y:->Zero(U)>;
-            return U,u,OneIdeal(OA);
-        end if;
-        indff:=Index(S,ff);
-        assert2 forall{P : P in primes_01_S_above_ff | indff mod Index(S,P) eq 0 };
-        ks:=[ Valuation(indff,p) div Valuation(Index(S,P),p) : P in primes_01_S_above_ff ];
-        prod:=&*([ primes_01_S_above_ff[i]^ks[i] : i in [1..#primes_01_S_above_ff]]);
-        ff_prod:=ff+prod;
-        assert not 1 in ff_prod;
-        assert2 OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
-      
-        I:=OA!!(ff_prod);
-        R,r:=ResidueRingUnits(I);
-        gens:=ResidueRingUnitsSubgroupGenerators(ff_prod);
-        U,u0:=quo<R | [ g@@r : g in gens]>;
-        u:=map<U->Algebra(S) |  x:-> r(x@@u0), y:->u0(y@@r) >;
-        return U,u,I;
-    end function;
-
-    fixed_pts_sigma:=function(S)
-    // Given an order S in A, representing an order S' in A', 
-    // which is stable by the action of sigma (eg. WR),
-    // returns U,u,F,m where
-    // - U=OA'^*/S'^*,
-    // - u is a map u:U->OA giving representatives 
-    // - F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
-        U,u,I:=units_quotient_01(S); //u:U->A
-        Q,q:=ResidueRing(OA,I);
-        sigma:=sigma_OA_mod_I(Q,q,A); // sigma: Q->Q
-        id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation
-        F:=Kernel(id_sigma);
-        return U,u,F;
-    end function;
-
-    // only for WR: F = Delta(OE')^*W'R^*/W'R^* inside OA'^*/W'R^*
-    vprintf Algorithm_2,1 : "Computing fixed_pts_sigma...";
-    U,u,F:=fixed_pts_sigma(WR);
-    vprintf Algorithm_2,1 : "done\n";
-    units_quotient_fixed_sigma_WR_gens:=[u(F.i) : i in [1..Ngens(F)]];
-    vprintf Algorithm_2,2 : "Generators of Delta(OE^*)W'_R^* in U : %o\n", PrintSeqAlgEtQElt( units_quotient_fixed_sigma_WR_gens);
-    delete U,u,F;
-
-    units_quotient_fixed_sigma:=function(S)
-    // Given an order S in A, representing an order S' in A', returns Q,q where
-    // Q = OA'^*/S'^*Delta(OE'^*) 
-    // q is a map Q->OA giving representatives
-        if not assigned S`units_quotient_fixed_sigma then
-            U,u:=units_quotient_01(S); //u:U=OA'^*/S'^* -> A
-            fixed_pts_gens:=[ g@@u : g in units_quotient_fixed_sigma_WR_gens];
-            Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
-            q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
-            gammas:=[q(x) : x in Q];
-            S`units_quotient_fixed_sigma:=<Q,q,gammas>;
-        end if;
-        return Explode(S`units_quotient_fixed_sigma);
-    end function;
 
     // ####################
     // F-V stable classes with maximal end,
@@ -220,7 +141,8 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
             assert #exps eq #pp_A_01; 
             Append(~deltas,&*[nice_unifs_01[i]^(valsJ[i]-exps[i]) : i in [1..#pp_A_01]]);
         end for;
-        QS,qS,gammas:=units_quotient_fixed_sigma(S); // this is now cached in an attributed
+        QS,qS:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,"(0,1)");
+        gammas:=[qS(x):x in QS];
         vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
         vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
         vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
