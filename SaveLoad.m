@@ -144,6 +144,10 @@ end intrinsic;
 
 /*
     
+    // The following code recomputes the isomorphism classes for the examples in the paper, saves them, 
+    // and test that loading is successful.
+    // It will trigger a failed assert if any of the files already exists. Do not forget to erase them beforehand.
+
     AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
@@ -172,14 +176,12 @@ end intrinsic;
         printf "computed %o isomorphism classes; saving...",tot;
         str:=SaveAbVarFqCommEndAlg(iso);
         fprintf fld*file,"%o",str;
-        print "testing loading...";
+        printf "testing loading...";
         delete isog;
         delete iso;
         isog:=IsogenyClass(h);
         assert tot eq #LoadAbVarFqCommEndAlg(isog,Read(fld*file)); 
-        print "done\n";
+        printf "done\n";
     end for;
-
-
 
 */
