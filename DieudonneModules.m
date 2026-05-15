@@ -27,7 +27,6 @@
 declare verbose DieudonneModules,3;
 declare verbose DieudonneModules_L,3;
 declare verbose sigma,3;
-declare verbose Delta_scaling,3;
 
 declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg;
                                
