@@ -78,17 +78,12 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
 
     R:=Order(classes[1,1]);
     assert assigned isog`SemilinearOperatorsWType;
-    slinop_str_all:=<>;
-    for nu_Hash->data_nu in isog`SemilinearOperatorsWType do
-        Qm0,qm0,FQm0,VQm0,den_idl,m0,J:=data;
-        _,zbJ:=PrintSeqAlgEtQElt(ZBasis(J));
-        _,zbden:=PrintSeqAlgEtQElt(ZBasis(den_idl));
-        _,imgsF:=PrintSeqAlgEtQElt([(FQm0(Qm0.i))@@qm0 : i in [1..Ngens(Qm0)]]); //in J
-        _,imgsV:=PrintSeqAlgEtQElt([(VQm0(Qm0.i))@@qm0 : i in [1..Ngens(Qm0)]]); //in J
-        slinop_str:=Sprintf("<%o,%o,%o,%o,%o,%o>",nu_Hash,m0,zbJ,zbden,imgsF,imgsV);
-        Append(~slinop_str_all,slinop_str);
-    end for;
-    slinop_str_all:=Sprint(slinop_str_all);
+    Qm0,qm0,FQm0,VQm0,den_idl,m0,J:=Explode(isog`SemilinearOperatorsWType);
+    _,zbJ:=PrintSeqAlgEtQElt(ZBasis(J));
+    _,zbden:=PrintSeqAlgEtQElt(ZBasis(den_idl));
+    _,imgsF:=PrintSeqAlgEtQElt([(FQm0(Qm0.i))@@qm0 : i in [1..Ngens(Qm0)]]); //in J
+    _,imgsV:=PrintSeqAlgEtQElt([(VQm0(Qm0.i))@@qm0 : i in [1..Ngens(Qm0)]]); //in J
+    slinop_str:=Sprintf("<%o,%o,%o,%o,%o>",m0,zbJ,zbden,imgsF,imgsV);
 
     output:="<" cat E cat "," cat A cat "," cat WR cat "," cat 
                 ends_str cat "," cat 
@@ -96,7 +91,7 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
                 Is_str cat "," cat
                 dms_str cat "," cat
                 isom_classes_as_indices cat "," cat 
-                slinop_str_all cat ">"; 
+                slinop_str cat ">"; 
     output:=StripWhiteSpace(output); // remove \n
     return output;
 end intrinsic;
@@ -123,31 +118,68 @@ intrinsic LoadAbVarFqCommEndAlg(isog::IsogenyClassFq,input::MonStgElt)->SeqEnum[
         Append(~output,AV);
     end for;
 
-    slinop_all:=input[9];
-    isog`SemilinearOperatorsWType:=AssociativeArray();
-    for slinop in slinop do
-        nu_Hash:=slinop[1];
-        m0:=slinop[2];
-        J:=Ideal(WR,[A!z:z in slinop[3]]);
-        J`ZBasis:=[A!z : z in slinop[3]]; // the ideal creation does an HNF of the ZBasis.
-                                          // this messes up the info about the quotient below.
-        den_idl:=Ideal(WR,[A!z:z in slinop[4]]);
-        p:=CharacteristicFiniteField(isog);
-        assert p^m0*J subset den_idl;
-        Qm0,qm0:=Quotient(J,den_idl);
-        assert Index(J,den_idl) eq #Qm0;
-        imgsF:=[A!z:z in slinop[5]];
-        imgsV:=[A!z:z in slinop[6]];
-        assert forall{z:z in imgsF|z in J};
-        assert forall{z:z in imgsV|z in J};
-        imgsF:=[qm0(z):z in imgsF];
-        imgsV:=[qm0(z):z in imgsV];
-        FQm0:=hom<Qm0->Qm0|imgsF>;
-        VQm0:=hom<Qm0->Qm0|imgsV>;
-        assert forall{i:i in [1..Ngens(Qm0)] | FQm0(VQm0(Qm0.i)) eq p*Qm0.i};
-        assert forall{i:i in [1..Ngens(Qm0)] | VQm0(FQm0(Qm0.i)) eq p*Qm0.i};
-        isog`SemilinearOperatorsWType[nu_Hash]:=<Qm0,qm0,FQm0,VQm0,den_idl,m0,J>;
-    end for;
+    slinop:=input[9];
+    m0:=slinop[1];
+    J:=Ideal(WR,[A!z:z in slinop[2]]);
+    J`ZBasis:=[A!z : z in slinop[2]]; // the ideal creation does an HNF of the ZBasis.
+                                      // this messes up the info about the quotient below.
+    den_idl:=Ideal(WR,[A!z:z in slinop[3]]);
+    p:=CharacteristicFiniteField(isog);
+    assert p^m0*J subset den_idl;
+    Qm0,qm0:=Quotient(J,den_idl);
+    assert Index(J,den_idl) eq #Qm0;
+    imgsF:=[A!z:z in slinop[4]];
+    imgsV:=[A!z:z in slinop[5]];
+    assert forall{z:z in imgsF|z in J};
+    assert forall{z:z in imgsV|z in J};
+    imgsF:=[qm0(z):z in imgsF];
+    imgsV:=[qm0(z):z in imgsV];
+    FQm0:=hom<Qm0->Qm0|imgsF>;
+    VQm0:=hom<Qm0->Qm0|imgsV>;
+    assert forall{i:i in [1..Ngens(Qm0)] | FQm0(VQm0(Qm0.i)) eq p*Qm0.i};
+    assert forall{i:i in [1..Ngens(Qm0)] | VQm0(FQm0(Qm0.i)) eq p*Qm0.i};
+    isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_idl,m0,J>;
     return output;
 end intrinsic;
 
+/*
+    
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    fld:="~/IsomClAbVarFqCommEndAlg/examples/";
+    PP<x>:=PolynomialRing(Integers());
+    check:=Split(Pipe("ls " cat fld,"r"));
+    inputs:=[
+    <(x^2-2*x+4)*(x^2+2*x+4),"2.4.a_e">,
+    <x^6 + 11*x^5 + 60*x^4 + 208*x^3 + 480*x^2 + 704*x + 512,"3.8.l_ci_ia">,
+    <x^8+x^7+x^6+4*x^5-4*x^4+16*x^3+16*x^2+64*x + 256,"4.4.b_b_e_ae">,
+    <x^8+x^7+x^6+4*x^5-4*x^4+16*x^3+16*x^2+64*x + 256,"4.4.b_b_e_ae">,
+    <x^6 - x^5 - 3*x^4 + 45*x^3 - 27*x^2 - 81*x + 729,"3.9.ab_ad_bt">
+    ];
+
+    for input in inputs do
+        h,file:=Explode(input);
+        printf "%o : ",file;
+        assert file notin check;
+        assert IsSquarefree(h);
+        isog:=IsogenyClass(h);
+
+        // saving data
+        iso:=IsomorphismClasses(isog);
+        tot:=#iso;
+        printf "computed %o isomorphism classes; saving...",tot;
+        str:=SaveAbVarFqCommEndAlg(iso);
+        fprintf fld*file,"%o",str;
+        print "testing loading...";
+        delete isog;
+        delete iso;
+        isog:=IsogenyClass(h);
+        assert tot eq #LoadAbVarFqCommEndAlg(isog,Read(fld*file)); 
+        print "done\n";
+    end for;
+
+
+
+*/

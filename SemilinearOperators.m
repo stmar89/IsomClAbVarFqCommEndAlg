@@ -25,8 +25,7 @@
 declare verbose alpha_at_precision,3;
 
 declare attributes IsogenyClassFq : AlphaWType,
-                                    SemilinearOperatorsWType,
-                                    SemilinearOperatorsWTypeCRT;
+                                    SemilinearOperatorsWType;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////Alpha of W-type/////////////////////////////////////
@@ -146,10 +145,10 @@ end intrinsic;
 //intrinsic SemilinearOperatorsWTypeAtPlace(isog::IsogenyClassFq,J::AlgEtQIdl,nu::AlgEtQIdl,m0::RngIntElt)->GrpAb,Map,Map,Map,AlgEtQIdl
 //{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, a place nu of the DeligneAlgebra and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to (J/p^m0*J)_nu, q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
 //    if not assigned isog`SemilinearOperatorsWType then
-//        isog`SemilinearOperatorsWType:=AssociativeArray();
+//        isog`SemilinearOperatorsWTypeArray:=AssociativeArray();
 //    end if;
 //    nu_Hash:=myHash(nu);
-//    if not IsDefined(isog`SemilinearOperatorsWType,nu_Hash) then
+//    if not IsDefined(isog`SemilinearOperatorsWTypeArray,nu_Hash) then
 //        p:=CharacteristicFiniteField(isog);
 //        a:=Ilog(p,FiniteField(isog));
 //        _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
@@ -219,15 +218,15 @@ end intrinsic;
 //            end for;
 //            vprintf Algorithm_3,2 : "all good.\n";
 //        end if;
-//        isog`SemilinearOperatorsWType[nu_Hash]:=<Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M>;
+//        isog`SemilinearOperatorsWTypeArray[nu_Hash]:=<Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M>;
 //    end if;
-//    Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M:=Explode(isog`SemilinearOperatorsWType[nu_Hash]);
+//    Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M:=Explode(isog`SemilinearOperatorsWTypeArray[nu_Hash]);
 //    return Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M;
 //end intrinsic;
 //
 //intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnum[AlgEtQIdl],m0::RngIntElt)->GrpAb,Map,Map,Map
 //{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, a sequence of places nus of the DeligneAlgebra and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu in nus, q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
-//    if not assigned isog`SemilinearOperatorsWTypeCRT then
+//    if not assigned isog`SemilinearOperatorsWType then
 //        p:=CharacteristicFiniteField(isog);
 //        Qs:=[];
 //        qs:=<>;
@@ -263,36 +262,28 @@ end intrinsic;
 //            assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
 //            assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
 //        end if;
-//        isog`SemilinearOperatorsWTypeCRT:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
+//        isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
 //    end if;
-//    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWTypeCRT);
+//    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWType);
 //    return Qm0,qm0,FQm0,VQm0;
 //end intrinsic;
 
-intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnum[AlgEtQIdl],m0::RngIntElt)->GrpAb,Map,Map,Map
-{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, a sequence of places nus of the DeligneAlgebra and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu in nus, q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.
-//TODO the role of the nus needs to be updated
-}
-    if not assigned isog`SemilinearOperatorsWTypeCRT then
+intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt)->GrpAb,Map,Map,Map
+{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu of slope in (0,1), q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
+    if not assigned isog`SemilinearOperatorsWType then
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
         _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
 
-        //FIXME we ignore nus for now and work over (0,1)
-//        PP:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
-//        // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in PP.
-//        // By looking at the composition series, one deduces that any 
-//        // M \geq Truncate(Log(Index(OA,P),Index(J,p^(m0+1)J)) will do.
-//        size:=(p^(m0+1))^AbsoluteDimension(Algebra(OA)); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-//        M:=Max( [ Truncate(Log(Index(OA,P),size)) : P in PP] );
-        _,PP,_:=PrimesOfSAbove_p(isog,WR);
+        _,pps,_:=PrimesOfSAbove_p(isog,WR);
+        _,nus,_:=PlacesOfQFAbove_p(isog);
         // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in PP.
         // By looking at the composition series, one deduces that any 
         // M \geq Truncate(Log(Index(OA,P),Index(J,p^(m0+1)J)) will do.
         size:=(p^(m0+1))^AbsoluteDimension(Algebra(OA)); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-        M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in PP] );
+        M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in pps] );
         //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
-        PP_M:=(&*PP)^M;
+        PP_M:=(&*pps)^M;
         PP_M_J:=J*PP_M;
 
         Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP_M_J);
@@ -312,7 +303,6 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnu
         QOA,qOA:=ResidueRing(OA,p^m1*OA);
         sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
 
-        //FIXME assuming tat nus are all places of slope in (0,1)
         PPs:=[];
         alpha_s:=[];
         for nu in nus do
@@ -358,9 +348,9 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnu
             end for;
             vprintf Algorithm_3,2 : "all good.\n";
         end if;
-        isog`SemilinearOperatorsWTypeCRT:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
+        isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
     end if;
-    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWTypeCRT);
+    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWType);
     return Qm0,qm0,FQm0,VQm0;
 end intrinsic;
 

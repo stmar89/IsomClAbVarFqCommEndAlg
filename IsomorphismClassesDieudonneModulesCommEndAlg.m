@@ -353,7 +353,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(a,InertiaDegree(P)) : P in plE_sl_in01 ];
 
     vprintf Algorithm_3 : "Computing Qm0,qm0,FQm0,VQm0...";
-    Qm0,qm0,FQm0,VQm0:=SemilinearOperatorsWType(isog,J,plE_sl_in01,m0);
+    Qm0,qm0,FQm0,VQm0:=SemilinearOperatorsWType(isog,J,m0);
     vprintf Algorithm_3 : "done\n";
 
     is_F_V_stable:=function(I)
