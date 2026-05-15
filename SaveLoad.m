@@ -171,12 +171,14 @@ end intrinsic;
         isog:=IsogenyClass(h);
 
         // saving data
+        t0:=Cputime();
         iso:=IsomorphismClasses(isog);
+        t1:=Cputime(t0);
         tot:=#iso;
-        printf "computed %o isomorphism classes; saving...",tot;
+        printf "computed %o isomorphism classes in %o seconds; saving...",tot,t1;
         str:=SaveAbVarFqCommEndAlg(iso);
         fprintf fld*file,"%o",str;
-        printf "testing loading...";
+        printf "loading...";
         delete isog;
         delete iso;
         isog:=IsogenyClass(h);
