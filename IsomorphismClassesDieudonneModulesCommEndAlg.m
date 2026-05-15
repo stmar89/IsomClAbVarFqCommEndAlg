@@ -173,14 +173,19 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     exps_nus:=[];
     pp_A_01:=[];
     nice_unifs_01:=[];
-    Delta_unif:=[Delta_map(t):t in UniformizersInQFAt_p(isog,plE_sl_in01)];
     for iP->P in plE_sl_in01 do
         pp_A_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,P); // here the places of A need 
                                                                               // to be sorted by sigma
         Append(~exps_nus,exponents_from_Waterhouse(P));
-        pp_A_01 cat:=pp_A_nu;          
-        nice_unifs_01 cat:=[ Delta_unif[iP] : i in [1..#pp_A_nu] ];
+        pp_A_01 cat:=pp_A_nu;
     end for;
+    // We need now uniformizers for all places of A above places nu of QF.
+    // Note: we cannot use Delta(t) for t a uniformizer at nu, because it will have 
+    // valuation 1 at ALL places of A above nu. So when taking a product, we are modifing all
+    // places above nu at the same time.
+    // Currently, we are calling Uniformizers for places of A only here. If this changes, we might
+    // want to make an intrinsic that stores them in some smart way...
+    nice_unifs_01:=Uniformizers(pp_A_01);
     exps_nus_cc:=CartesianProduct(exps_nus);
     exps_01:=[];
     for cc in exps_nus_cc do
