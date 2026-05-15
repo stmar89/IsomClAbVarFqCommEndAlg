@@ -213,10 +213,10 @@ intrinsic SemilinearOperatorsWTypeAtPlace(isog::IsogenyClassFq,J::AlgEtQIdl,nu::
             end for;
             vprintf Algorithm_3,2 : "all good.\n";
         end if;
-        isog`SemilinearOperatorsWType[nu_Hash]:=<Qm0,qm0,FQm0,VQm0,PP_M,m0,J>;
+        isog`SemilinearOperatorsWType[nu_Hash]:=<Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M>;
     end if;
-    Qm0,qm0,FQm0,VQm0,PP_M:=Explode(isog`SemilinearOperatorsWType[nu_Hash]);
-    return Qm0,qm0,FQm0,VQm0,PP_M;
+    Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M:=Explode(isog`SemilinearOperatorsWType[nu_Hash]);
+    return Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M;
 end intrinsic;
 
 intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnum[AlgEtQIdl],m0::RngIntElt)->GrpAb,Map,Map,Map
@@ -229,24 +229,33 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnu
         Vs:=<>;
         PP_Ms:=[];
         for nu in nus do
-            Q,q,F,V,PP_M:=SemilinearOperatorsWTypeAtPlace(isog,J,nu,m0);
+            Q,q,F,V,PP_M,_,_,M:=SemilinearOperatorsWTypeAtPlace(isog,J,nu,m0);
             Append(~Qs,Q);
             Append(~qs,q);
             Append(~Fs,F);
             Append(~Vs,V);
             Append(~PP_Ms,PP_M);
         end for;
+        // FIXME is the line below correct, or should I do a CRT?
         Qm0,embs,projs:=DirectSum(Qs);
-        // FIXME is the line above correct, or should I do a CRT?
         qm0:=map<Algebra(J)->Qm0|x:->&+[x@qs[i]@embs[i]:i in [1..#nus]]>; //preimages would require an annoying CRT
-        Fm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Fs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
-        Vm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Vs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
+
+        FQm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Fs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
+        VQm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Vs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
         den_ideal:=p^m0*J+(&*PP_Ms)*J;
-        assert2 forall{z:z in ZBasis(den_ideal)|qm0(z) eq Zero(Qm0)};
-        isog`SemilinearOperatorsWTypeCRT:=<Qm0,qm0,Fm0,Vm0,den_ideal,m0,J>;
+        assert Index(J,den_ideal) eq #Qm0;
+        if GetAssertions() ge 2 then
+            a:=Ilog(p,FiniteField(isog));
+            _,_,_,_,_,pi_A:=DieudonneAlgebraCommEndAlg(isog);
+            assert2 forall{z:z in ZBasis(den_ideal)|qm0(z) eq Zero(Qm0)};
+            //assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))}; //need preimage
+            assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
+            assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
+        end if;
+        isog`SemilinearOperatorsWTypeCRT:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
     end if;
-    Qm0,qm0,Fm0,Vm0:=Explode(isog`SemilinearOperatorsWTypeCRT);
-    return Qm0,qm0,Fm0,Vm0;
+    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWTypeCRT);
+    return Qm0,qm0,FQm0,VQm0;
 end intrinsic;
 
 // OLD VERSION
