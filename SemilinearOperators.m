@@ -236,13 +236,14 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnu
             Append(~Vs,V);
             Append(~PP_Ms,PP_M);
         end for;
-        // FIXME is the line below correct, or should I do a CRT?
+        den_ideal:=p^m0*J+(&*PP_Ms)*J;
+        // with DIRECT SUM
         Qm0,embs,projs:=DirectSum(Qs);
         qm0:=map<Algebra(J)->Qm0|x:->&+[x@qs[i]@embs[i]:i in [1..#nus]]>; //preimages would require an annoying CRT
+        // with CRT
 
         FQm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Fs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
         VQm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Vs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
-        den_ideal:=p^m0*J+(&*PP_Ms)*J;
         assert Index(J,den_ideal) eq #Qm0;
         if GetAssertions() ge 2 then
             a:=Ilog(p,FiniteField(isog));
