@@ -30,6 +30,28 @@ declare verbose Algorithm_3,3;
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
+intrinsic ExponentsWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
+{Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing all the isomorphism classes of WR\{F,V\}-ideals with maximal endomorphsm OE.}
+    // The combinatorics is taken from Waterhouse's paper
+    p:=CharacteristicFiniteField(isog);
+    a:=Ilog(p,FiniteField(isog));
+    f_nu:=InertiaDegree(nu);
+    g_nu:=GCD(a,f_nu); //q=p^a
+    e_nu:=RamificationIndex(nu);
+    pi:=PrimitiveElement(DeligneAlgebra(isog));
+
+    exps:=[];
+    cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu]]);
+    for tup0 in cp do
+        tup:=[ tup0[i] : i in [1..g_nu] ];
+        if &+tup eq Integers()!(g_nu*Valuation(pi,nu)/a) then
+            exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g_nu]];
+            Append(~exps,exp);
+        end if;
+    end for;
+    return exps;
+end intrinsic;
+
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
 {Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
 //FIXME deal with vararg
@@ -64,28 +86,6 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     end if;
 
     // ####################
-    // F-V stable classes with maximal end,
-    // using the exponents description from
-    // Waterhouse's paper
-    // ####################
-    
-    exponents_from_Waterhouse:=function(P)
-        f_nu:=InertiaDegree(P);
-        g_nu:=GCD(a,f_nu); //q=p^a
-        e_nu:=RamificationIndex(P);
-        exps:=[];
-        cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu]]);
-        for tup0 in cp do
-            tup:=[ tup0[i] : i in [1..g_nu] ];
-            if &+tup eq Integers()!(g_nu*Valuation(pi,P)/a) then
-                exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g_nu]];
-                Append(~exps,exp);
-            end if;
-        end for;
-        return exps;
-    end function;
-    
-    // ####################
     // Algorithm 2
     // ####################
 
@@ -94,10 +94,10 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     exps_nus:=[];
     pp_A_01:=[];
     nice_unifs_01:=[];
-    for iP->P in plE_sl_in01 do
-        pp_A_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,P); // here the places of A need 
-                                                                              // to be sorted by sigma
-        Append(~exps_nus,exponents_from_Waterhouse(P));
+    for nu in plE_sl_in01 do
+        pp_A_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu); // here the places of A need 
+                                                                               // to be sorted by sigma
+        Append(~exps_nus,ExponentsWTypeAtPlace(isog,nu));
         pp_A_01 cat:=pp_A_nu;
     end for;
     // We need now uniformizers for all places of A above places nu of QF.
