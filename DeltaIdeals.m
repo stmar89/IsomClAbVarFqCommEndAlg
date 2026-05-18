@@ -89,6 +89,11 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
         vp_ind:=Valuation(Index(oOA,dI),p);
         dI_ppart:=dI+p^vp_ind*oOA;
         I`Delta_inverse_ppart:=(1/d)*DeltaInverseIdeal(isog,dI_ppart);
+        //if GetAssertions() ge 3 then
+        //    //This test can be VERY Expensive
+        //    DinvI:=DeltaInverseIdeal(isog,I);
+        //    assert3 Index(DinvI+I`Delta_inverse_ppart,DinvI meet I`Delta_inverse_ppart) mod p ne 0;
+        //end if;
     end if;
     return I`Delta_inverse_ppart;
 end intrinsic;
