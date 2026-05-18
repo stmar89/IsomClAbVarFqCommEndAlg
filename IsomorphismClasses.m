@@ -157,6 +157,120 @@ intrinsic IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog::IsogenyClassFq)->
     return wk;
 end intrinsic;
 
+intrinsic IsomorphismClassesAwayFrom_pCommEndAlg(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
+{Returns a sequence of fractional ZFVOrder-ideals representing the local isomorphism classes for all primes different from the characteristic p of the ZFVOrder of isog.}
+    require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
+    R:=ZFVOrder(isog);
+    E:=Algebra(R);
+    pi:=PrimitiveElement(E);
+    //h:=DefiningPolynomial(E);
+    g:=Dimension(isog);
+    q:=FiniteField(isog);
+    t,p,a:=IsPrimePower(q);
+    assert t;
+    O:=MaximalOrder(E);
+    indOR:=Index(O,R);
+    vp_indOR:=Valuation(indOR,p);
+
+    ps:=[];
+    sing:=SingularPrimes(R);
+    sing_ell:=SingPrimesOfZFVAwayFrom_p(isog);
+
+    part_ell:=[];
+    for ell in sing_ell do
+        l:=MinimalInteger(ell);
+        Append(~ps,l);
+        assert IsPrime(l);
+        vl:=Valuation(indOR,l);
+        R_ell:=Order( ZBasis(R) cat ZBasis(O!!ell^vl) );
+        Append(~part_ell, [ R!!I : I in WKICM(R_ell) ]);
+    end for;
+
+    pp:=sing_ell;
+    wk_pp:=part_ell;
+    if #pp eq 0 then
+    //early exit
+        return [OneIdeal(R)],[];
+    end if;
+
+    wk_pp_idls:=[];
+    pp_pows:=[];
+    t1:=Cputime();
+    vprintf IsomClNotLocalLocal,2 : "We make all the local parts integral\n";
+    for ip->wk in wk_pp do
+       wk_exps:=[];
+       wk_idls:=[];
+       for i in [1..#wk] do
+           I:=wk[i];
+           if not IsIntegral(I) then
+               I:=SmallRepresentative(I); // I c E with small norm
+           end if;
+           k:=Valuation(Index(R,I),ps[ip]);
+           Append(~wk_exps,k);
+           Append(~wk_idls,I);
+       end for;
+       k_ip:=Max(wk_exps);
+       Pk_ip:=pp[ip]^k_ip; // for every local representative I at pp[ip] we have that Pk_ip c I (locally)
+       ZBasisLLL(Pk_ip);
+       Append(~pp_pows,Pk_ip);
+       Append(~wk_pp_idls,wk_idls);
+    end for;
+    vprintf IsomClNotLocalLocal,2 : "...Done in %o secs.\n",Cputime(t1);
+       
+    n:=#pp;
+    t0:=Cputime();
+    vprintf IsomClNotLocalLocal,2 : "We compute the \prod_{j \\ne i} P_j^k_j\n";
+    prod_j_ne_i:=[ ];
+    for i in [1..n] do
+       if n eq 1 then
+          prod:=OneIdeal(R);
+       else
+          prod:=&*[ pp_pows[j] : j in [1..n] | j ne i ];
+       end if;
+       ZBasisLLL(prod);
+       Append(~prod_j_ne_i,prod);
+    end for;
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
+
+    t0:=Cputime();
+    vprintf IsomClNotLocalLocal,2 : "We modify each entry of the cartesian product\n";
+    for ip in [1..n] do
+       for i in [1..#wk_pp_idls[ip]] do
+           I:=(wk_pp_idls[ip][i]+pp_pows[ip])*prod_j_ne_i[ip];
+           ZBasisLLL(I);
+           wk_pp_idls[ip][i]:=I;
+       end for;
+    end for;
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
+
+    t0:=Cputime();
+    tot:=&*[#x : x in wk_pp_idls]; perc_old:=0; iI:=0;
+    wk_pp_idls:=CartesianProduct(wk_pp_idls);
+    vprintf IsomClNotLocalLocal,2 : "We start patching together the local parts\n";
+    wk:=[];
+    for I_Ps in wk_pp_idls do
+       if GetVerbose("WKICM") ge 3 then
+           iI +:=100; perc:=Truncate(iI/tot); 
+           if perc gt perc_old then perc_old:=perc; printf "\t%o%% in %o secs\n",perc,Cputime(t0); end if;
+       end if;
+       J:=&+[ I_Ps[ip] : ip in [1..n] ];
+       // J satisfies: J = I_Ps[ip] locally at pp[ip] for every ip.
+       assert2 forall{ ip : ip in [1..n] | 
+                                       (J+I_Ps[ip]) eq I_Ps[ip]+pp[ip]*(J+I_Ps[ip]) and 
+                                       (J+I_Ps[ip]) eq J+pp[ip]*(J+I_Ps[ip])};
+       Append(~wk,J);
+    end for;
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
+
+    t0:=Cputime();
+    vprintf IsomClNotLocalLocal,2 : "We LLL all the ZBasis\n";
+    for I in wk do
+       ZBasisLLL(I);
+    end for;
+    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs\n",Cputime(t0);
+    return wk;
+end intrinsic;
+
 glue_local_parts_orders:=function(primes,orders)
 // given primes P1,...,Pn of an order R and overorders S1,...,Sn 
 // returns an order S such that S_Pi = Si_Pi for every i and
@@ -178,33 +292,40 @@ glue_local_parts_orders:=function(primes,orders)
     return S;
 end function;
 
-intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AbVarFq]
-{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg.}
+intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : slopesDieudonneModules:="(0,1)", IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AbVarFq]
+{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The VarArg slopesDieudonneModules can be either "(0,1)" (default) or "all": in the first case only the local-local part of the isomorphism classes of DieudonneModules will be computed using WR'\{F',V'\}-ideals and the rest is deduced using ZFV-ideals; in the second case ZFV-ideals are used only to compute the local parts away from the characteristic p, while WR\{F,V\}-modules are used to compute Dieudonné modules. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
+    require slopesDieudonneModules in {"(0,1)","all"} : "The VarArg slopesDieudonneModules is set to an invalid string";
     output:=[];
     places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);
-    places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_1|not IsInvertible(P)];
-    isom_away_01:=IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog);
-    //TODO for now only with slopes (0,1)
-    isom_DM_01:=IsomorphismClassesDieudonneModulesCommEndAlg(isog,"(0,1)");
-    for dm in isom_DM_01 do
+    if slopesDieudonneModules eq "(0,1)" then
+        places_DM:=places_01;
+        places_ZFV:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_1|not IsInvertible(P)];
+        isom_ZFV:=IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog);
+    elif slopesDieudonneModules eq "all" then
+        places_DM:=places_0 cat places_01 cat places_1;
+        places_ZFV:=SingPrimesOfZFVAwayFrom_p(isog);
+        isom_ZFV:=IsomorphismClassesAwayFrom_pCommEndAlg(isog);
+    end if;
+    isom_DM:=IsomorphismClassesDieudonneModulesCommEndAlg(isog,slopesDieudonneModules);
+    primes:=places_DM cat places_ZFV;
+    for dm in isom_DM do
         dm_order:=dm`DeltaEndomorphismRing;
-        dm_orders:=[ dm_order : P in places_01 ];
-        for I in isom_away_01 do
-            ell_01_orders:=[ MultiplicatorRing(I) : P in places_away_01 ];
+        orders_DM:=[ dm_order : P in places_DM ];
+        for I in isom_ZFV do
+            orders_ZFV:=[ MultiplicatorRing(I) : P in places_ZFV ];
             // note that if R is maximal 
-            orders:=ell_01_orders cat dm_orders;
-            primes:=places_away_01 cat places_01;
+            orders:=orders_ZFV cat orders_DM;
             assert #orders eq #primes;
             if #primes eq 0 then
                 S:=ZFVOrder(isog);
             else
-                S:=glue_local_parts_orders(primes, ell_01_orders cat dm_orders);
+                S:=glue_local_parts_orders(primes, orders);
             end if;
             PS,pS:=PicardGroup(S);
             for ll in PS do
                 L:=pS(ll);
-                X:=<I,dm,L,S>;
+                X:=<I,dm,L,S,slopesDieudonneModules>;
                 Append(~output,X);
             end for;
         end for;

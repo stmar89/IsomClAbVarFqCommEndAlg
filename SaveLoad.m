@@ -48,6 +48,10 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
     pics:=[* [ iso[3] : iso in classes | Order(iso[3]) eq S ] : S in ends *];
     Is:={@ iso[1] : iso in classes @};
     dms:={@ iso[2] : iso in classes @};
+    slopes:={@ isog[5] @}; //either "(0,1)" or "all"
+    assert #slopes eq 1;
+    assert slopes[1] in {"(0,1)","all"};
+    slopes:=slopes[1] eq "(0,1)" select "\"(0,1)\"" else "\"all\"";
     isom_classes_as_indices:=[];
     for iso in classes do
         I:=Index(Is,iso[1]);
@@ -91,7 +95,8 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
                 Is_str cat "," cat
                 dms_str cat "," cat
                 isom_classes_as_indices cat "," cat 
-                slinop_str cat ">"; 
+                slinop_str cat "," cat
+                slopes cat ">"; 
     output:=StripWhiteSpace(output); // remove \n
     return output;
 end intrinsic;
@@ -112,8 +117,9 @@ intrinsic LoadAbVarFqCommEndAlg(isog::IsogenyClassFq,input::MonStgElt)->SeqEnum[
     Is:=[ Ideal(R,[E!z:z in I]) : I in input[6] ];
     dms:=[ Ideal(WR,[A!z:z in dm]) : dm in input[7] ];
     output:=[];
+    slopes:=input[10];
     for iso in input[8] do
-        AV:=AbelianVarietyCommEndAlg(isog,<Is[iso[1]],dms[iso[2]],pics[iso[4],iso[3]],ends[iso[4]]>);
+        AV:=AbelianVarietyCommEndAlg(isog,<Is[iso[1]],dms[iso[2]],pics[iso[4],iso[3]],ends[iso[4]],slopes>);
         AV`EndomorphismRing:=ends[iso[4]];
         Append(~output,AV);
     end for;

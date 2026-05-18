@@ -22,7 +22,6 @@
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
-//TODO change verbose
 declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 

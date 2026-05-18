@@ -36,7 +36,8 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
         isog:=IsogenyClass(AV);
         require IsSquarefree(isog) : "At the moment it is implemented only for abelian varieties with commutative Fq-endomorphism algebra.";
         p:=CharacteristicFiniteField(isog);
-        J,DM,L,S:=IsomDataCommEndAlg(AV);
+        J,DM,L,S,slopesDieudonneModules:=IsomDataCommEndAlg(AV);
+//FIXME th version below is only for slopesDieudonneModules eq "(0,1)". Update for the version with "all"
         R:=ZFVOrder(isog);
         E:=Algebra(R);
         // denote by m the local-local ideal of R.
