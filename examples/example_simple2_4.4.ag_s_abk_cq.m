@@ -10,7 +10,7 @@
 
     PP<x>:=PolynomialRing(Integers());
 
-    h:=x^8 - 6*x^7 + 18*x^6 - 36*x^5 + 68*x^4 - 144*x^3 + 288*x^2 - 384*x + 256;
+    h:=x^8-6*x^7+18*x^6-36*x^5+68*x^4-144*x^3+288*x^2-384*x+256;
     assert IsSquarefree(h);
     isog:=IsogenyClass(h);
     g:=Dimension(isog);
@@ -26,7 +26,7 @@
     //iso:=IsomorphismClasses(isog);
 
     R:=ZFVOrder(isog);
-    m0,J,dJ,Q,mQ,F,V:=SemilinearOperators(isog);
+    Q,mQ,F,V,dJ,m0,J:=Explode(isog`SemilinearOperatorsWType);
     E:=Algebra(R);
 
     oo:=OverOrders(R);

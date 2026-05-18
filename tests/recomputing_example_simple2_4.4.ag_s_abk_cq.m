@@ -74,6 +74,12 @@
         printf "%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
     end for;
 
+PlacesOfQFAbove_p(isog);
+_,nus,_:=PlacesOfQFAbove_p(isog);
+for nu in nus do
+ExponentsWTypeAtPlace(isog,nu);
+end for;
+
 /*
 
 */

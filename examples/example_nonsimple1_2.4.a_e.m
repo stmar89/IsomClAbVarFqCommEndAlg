@@ -26,7 +26,7 @@
     //iso:=IsomorphismClasses(isog);
 
     R:=ZFVOrder(isog);
-    m0,J,dJ,Q,mQ,F,V:=SemilinearOperators(isog);
+    Q,mQ,F,V,dJ,m0,J:=Explode(isog`SemilinearOperatorsWType);
     E:=Algebra(R);
 
     oo:=OverOrders(R);
