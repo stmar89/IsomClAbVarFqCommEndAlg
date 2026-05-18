@@ -268,15 +268,24 @@ end intrinsic;
 //    return Qm0,qm0,FQm0,VQm0;
 //end intrinsic;
 
-intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt)->GrpAb,Map,Map,Map
-{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu of slope in (0,1), q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
+intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt,slopes::MonStgElt)->GrpAb,Map,Map,Map
+{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu of slope in (0,1) or any --depending whether the argument slope is "(0,1)" or "all"-- q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
     if not assigned isog`SemilinearOperatorsWType then
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
         _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
 
-        _,pps,_:=PrimesOfSAbove_p(isog,WR);
-        _,nus,_:=PlacesOfQFAbove_p(isog);
+        require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
+        pps0,pps01,pps1:=PrimesOfSAbove_p(isog,WR);
+        nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
+        if slopes eq "(0,1)" then
+            pps:=pps01;
+            nus:=nus01;
+        elif slopes eq "all" then
+            pps:=pps0 cat pps01 cat pps1;
+            nus:=nus0 cat nus01 cat nus1;
+        end if;
+
         // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in PP.
         // By looking at the composition series, one deduces that any 
         // M \geq Truncate(Log(Index(OA,P),Index(J,p^(m0+1)J)) will do.
@@ -347,7 +356,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
             end for;
             vprintf Algorithm_3,2 : "all good.\n";
         end if;
-        isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
+        isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J,slopes>;
     end if;
     Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWType);
     return Qm0,qm0,FQm0,VQm0;

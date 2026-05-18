@@ -185,7 +185,8 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPre
     places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);
     places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_1|not IsInvertible(P)];
     isom_away_01:=IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog);
-    isom_DM_01:=IsomorphismClassesDieudonneModulesCommEndAlg(isog);
+    //TODO for now only with slopes (0,1)
+    isom_DM_01:=IsomorphismClassesDieudonneModulesCommEndAlg(isog,"(0,1)");
     for dm in isom_DM_01 do
         dm_order:=dm`DeltaEndomorphismRing;
         dm_orders:=[ dm_order : P in places_01 ];

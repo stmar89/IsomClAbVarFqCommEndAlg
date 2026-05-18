@@ -1,6 +1,6 @@
 /*
 parallel script, to run on screen
-    parallel -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
+    parallel -j 7 -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
 */
 
     // The next variable determines wheather we save again the isom
