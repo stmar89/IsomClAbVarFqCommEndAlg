@@ -31,8 +31,8 @@ declare attributes IsogenyClassFq : AlphaWType,
 ///////////////////////////Alpha of W-type/////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->AlgEtQElt
-{Given an isogeny class isog, a place nu of the DeligneAlgebra and a positive integer m, returns an integral element alpha of the DieudonneAlgebra A whose image in the quotient (OA/p^mOA)_nu is congruent to the nu-component alpha_nu of an element of of W-type, that is, such that alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.}
+intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->AlgEtQElt,AlgEtQIdl
+{Given an isogeny class isog, a place nu of the DeligneAlgebra and a positive integer m, returns an integral element alpha of the DieudonneAlgebra A whose image in the quotient (OA/p^mOA)_nu is congruent to the nu-component alpha_nu of an element of of W-type, that is, such that alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu. Moreover, it returns also the product of maximal ideals of A above nu, raised to the power m*e where e is the common ramification index.}
     if not assigned isog`AlphaWType then
         isog`AlphaWType:=AssociativeArray();
     end if;
@@ -127,9 +127,9 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
         // Check that alpha_nu of W-type: 1 in all components but the last one, and with sigma-norm = pi_nu
         assert2 forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]};
         assert2 forall{i:i in [1..g_nu]|X-pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qOA_mod_I@(sigma^i)@@qOA_mod_I:i in [0..a-1]];
-        isog`AlphaWType[nu_Hash]:=alpha_nu;
+        isog`AlphaWType[nu_Hash]:=<alpha_nu,PPs_nu_m_prod>;
     end if;
-    return isog`AlphaWType[nu_Hash];
+    return Explode(isog`AlphaWType[nu_Hash]);
 end intrinsic;
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -306,10 +306,9 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
         PPs:=[];
         alpha_s:=[];
         for nu in nus do
-            PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
-            alpha_nu:=AlphaWTypeAtPlace(isog,nu,m1);
-            PPs cat:=PPs_nu;
-            alpha_s cat:=[alpha_nu:i in [1..#PPs_nu]];
+            alpha_nu,PPs_nu:=AlphaWTypeAtPlace(isog,nu,m1);
+            Append(~PPs,PPs_nu);
+            Append(~alpha_s,alpha_nu);
         end for;
         alpha:=CRT(PPs,alpha_s);
 
