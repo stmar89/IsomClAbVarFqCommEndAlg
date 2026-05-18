@@ -3,10 +3,14 @@ parallel script, to run on screen
     parallel -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
 */
 
+    // The next variable determines wheather we save again the isom
+    // classes. See the end of the file.
+    //SAVE:=true;
+    SAVE:=false;
     //SetAssertions(2);
 
     AttachSpec("~/AbVarFq/spec");
-    AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
+    //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
@@ -50,7 +54,21 @@ parallel script, to run on screen
 
     t0:=Cputime();
     iso:=IsomorphismClasses(isog);
+    n_iso:=#iso;
     t1:=Cputime(t0);
     t1:=Truncate(t1) div 60; // in minutes
 
-    printf "isogeny class %o \tisomorphism classes %o\tcomputed in %o minutes\n",label,#iso,t1;
+    printf "isogeny class %o \tisomorphism classes %o\tcomputed in %o minutes\n",label,n_iso,t1;
+
+    // to SAVE again the output
+    if SAVE then
+        fld:="~/IsomClAbVarFqCommEndAlg/examples/";
+        assert label notin Split(Pipe("ls " cat fld,"r"));
+        str:=SaveAbVarFqCommEndAlg(iso);
+        fprintf fld*label,"%o",str;
+        delete isog;
+        delete iso;
+        isog:=IsogenyClass(h);
+        assert n_iso eq #LoadAbVarFqCommEndAlg(isog,Read(fld*label)); 
+    end if;
+    
