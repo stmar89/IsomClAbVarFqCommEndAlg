@@ -126,14 +126,14 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
             assert #exps eq #plA; 
             Append(~deltas,&*[nice_unifs[i]^(valsJ[i]-exps[i]) : i in [1..#plA]]);
         end for;
-        QS,qS:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,"(0,1)");
+        QS,qS:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
         gammas:=[qS(x):x in QS];
+        II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
         vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
         vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
         vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
         assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
-        II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
         vprintf Algorithm_2,2 : "#II = %o\n",#II;
         vprintf Algorithm_2,3 : "valuations of the of extensions O_A' of the ideals in II = %o\n",[ [ Valuation(OA!!ii,P) : P in plA ] : ii in II ]; // computing this info might take a lot of time.
         output cat:=II;

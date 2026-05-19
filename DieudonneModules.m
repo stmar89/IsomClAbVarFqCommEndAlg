@@ -58,7 +58,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 <L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
-- WR is an order in A, isomorphic to R\otimes_Z OA.
+- WR is an order in A, isomorphic to R\otimes_Z OE locally at p and equal to OA everywhere else.
 - sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of (L\otimes_Q Qp)/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
@@ -157,19 +157,21 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         assert2 forall{ i : i,j in ZBasis(MaximalOrder(E)) | Delta_map(i*j) eq Delta_map(i)*Delta_map(j) };
 
         // #######################
-        // tilde W_R: order isomorphic to W \otimes R
+        // tilde W_R: order in A isomorphic to W \otimes R at p, and to OA everywhere else
         // #######################
       
         pi_A_bar:=q/pi_A;
         gens_WR:=&cat[[ z,z*pi_A,z*pi_A_bar ] : z in zb_OL_inA] cat [pi_A, pi_A_bar];
-        WR:=Order(gens_WR);
-
+        WR_p:=Order(gens_WR);
+        oOA:=WR_p!!OneIdeal(OA);
+        oWR_p:=OneIdeal(WR_p);
+        k:=Valuation(Index(OA,WR_p),p);
+        WR:=Order(ZBasis(p^k*oOA+oWR_p));
         // test
         assert pi_A in WR;
         assert q/pi_A in WR;
-        assert2 Index(OA,WR) ge Index(MaximalOrder(E),R);
+        assert2 test and n ge Valuation(Index(MaximalOrder(E),R),p) where test,n:=IsPowerOf(Index(OA,WR),p);
         // end test
-
    
         // #######################
         // tilde sigma (on A): acts as the L-Forbenius on L-coeffs when A is written as L+pi*L+...+pi^(deg(h)-1)L
