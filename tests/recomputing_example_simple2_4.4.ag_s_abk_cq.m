@@ -22,14 +22,30 @@
     assert IsSquarefree(h);
 
     for slopes in ["(0,1)","all"] do
+        if assigned isog then
+            delete isog; //for the second run
+        end if;
+        printf "-------------------------\n";
+
         isog:=IsogenyClass(h);
         g:=Dimension(isog);
         q:=FiniteField(isog);
         t,p,a:=IsPrimePower(q); assert t;
         t0:=Cputime();
         iso:=IsomorphismClassesCommEndAlg(isog:slopesDieudonneModules:=slopes);
-        t1:=Truncate(Cputime(t0)) div 60;
-        printf "Using slopesDieudonneModules:=%o, we got %o isomorphism classes in %o minutes\n",slopes,#iso,t1;
+        t1:=Round(Cputime(t0));
+        printf "Using slopesDieudonneModules:=%o and SetAssertions(%o),\n\twe got %o isomorphism classes in %o mins %o secs\n",
+                slopes,GetAssertions(),#iso,t1 div 60,t1 mod 60;
+        t0:=Cputime();
+        gen_del_mods:=[GeneralizedDeligneModule(A):A in iso];
+        t1:=Round(Cputime(t0));
+        printf "\tGeneralizedDeligneModules computed in %o mins %o secs\n",
+                t1 div 60,t1 mod 60;
+        nu0,nu01,nu1:=PlacesOfQFAbove_p(isog);
+        nus:=nu0 cat nu01 cat nu1;
+        data_nus:=[<Slope(nu),RamificationIndex(nu),GCD(a,InertiaDegree(nu))>:nu in nus];
+        data_nus:=StripWhiteSpace(Sprint(data_nus));
+        printf "\t<s_nu,e_nu,g_nu> = %o\n",data_nus;
 
         R:=ZFVOrder(isog);
         E:=Algebra(R);
@@ -48,7 +64,7 @@
 
         Ep,mEp:=TotallyRealSubAlgebra(E);
         OEp:=MaximalOrder(Ep);
-        "p is " cat (#PlacesAboveRationalPrime(Ep,p) eq g select "" else "not ") cat "totally split in E^+";
+        printf "\tp is %o totally split in E^+\n\n",(#PlacesAboveRationalPrime(Ep,p) eq g select "" else "not ");
         OEp:=[mEp(z):z in ZBasis(OEp)];
         contains_OEp:=func< S | forall{z:z in OEp|z in S}>;
 
@@ -72,15 +88,8 @@
             end for;
             // indices of minimal overorders (to find the place of S in the graph of inclusions)
             ind_min_oo:=[ Index(oo,T) : T in MinimalOverOrders(S) ];
-            printf "%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
+            printf "\t%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
         end for;
-       
-        t0:=Cputime();
-        gen_del_mods:=[GeneralizedDeligneModule(A):A in iso];
-        t1:=Round(Cputime(t0)) div 60;
-        printf "Computation of GeneralizedDeligneModules done in %o minutes\n\n\n\n",t1;
-
-        delete isog; //for the second run
     end for;
 
 
