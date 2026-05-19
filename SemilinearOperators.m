@@ -365,6 +365,6 @@ end intrinsic;
 intrinsic SemilinearOperators(isog::IsogenyClassFq)->GrpAb,Map,Map,Map,AlgEtQIdl,RngIntElt,AlgEtQIdl,MonStgElt
 {Returns the attribute SemilinearOperatorsWType of the isogeny class.}
     require assigned isog`SemilinearOperatorsWType : "Run first IsomorphismClassesDieudonneModules(isog)";
-    return Explode(isog`SemilinearOperators);
+    return Explode(isog`SemilinearOperatorsWType);
 end intrinsic;
 
