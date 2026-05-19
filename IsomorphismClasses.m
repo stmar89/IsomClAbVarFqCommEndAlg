@@ -25,6 +25,7 @@
 /////////////////////////////////////////////////////
 
 declare verbose IsomClNotLocalLocal, 3;
+declare verbose IsomClNot_p, 3;
 declare verbose IsomAbVar, 3;
 
 intrinsic IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
@@ -196,7 +197,7 @@ intrinsic IsomorphismClassesAwayFrom_pCommEndAlg(isog::IsogenyClassFq)->SeqEnum[
     wk_pp_idls:=[];
     pp_pows:=[];
     t1:=Cputime();
-    vprintf IsomClNotLocalLocal,2 : "We make all the local parts integral\n";
+    vprintf IsomClNot_p,2 : "We make all the local parts integral\n";
     for ip->wk in wk_pp do
        wk_exps:=[];
        wk_idls:=[];
@@ -215,11 +216,11 @@ intrinsic IsomorphismClassesAwayFrom_pCommEndAlg(isog::IsogenyClassFq)->SeqEnum[
        Append(~pp_pows,Pk_ip);
        Append(~wk_pp_idls,wk_idls);
     end for;
-    vprintf IsomClNotLocalLocal,2 : "...Done in %o secs.\n",Cputime(t1);
+    vprintf IsomClNot_p,2 : "...Done in %o secs.\n",Cputime(t1);
        
     n:=#pp;
     t0:=Cputime();
-    vprintf IsomClNotLocalLocal,2 : "We compute the \prod_{j \\ne i} P_j^k_j\n";
+    vprintf IsomClNot_p,2 : "We compute the \prod_{j \\ne i} P_j^k_j\n";
     prod_j_ne_i:=[ ];
     for i in [1..n] do
        if n eq 1 then
@@ -230,10 +231,10 @@ intrinsic IsomorphismClassesAwayFrom_pCommEndAlg(isog::IsogenyClassFq)->SeqEnum[
        ZBasisLLL(prod);
        Append(~prod_j_ne_i,prod);
     end for;
-    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
+    vprintf IsomClNot_p,2 : "\t...Done in %o secs.\n",Cputime(t0);
 
     t0:=Cputime();
-    vprintf IsomClNotLocalLocal,2 : "We modify each entry of the cartesian product\n";
+    vprintf IsomClNot_p,2 : "We modify each entry of the cartesian product\n";
     for ip in [1..n] do
        for i in [1..#wk_pp_idls[ip]] do
            I:=(wk_pp_idls[ip][i]+pp_pows[ip])*prod_j_ne_i[ip];
@@ -241,12 +242,12 @@ intrinsic IsomorphismClassesAwayFrom_pCommEndAlg(isog::IsogenyClassFq)->SeqEnum[
            wk_pp_idls[ip][i]:=I;
        end for;
     end for;
-    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
+    vprintf IsomClNot_p,2 : "\t...Done in %o secs.\n",Cputime(t0);
 
     t0:=Cputime();
     tot:=&*[#x : x in wk_pp_idls]; perc_old:=0; iI:=0;
     wk_pp_idls:=CartesianProduct(wk_pp_idls);
-    vprintf IsomClNotLocalLocal,2 : "We start patching together the local parts\n";
+    vprintf IsomClNot_p,2 : "We start patching together the local parts\n";
     wk:=[];
     for I_Ps in wk_pp_idls do
        if GetVerbose("WKICM") ge 3 then
@@ -260,14 +261,14 @@ intrinsic IsomorphismClassesAwayFrom_pCommEndAlg(isog::IsogenyClassFq)->SeqEnum[
                                        (J+I_Ps[ip]) eq J+pp[ip]*(J+I_Ps[ip])};
        Append(~wk,J);
     end for;
-    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs.\n",Cputime(t0);
+    vprintf IsomClNot_p,2 : "\t...Done in %o secs.\n",Cputime(t0);
 
     t0:=Cputime();
-    vprintf IsomClNotLocalLocal,2 : "We LLL all the ZBasis\n";
+    vprintf IsomClNot_p,2 : "We LLL all the ZBasis\n";
     for I in wk do
        ZBasisLLL(I);
     end for;
-    vprintf IsomClNotLocalLocal,2 : "\t...Done in %o secs\n",Cputime(t0);
+    vprintf IsomClNot_p,2 : "\t...Done in %o secs\n",Cputime(t0);
     return wk;
 end intrinsic;
 

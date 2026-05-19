@@ -111,7 +111,7 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
         assert w_nu in MaximalOrder(E);
         wU:=-U_pr(Delta_map(w_nu)); // in E->A->U
 
-        gamma0:=wU@@phi; // in Us[g_nu], the last componenet of U
+        gamma0:=wU@@phi; // in Us[g_nu], the last component of U
         gamma_A:=(&+[i lt g_nu select 
                                 U_embs[i](One(A)@@us_nu[i]) else 
                                 U_embs[i](gamma0) : i in [1..g_nu]])@@U_pr; // in A
@@ -286,7 +286,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
             nus:=nus0 cat nus01 cat nus1;
         end if;
 
-        // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in PP.
+        // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in pps.
         // By looking at the composition series, one deduces that any 
         // M \geq Truncate(Log(Index(OA,P),Index(J,p^(m0+1)J)) will do.
         size:=(p^(m0+1))^AbsoluteDimension(Algebra(OA)); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
