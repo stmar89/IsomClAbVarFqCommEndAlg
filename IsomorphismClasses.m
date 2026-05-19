@@ -315,7 +315,7 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : slopesDieudonneMod
         for I in isom_ZFV do
             orders_ZFV:=[ MultiplicatorRing(I) : P in places_ZFV ];
             // note that if R is maximal 
-            orders:=orders_ZFV cat orders_DM;
+            orders:=orders_DM cat orders_ZFV;
             assert #orders eq #primes;
             if #primes eq 0 then
                 S:=ZFVOrder(isog);
