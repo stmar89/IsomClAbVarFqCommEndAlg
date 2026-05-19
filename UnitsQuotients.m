@@ -73,9 +73,9 @@ together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).}
     return U,u,I;
 end intrinsic;
 
-intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd,slopes::MonStgElt)->GrpAb,Map
-{Given an isogeny class isog, an order S in the DieudonneAlgebra and string variable slopes with values "0","(0,1)","1" or "all", returns the triple U,u,I where U=OA'^*/S'^*Delta(OE'^*), where ' denotes the 0,(0,1),1 or p-part, the map u:U->OA together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).}
-    if not assigned S`units_quotient_fixed_sigma or S`units_quotient_fixed_sigma[1] ne slopes then
+intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd,slopes::MonStgElt)->GrpAb,Map,SeqEnum[AlgEtQElt]
+{Given an isogeny class isog, an order S in the DieudonneAlgebra and string variable slopes with values "0","(0,1)","1" or "all", returns the triple U,u where U=OA'^*/S'^*Delta(OE'^*), where ' denotes the 0,(0,1),1 or p-part, the map u:U->OA together a list of representatives in OA of U.}
+    if not assigned S`units_quotient_fixed_sigma or S`units_quotient_fixed_sigma[4] ne slopes then
         _,_,_,_,A,_,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
         if not assigned isog`units_quotient_fixed_sigma_WR_gens then
             fixed_pts_sigma:=function(T)
@@ -103,8 +103,8 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
         fixed_pts_gens:=[ g@@u : g in isog`units_quotient_fixed_sigma_WR_gens];
         Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
         q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
-        S`units_quotient_fixed_sigma:=<slopes,Q,q>;
+        S`units_quotient_fixed_sigma:=<Q,q,[q(x):x in Q],slopes>;
     end if;
-    _,Q,q:=Explode(S`units_quotient_fixed_sigma);
-    return Q,q;
+    Q,q,gammas:=Explode(S`units_quotient_fixed_sigma);
+    return Q,q,gammas;
 end intrinsic;

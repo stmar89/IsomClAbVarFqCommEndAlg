@@ -124,12 +124,11 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
             assert #exps eq #plA; 
             Append(~deltas,&*[nice_unifs[i]^(valsJ[i]-exps[i]) : i in [1..#plA]]);
         end for;
-        QS,qS:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
-        gammas:=[qS(x):x in QS];
+        _,_,gammas:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
         II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
         vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
-        vprintf Algorithm_2,2 : "deltas = %o\n", PrintSeqAlgEtQElt(deltas);
-        vprintf Algorithm_2,2 : "gammas = %o\n", PrintSeqAlgEtQElt(gammas);
+        vprintf Algorithm_2,2 : "#deltas = %o\n", #deltas;
+        vprintf Algorithm_2,2 : "#gammas = %o\n", #gammas;
         assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
         vprintf Algorithm_2,2 : "#II = %o\n",#II;
