@@ -95,8 +95,7 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
         vprintf Algorithm_2,1 : "Computing WKICM(WR_plE)...";
     elif slopes eq "all" then
         plE:=plE0 cat plE01 cat plE1;
-        plA:=[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // here the places of A need
-                                                                                       // to be sorted by sigma
+        plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // sorted by sigma !!!
         WR_plE:=WR;
     end if;
     // We need now uniformizers for all places of A above places nu of QF.
