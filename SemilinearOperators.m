@@ -268,8 +268,8 @@ end intrinsic;
 //    return Qm0,qm0,FQm0,VQm0;
 //end intrinsic;
 
-intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt,slopes::MonStgElt)->GrpAb,Map,Map,Map
-{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu of slope in (0,1) or any --depending whether the argument slope is "(0,1)" or "all"-- q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
+intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt,slopes::MonStgElt)->GrpAb,Map,Map,Map,AlgEtQIdl,RngIntElt,AlgEtQIdl
+{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu of slope in (0,1) or any --depending whether the argument slope is "(0,1)" or "all"-- q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q. Moreover the intrinsic returns also the ideal den_ideal so that Q=J/den_ideal, and m0 and J.}
     if not assigned isog`SemilinearOperatorsWType then
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
@@ -358,8 +358,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
         end if;
         isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J,slopes>;
     end if;
-    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWType);
-    return Qm0,qm0,FQm0,VQm0;
+    return Explode(isog`SemilinearOperatorsWType);
 end intrinsic;
 
 intrinsic SemilinearOperators(isog::IsogenyClassFq)->GrpAb,Map,Map,Map,AlgEtQIdl,RngIntElt,AlgEtQIdl,MonStgElt

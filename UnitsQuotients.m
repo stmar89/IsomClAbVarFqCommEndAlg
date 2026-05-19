@@ -78,14 +78,14 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
     if not assigned S`units_quotient_fixed_sigma or S`units_quotient_fixed_sigma[1] ne slopes then
         _,_,_,_,A,_,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
         if not assigned isog`units_quotient_fixed_sigma_WR_gens then
-            fixed_pts_sigma:=function(S)
-            // Given an order S in A, representing an order S' in A', 
+            fixed_pts_sigma:=function(T)
+            // Given an order T in A, representing an order T' in A', 
             // which is stable by the action of sigma (eg. WR),
             // returns U,u,F,m where
-            // - U=OA'^*/S'^*,
+            // - U=OA'^*/T'^*,
             // - u is a map u:U->OA giving representatives 
-            // - F is the subgroup of elements of U=OA'^*/S'^* fixed by sigma
-                U,u,I:=UnitGroupQuotientAtSlope(isog,S,slopes); //u:U->A
+            // - F is the subgroup of elements of U=OA'^*/T'^* fixed by sigma
+                U,u,I:=UnitGroupQuotientAtSlope(isog,T,slopes); //u:U->A
                 Q,q:=ResidueRing(OA,I);
                 sigma:=sigma_OA_mod_I(Q,q,A); // sigma: Q->Q
                 id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation

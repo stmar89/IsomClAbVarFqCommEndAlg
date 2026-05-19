@@ -190,11 +190,12 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
     vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(Ilog(CharacteristicFiniteField(isog),FiniteField(isog)),InertiaDegree(P)) : P in plE ];
 
     vprintf Algorithm_3 : "Computing Qm0,qm0,FQm0,VQm0...";
-    Qm0,qm0,FQm0,VQm0:=SemilinearOperatorsWType(isog,J,m0,slopes);
+    Qm0,qm0,FQm0,VQm0,den_ideal:=SemilinearOperatorsWType(isog,J,m0,slopes);
     vprintf Algorithm_3 : "done\n";
 
     is_F_V_stable:=function(I)
         assert2 I subset J;
+        assert2 Index(den_ideal+I,den_ideal) mod CharacteristicFiniteField(isog) eq 0; // den_ideal < I locally at p
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
         IFV_Qm0:=I_Qm0 + 
                         sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +

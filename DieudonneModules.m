@@ -73,7 +73,6 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         q:=FiniteField(isog);
         t,p,a:=IsPrimePower(q);
         assert t;
-        _,plE_sl_in01,_:=PlacesOfQFAbove_p(isog);
         // ################### 
         // Global Representatives: L and sigma_L
         // ###################
@@ -168,6 +167,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         k:=Valuation(Index(OA,WR_p),p);
         WR:=Order(ZBasis(p^k*oOA+oWR_p));
         // test
+        assert2 WR eq MultiplicatorRing(p^k*oOA+oWR_p);
         assert pi_A in WR;
         assert q/pi_A in WR;
         assert2 test and n ge Valuation(Index(MaximalOrder(E),R),p) where test,n:=IsPowerOf(Index(OA,WR),p);
