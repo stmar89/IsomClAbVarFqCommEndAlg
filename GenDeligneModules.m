@@ -37,60 +37,73 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
         require IsSquarefree(isog) : "At the moment it is implemented only for abelian varieties with commutative Fq-endomorphism algebra.";
         p:=CharacteristicFiniteField(isog);
         J,DM,L,S,slopesDieudonneModules:=IsomDataCommEndAlg(AV);
-//FIXME th version below is only for slopesDieudonneModules eq "(0,1)". Update for the version with "all"
         R:=ZFVOrder(isog);
-        E:=Algebra(R);
-        // denote by m the local-local ideal of R.
-        // need I and M satisfying : 
-        //                           M_n = (Delta(JL)*WR)_n for every max R-ideal n above p of slope 0 or 1,
-        //                           M_m = (Delta(L)*DM)_m,
-        //                           I_p = (Delta^-1(M))_p,
-        //                           I_l = (JL)_l for every l!=p.
-        //
-        // This will be done by computing and storing K and N such that
-        //                           N_n = (Delta(J)*WR)_n for every max R-ideal n above p of slope 0 or 1,
-        //                           N_m = DM_m,
-        //                           K_p = (Delta^-1(N))_p,
-        //                           K_l = J_l for every l!=p.
-        // Then we set: I = K*L and M = N*Delta(L).
+        assert slopesDieudonneModules in {"(0,1)","all"};
         if not assigned isog`glueing_gen_deligne_module_data then
             isog`glueing_gen_deligne_module_data:=AssociativeArray();
         end if;
         already_done,data:=IsDefined(isog`glueing_gen_deligne_module_data,<J,DM>);
         if already_done then
-        // early exit
-            K,N:=Explode(data);
-            I:=K*(R!!L);
-            M:=N*DeltaIdeal(isog,L);
-            AV`GeneralizedDeligneModule:=<I,M>;
-            return Explode(AV`GeneralizedDeligneModule);
+            K,N,slopes_done:=Explode(data);
+            assert slopes_done eq slopesDieudonneModules;
+        else
+            _,_,_,_,_,_,_,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
+            // if slopesDieudonneModules eq "(0,1)" then
+            // denote by m the local-local ideal of R.
+            // need I and M satisfying : 
+            //                           M_n = (Delta(JL)*WR)_n for every max R-ideal n above p of slope 0 or 1,
+            //                           M_m = (Delta(L)*DM)_m,
+            //                           I_p = (Delta^-1(M))_p,
+            //                           I_l = (JL)_l for every l!=p.
+            //
+            // This will be done by computing and storing K and N such that
+            //                           N_n = (Delta(J)*WR)_n for every max R-ideal n above p of slope 0 or 1,
+            //                           N_m = DM_m,
+            //                           K_p = (Delta^-1(N))_p,
+            //                           K_l = J_l for every l!=p.
+            // Then we set: I = K*L and M = N*Delta(L).
+            // ---------------------------------------------------
+            // if instead slopesDieudonneModules eq "(0,1)" then
+            // DM encodes all the info at p and J encodes all the infor away from p.
+            // We need I and M satisfying:
+            //                          M_p = (Delta(L)*DM)_p
+            //                          I_p = (Delta^-1(M))_p
+            //                          I_l = (JL)_l for every l!=p
+            // 
+            // We store auxiliary modules K and N such that
+            //                          N = DM
+            //                          K_p = (Delta^-1(N))_p     -- this bit is computationally expensive
+            //                          K_l = J_l for every l!=p
+            // Then we set: I = K*L and M = N*Delta(L).
+            // ---------------------------------------------------
+            // NB: only the construction of N is different. Given N and J, we construct K, I and M in the
+            // same way.
+            if slopesDieudonneModules eq "(0,1)" then
+                // We create N
+                DeltaJ:=DeltaIdeal(isog,J);
+                k:=Valuation(Index(DeltaJ+DM,DeltaJ meet DM),p);
+                mm0,mm01,mm1:=PrimesOfZFVAbove_p(isog);
+                m_k:=#mm01 eq 1 select Ideal(WR,[Delta_map(z):z in ZBasis(mm01[1]^k)]) else OneIdeal(WR);
+                nn_k:=#mm0+#mm1 eq 0 select OneIdeal(WR) 
+                        else Ideal(WR,[Delta_map(z):z in ZBasis(&*([P^k:P in mm0 cat mm1]))]);
+                N:=m_k*DeltaJ+nn_k*DM;
+            elif slopesDieudonneModules eq "all" then
+                N:=DM;
+            end if;
+            // We create K
+            K_p:=R!!DeltaInverseIdealpPart(isog,N);
+            K_coprime_p:=J;
+            ind:=Index(K_p+K_coprime_p,K_p meet K_coprime_p);
+            k:=Valuation(ind,p);
+            pk:=p^k;
+            ind_coprime_p:=ind div pk;
+            K:=pk*K_coprime_p+ind_coprime_p*K_p;
+            isog`glueing_gen_deligne_module_data[<J,DM>]:=<K,N,slopesDieudonneModules>;
         end if;
-        // not already_done     
-        _,_,_,_,_,_,_,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
-
-        // We create N
-        DeltaJ:=DeltaIdeal(isog,J);
-        k:=Valuation(Index(DeltaJ+DM,DeltaJ meet DM),p);
-        mm0,mm01,mm1:=PrimesOfZFVAbove_p(isog);
-        m_k:=#mm01 eq 1 select Ideal(WR,[Delta_map(z):z in ZBasis(mm01[1]^k)]) else OneIdeal(WR);
-        nn_k:=#mm0+#mm1 eq 0 select OneIdeal(WR) 
-                else Ideal(WR,[Delta_map(z):z in ZBasis(&*([P^k:P in mm0 cat mm1]))]);
-        N:=m_k*DeltaJ+nn_k*DM;
-        // TODO add assert or assert2.
-
-        // We create K
-        K_p:=R!!DeltaInverseIdealpPart(isog,N);
-        K_coprime_p:=J;
-        ind:=Index(K_p+K_coprime_p,K_p meet K_coprime_p);
-        k:=Valuation(ind,p);
-        pk:=p^k;
-        ind_coprime_p:=ind div pk;
-        //K:=pk*K_p+ind_coprime_p*K_coprime_p;
-        K:=pk*K_coprime_p+ind_coprime_p*K_p;
-        isog`glueing_gen_deligne_module_data[<J,DM>]:=<K,N>;
+        // We create (I,M)
         I:=K*(R!!L);
         M:=N*DeltaIdeal(isog,L);
-        AV`GeneralizedDeligneModule:=<I,M>;
+        AV`GeneralizedDeligneModule:=<I,M,slopesDieudonneModules>;
     end if;
     return Explode(AV`GeneralizedDeligneModule);
 end intrinsic;
