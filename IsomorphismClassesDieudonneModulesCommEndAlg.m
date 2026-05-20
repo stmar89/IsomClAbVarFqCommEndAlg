@@ -113,7 +113,7 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
     wk:=[ WR!!I : I in WKICM(WR_plE)];
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk;
 
-    vprintf Algorithm_2,1 : "Computing output...";
+    vprintf Algorithm_2,1 : "Computing candidates...";
     output:=[];
     for iI->I in wk do
         S:=MultiplicatorRing(I);
@@ -126,13 +126,18 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
         end for;
         _,_,gammas:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
         II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
-        assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
-        assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
         vprintf Algorithm_2,2 : "\n\tiI = %3o  #deltas = %3o #gammas = %3o valsJ = %o",
                                  iI,#deltas,#gammas,StripWhiteSpace(Sprint(valsJ));
         vprintf Algorithm_2,3 : "\n\tvaluations of the of extensions O_A' of the ideals in II = %o",
                                  StripWhiteSpace(Sprint([[Valuation(OA!!ii,P):P in plA]:ii in II])); 
                                  // computing this info might take a lot of time.
+        assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
+        assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
+        //FIXME the next assert fails sometimes...it seems only with "all"...and only when #gammas>1 !!!!
+        // I could track it back to an issue with the computation of gammas, which is being investigate in
+        // UnitsQuotients.m. see the FIXME there.
+        assert2 forall{ i : i in II | [Valuation(OA!!i,P):P in plA] in exps_plE };
+        // FIXME the previous assert can be quite expensive...move to assert3
         output cat:=II;
     end for;
     vprintf Algorithm_2,1 : "done\n";
@@ -192,11 +197,8 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
 
     is_F_V_stable:=function(I)
         assert2 I subset J;
-        assert2 Index(den_ideal+I,I) mod CharacteristicFiniteField(isog) ne 0; // den_ideal < I locally at p
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
-        IFV_Qm0:=I_Qm0 + 
-                        sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +
-                        sub<Qm0 | [VQm0(z) : z in Generators(I_Qm0)] >;
+        IFV_Qm0:=sub<Qm0 | &cat[[z,FQm0(z),VQm0(z)] : z in Generators(I_Qm0)] >;
         vprintf Algorithm_3,3 : "[I_Q+F_Q(I_Q)+V_Q(I_Q):I_Q] = %o\n",Index(IFV_Qm0,sub<IFV_Qm0|I_Qm0>);
         return I_Qm0 eq IFV_Qm0;
     end function;
