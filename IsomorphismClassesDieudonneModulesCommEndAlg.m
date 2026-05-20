@@ -194,7 +194,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
 
     is_F_V_stable:=function(I)
         assert2 I subset J;
-        assert2 Index(den_ideal+I,den_ideal) mod CharacteristicFiniteField(isog) eq 0; // den_ideal < I locally at p
+        assert2 Index(den_ideal+I,I) mod CharacteristicFiniteField(isog) ne 0; // den_ideal < I locally at p
         I_Qm0:=sub<Qm0 | [qm0(z) : z in ZBasis(I) ]>;
         IFV_Qm0:=I_Qm0 + 
                         sub<Qm0 | [FQm0(z) : z in Generators(I_Qm0)] > +
