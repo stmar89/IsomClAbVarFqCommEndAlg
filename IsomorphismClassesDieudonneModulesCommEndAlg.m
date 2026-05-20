@@ -105,8 +105,8 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
     // want to make an intrinsic that stores them in some smart way...
     nice_unifs:=Uniformizers(plA);
     exps_plE:=ExponentsWType(isog,slopes);
-    vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",exps_plE;
-    vprintf Algorithm_2,2 : "nice_unifs = %o\n", PrintSeqAlgEtQElt(nice_unifs);
+    vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",StripWhiteSpace(Sprint(exps_plE));
+    vprintf Algorithm_2,2 : "nice_unifs = %o\n",StripWhiteSpace(Sprint(PrintSeqAlgEtQElt(nice_unifs)));
 
     // DUALITY could speed up the next computation. 
     // It would have to run for all plA of slope <1/2 and =1/2, and deduce the output for >1/2 from the first.
@@ -115,7 +115,7 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
 
     vprintf Algorithm_2,1 : "Computing output...";
     output:=[];
-    for I in wk do
+    for iI->I in wk do
         S:=MultiplicatorRing(I);
         J:=OA!!I;
         valsJ:=[ Valuation(J,P) : P in plA ];
@@ -126,13 +126,11 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
         end for;
         _,_,gammas:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
         II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
-        vprintf Algorithm_2,2 : "valsJ = %o\n", valsJ;
-        vprintf Algorithm_2,2 : "#deltas = %o\n", #deltas;
-        vprintf Algorithm_2,2 : "#gammas = %o\n", #gammas;
         assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
-        vprintf Algorithm_2,2 : "#II = %o\n",#II;
-        vprintf Algorithm_2,3 : "valuations of the of extensions O_A' of the ideals in II = %o\n",[ [ Valuation(OA!!ii,P) : P in plA ] : ii in II ]; // computing this info might take a lot of time.
+        vprintf Algorithm_2,2 : "\niI = %3o  #deltas = %3o #gammas = %3o valsJ = %o",
+                                 iI,#deltas,#gammas,StripWhiteSpace(Sprint(valsJ));
+        vprintf Algorithm_2,3 : "\nvaluations of the of extensions O_A' of the ideals in II = %o",[ [ Valuation(OA!!ii,P) : P in plA ] : ii in II ]; // computing this info might take a lot of time.
         output cat:=II;
     end for;
     vprintf Algorithm_2,1 : "done\n";
@@ -165,13 +163,14 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
     exps:=ExponentsWType(isog,slopes)[1];
     //"WARNING: changing J for test purposes";exps:=exps_01[2];
     plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // sorted by sigma !!!
+    assert #plA eq #exps;
     JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
     J:=WR!!JOA;
     ZBasisLLL(J);
     vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",
                             [Valuation(OA!!J,P) : P in plA];
 
-    vprintf Algorithm_3,1 : "Delta-scaling the ideals into J...";
+    vprintf Algorithm_3,1 : "Delta-scaling the %o candidates into J...",#candidates;
     candidates,m0:=DeltaScaleInside(isog,J,candidates);
     vprintf Algorithm_3,1 : "done\n";
 
@@ -183,13 +182,10 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
     //m1:=m0+10; "WARNING: m0 is forced now from ",m0,"to",m1; m0:=m1; //for debugging
 
     vprintf Algorithm_3 : "m0 = %o\n",m0;
-    vprintf Algorithm_3,2 : "v_nu(pi) for all nu's = %o\n",[ Valuation( pi, P ) : P in plE ] where pi:=PrimitiveElement(DeligneAlgebra(isog));
-    vprintf Algorithm_3,2 : "e_nu for all nu's = %o\n",[ RamificationIndex(P) : P in plE ];
-    vprintf Algorithm_3,2 : "f_nu for all nu's = %o\n",[ InertiaDegree(P) : P in plE ];
-    vprintf Algorithm_3,2 : "g_nu for all nu's = %o\n",[ GCD(Ilog(CharacteristicFiniteField(isog),FiniteField(isog)),InertiaDegree(P)) : P in plE ];
 
     vprintf Algorithm_3 : "Computing Qm0,qm0,FQm0,VQm0...";
     Qm0,qm0,FQm0,VQm0,den_ideal:=SemilinearOperatorsWType(isog,J,m0,slopes);
+    assert IsPowerOf(#Qm0,CharacteristicFiniteField(isog));
     vprintf Algorithm_3 : "done\n";
 
     is_F_V_stable:=function(I)
