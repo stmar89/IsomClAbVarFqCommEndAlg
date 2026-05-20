@@ -99,7 +99,7 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
 end intrinsic;
 
 intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQIdl])->SeqEnum[AlgEtQIdl],RngIntElt
-{Given an isogeny class isog, a fractional ideal J and a sequence of fractional ideals Is of the DieudonneAlgebra it returns a sequence IIs and an integer m0 such that for each i Is[i] is Delta-isomorphic to IIs[i], each IIs[i] is inside J, and m0=Max(Valuation(p,Index(J,IIs[i])) is small.}
+{Given an isogeny class isog, a fractional WR-ideal J and a sequence of fractional WR-ideals Is of the DieudonneAlgebra it returns a sequence IIs and an integer m0 such that, for each i, Is[i] is Delta-isomorphic to IIs[i], each IIs[i] is inside J, and m0=Max(Valuation(p,Index(J,IIs[i])) is small.}
     IIs:=Is;
     _,_,_,_,A,_,OA,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
     nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);

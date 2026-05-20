@@ -22,7 +22,8 @@
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
-declare verbose alpha_at_precision,3;
+declare verbose AlphaWTypeAtPlace,3;
+declare verbose SemilinearOperatorsWType,3;
 
 declare attributes IsogenyClassFq : AlphaWType,
                                     SemilinearOperatorsWType;
@@ -87,7 +88,6 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
             beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
             // Action of the Frobenius on U
             img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
-            vprintf alpha_at_precision,2 : "\timg = %o\n\tsigma(img) = %o\n",img,sigma_U(img);
             assert2 sigma_U(img) eq img;
             return img;
         end function;
@@ -321,6 +321,8 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
             Append(~alpha_s,alpha_nu);
         end for;
         alpha:=CRT(PPs,alpha_s);
+        vprintf AlphaWTypeAtPlace,2 : "\n\talpha_s = %o",StripWhiteSpace(Sprint(PrintSeqAlgEtQElt(alpha_s)));
+        vprintf AlphaWTypeAtPlace,2 : "\n\talpha = %o",StripWhiteSpace(Sprint(PrintSeqAlgEtQElt([alpha])[1]));
 
         FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
         FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;

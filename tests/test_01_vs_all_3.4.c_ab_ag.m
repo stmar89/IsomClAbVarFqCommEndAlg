@@ -11,10 +11,10 @@
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
 
-//    SetVerbose("alpha_at_precision",2);
 //    SetVerbose("DieudonneModules",2);
 //    SetVerbose("Algorithm_2",2);
-//    SetVerbose("Algorithm_3",2);
+    SetVerbose("Algorithm_3",2);
+    SetVerbose("AlphaWTypeAtPlace",2);
 
     PP<x>:=PolynomialRing(Integers());
 

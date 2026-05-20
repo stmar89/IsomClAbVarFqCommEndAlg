@@ -59,7 +59,7 @@ together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).}
     end if;
     indff:=Index(S,ff);
     assert2 forall{P : P in primes_S_above_ff | indff mod Index(S,P) eq 0 };
-    ks:=[ Valuation(indff,p) div Valuation(Index(S,P),p) : P in primes_S_above_ff ];
+    ks:=[ 10 + (Valuation(indff,p) div Valuation(Index(S,P),p)) : P in primes_S_above_ff ];
     prod:=&*([ primes_S_above_ff[i]^ks[i] : i in [1..#primes_S_above_ff]]);
     ff_prod:=ff+prod;
     assert not 1 in ff_prod;
