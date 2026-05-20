@@ -128,9 +128,11 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
         II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
         assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
-        vprintf Algorithm_2,2 : "\niI = %3o  #deltas = %3o #gammas = %3o valsJ = %o",
+        vprintf Algorithm_2,2 : "\n\tiI = %3o  #deltas = %3o #gammas = %3o valsJ = %o",
                                  iI,#deltas,#gammas,StripWhiteSpace(Sprint(valsJ));
-        vprintf Algorithm_2,3 : "\nvaluations of the of extensions O_A' of the ideals in II = %o",[ [ Valuation(OA!!ii,P) : P in plA ] : ii in II ]; // computing this info might take a lot of time.
+        vprintf Algorithm_2,3 : "\n\tvaluations of the of extensions O_A' of the ideals in II = %o",
+                                 StripWhiteSpace(Sprint([[Valuation(OA!!ii,P):P in plA]:ii in II])); 
+                                 // computing this info might take a lot of time.
         output cat:=II;
     end for;
     vprintf Algorithm_2,1 : "done\n";
