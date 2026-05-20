@@ -84,7 +84,7 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
         assert IsCoprime(d,p);
         d:=dp*d;
         dI:=Delta_map(d)*I;
-        assert dI subset WR!!OneIdeal(OA);
+        assert2 dI subset WR!!OneIdeal(OA);
 
         vp_ind:=Valuation(Index(oOA,dI),p);
         dI_ppart:=dI+p^vp_ind*oOA;
@@ -138,7 +138,6 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
         y:=Index(xI+J,J);
         assert (y mod p) ne 0; // y coprime p
         yxI:=y*xI;
-        assert2 yxI subset J;
         vprintf Delta_scaling,1 : "ZBasisLLL...";
         ZBasisLLL(yxI);
         vprintf Delta_scaling,1 : "done";
@@ -168,11 +167,9 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
             y:=Index(xI+J,J);
             assert (y mod p) ne 0; // y coprime p
             yxI:=y*xI;
-            assert2 yxI subset J;
             if pExponent(J,yxI) le m0 then
                 vprintf Delta_scaling,1 : "\nsuccess...",i;
                 D_scale:=false;
-                vprintf Delta_scaling,1 : "ZBasisLLL...";
                 ZBasisLLL(yxI);
                 vprintf Delta_scaling,1 : "done";
                 IIs[i]:=yxI;
@@ -188,6 +185,6 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
     end for;
     assert2 forall{I:I in IIs|I subset J};
     // The next assert tests that p^m0*J < I locally at p. Since I < J, this is equivalent to m0 ge val_p(exp(J/I))
-    assert2 forall{I:I in IIs|Valuation(Index((p^m0)*J+I,I),p) eq 0};
+    assert2 forall{I:I in IIs|(Index((p^m0)*J+I,I) mod p) ne 0};
     return IIs,m0;
 end intrinsic;
