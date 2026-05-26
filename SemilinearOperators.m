@@ -39,12 +39,11 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`AlphaWType,nu_Hash) then
-        _,_,_,_,A,pi_A,_,Delta_map,_,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,A,pi_A,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
         OA:=MaximalOrder(A);
-        OA_mod_I,qOA_mod_I:=ResidueRing(OA,p^m*OA);
-        sigma:=sigma_OA_mod_I(OA_mod_I,qOA_mod_I,A);
+        OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m*OA);
         //FIXME this sigma is already computed in SemilinearOperatorsWType...
         PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
         f_nu:=InertiaDegree(nu);
@@ -152,7 +151,7 @@ end intrinsic;
 //    if not IsDefined(isog`SemilinearOperatorsWTypeArray,nu_Hash) then
 //        p:=CharacteristicFiniteField(isog);
 //        a:=Ilog(p,FiniteField(isog));
-//        _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
+//        _,_,_,_,A,pi_A,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
 //
 //        PP:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
 //        // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in PP.
@@ -179,8 +178,7 @@ end intrinsic;
 //        //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
 //        // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
 //        // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-//        QOA,qOA:=ResidueRing(OA,p^m1*OA);
-//        sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
+//        QOA,qOA,sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=SigmaOnQuotientOfOA(isog,p^m1*OA);
 //
 //        alpha:=AlphaWTypeAtPlace(isog,nu,m1);
 //
@@ -274,7 +272,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
     if not assigned isog`SemilinearOperatorsWType then
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
-        _,_,_,_,A,pi_A,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,A,pi_A,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
 
         require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
         pps0,pps01,pps1:=PrimesOfSAbove_p(isog,WR);
@@ -310,8 +308,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
         //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
         // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
         // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-        QOA,qOA:=ResidueRing(OA,p^m1*OA);
-        sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=sigma_OA_mod_I(QOA,qOA,A);
+        QOA,qOA,sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=SigmaOnQuotientOfOA(isog,p^m1*OA);
 
         PPs:=[];
         alpha_s:=[];

@@ -130,7 +130,7 @@ intrinsic PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog::IsogenyClass
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p,nu_Hash) then
-        _,_,_,_,A,_,_,Delta_map,_,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,A,_,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
         // When we construct the WR{F,V}-ideals with maximal endomorphism ring,
         // we are assuming that the primes of A above each given place are sorted according to 
         // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
@@ -142,13 +142,12 @@ intrinsic PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog::IsogenyClass
         if gP gt 2 then
             // the following does nothing if gP is 1 or 2
             PP:=&*pp;
-            Q,mQ:=ResidueRing(PP);
+            Q,mQ,sigma:=SigmaOnQuotientOfOA(PP);
             PP0:=pp[1];
             gens:=[mQ(x):x in Generators(PP0)];
-            ss:=sigma_OA_mod_I(Q,mQ,A);
             output:=[PP0];
             for i in [1..gP-1] do
-                gens:=[ss(x):x in gens];
+                gens:=[sigma(x):x in gens];
                 assert exists(PP_next){id:id in pp|forall{x:x in gens|x@@mQ in id}};
                 Append(~output,PP_next);
             end for;

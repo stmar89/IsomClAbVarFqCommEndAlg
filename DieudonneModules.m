@@ -26,12 +26,8 @@
 
 declare verbose DieudonneModules,3;
 declare verbose DieudonneModules_L,3;
-declare verbose sigma,3;
 
 declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg;
-                               
-declare attributes AlgEtQ         : sigma_fin_prec;
-
 declare attributes AlgEtQIdl      : DeltaEndomorphismRing;
 
 ///////////////
@@ -53,15 +49,14 @@ end function;
 ///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,AlgEtQOrd,UserProgram,Tup,Tup
+intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,AlgEtQOrd,Tup,Tup
 {Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
-<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
+<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
 - WR is an order in A, isomorphic to R\otimes_Z OE locally at p and equal to OA everywhere else.
-- sigma_OA_mod_I is a function that given an OA-ideal I such that the quotient OA/I is killed by a power of p, it returns a reduction of the map induced by the Frobenius automorphism of (L\otimes_Q Qp)/Qp;
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
-- A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
+- A_as_vector_space_over_L_data is a tuple consistsing of four L-linear isomorphisms m1,m2,m3,m4 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)). m4 //TODO
 - OA_as_abelian_group_data is the tuple <FOA,fOA,imageDeltaOE_inFOA> where FOA is a free abelian group and fOA:=OA->FOA is an isomorphism, and imageDeltaOE_inFOA is the image of Delta(OE) in FOA. This tuple is used to compute Delta^-1 of orders and ideals in the DieudonneAlgebra.}
     if not assigned isog`DiedudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
@@ -172,14 +167,16 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         assert q/pi_A in WR;
         assert2 test and n ge Valuation(Index(MaximalOrder(E),R),p) where test,n:=IsPowerOf(Index(OA,WR),p);
         // end test
-   
-        // #######################
-        // tilde sigma (on A): acts as the L-Forbenius on L-coeffs when A is written as L+pi*L+...+pi^(deg(h)-1)L
-        // #######################
 
+        // #######################
+        // A as vector space over L
+        // #######################
+   
         // We have defined A = prod_i L[x]/(h_i(x)).
-        // In order to compute sigma, we need to understand the action of the Frobenius sigma_L of L.
-        // To do so, we need to represent A as W:=L + pi*L + ... +pi^(deg(h)-1)L and compute L-isomorphism mAW:A->W.
+        // Now we compute maps that represent A as a vector spae over L, firstly using the powers of pi as a basis, 
+        // and then a ZBasis(OE). The latter is needed to compute the action sigma on quotients of OA.
+        //
+        // Define W:=L + pi*L + ... +pi^(deg(h)-1)L and compute L-isomorphism mAW:A->W.
         Vs:=[];
         vs:=<>;
         for i in [1..#nfs_A] do
@@ -195,105 +192,24 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         W:=KSpace(L,Degree(h));
         mWD:=iso< W->D | pows_pi_D >;
         mAW:=map< A->W | x:->mAD(x)@@mWD, y:-> mWD(y)@@mAD >;
-        A_as_vector_space_over_L_data:=<mAD,mWD,mAW>;
 
-        // Note that OA \simeq OE \otimes ZZ[zz] locally at p.
-        // We need to compute the images of a ZBasis of OE in Q.
-        // Let b be an element of OE: write it as d1 + pi*d2 + ... + pi^(2g-1)*d_{2g} for integers d_i.
-        // The the image of b in Q is mQ(W!(d1,...,d_{2g}))@@mAW).
-        OE:=MaximalOrder(E);
-        pb_OE:=[ pi^(i-1) : i in [1..AbsoluteDimension(E)] ];
-        zbOE_in_OA:=[ (W!b)@@mAW : b in AbsoluteCoordinates(ZBasis(OE),pb_OE) ];
-        assert2 forall{i:i in [1..#ZBasis(OE)]| MinimalPolynomial(zbOE_in_OA[i]) eq MinimalPolynomial(ZBasis(OE)[i])};
-        // We now constuct an isomorphism A->L^2g using zbOE_inOA. 
+        // Now we compute a second isomorphism mAW_zbOE:A->W using the ZBasis of OE. 
         // This corresponds to write OA = OE \otimes OL (locally at p).
-        // We need this description of OA to compute the action of sigma, which is trivial on the 'OE-part'.
+        OE:=MaximalOrder(E);
+        pow_pi:=[ pi^(i-1) : i in [1..AbsoluteDimension(E)] ];
+        zbOE_in_OA:=[ (W!b)@@mAW : b in AbsoluteCoordinates(ZBasis(OE),pow_pi) ];
+        assert2 forall{i:i in [1..#ZBasis(OE)]|MinimalPolynomial(zbOE_in_OA[i]) eq MinimalPolynomial(ZBasis(OE)[i])};
         zbOE_in_D:=[ mAD(b) : b in zbOE_in_OA ];
         mWD_zbOE:=iso<W->D | zbOE_in_D >;
         mAW_zbOE:=map<A->W | x:->mAD(x)@@mWD_zbOE, y:->mWD_zbOE(y)@@mAD >;
+        A_as_vector_space_over_L_data:=<mAD,mWD,mAW,mAW_zbOE>;
 
         FOA,fOA:=OrderAsFreeAbelianGroup(OA);
         assert2 forall{ z : z in ZBasis(OA) | fOA(z)@@fOA eq z };
         imageDeltaOE_inFOA:=sub<FOA | [fOA(Delta_image(z)) : z in ZBasis(MaximalOrder(E)) ]>;
         OA_as_abelian_group_data:=<FOA,fOA,imageDeltaOE_inFOA>;
 
-        sigma_OA_mod_I:=function(Q,mQ,A)
-        // Given mQ:OA->Q=OA/I, with I an OA-ideal and with Q an OL/PL^m-module for some m, 
-        // where PL is the only prime of OL,
-        // returns a ring homomorphism Q->Q induced by Frobenius automorphism of L\otimes Qp.
-            
-            // m can be computed using the formula |OL/PL|^m = |OA/I|
-            t,m:=IsPowerOf(#Q,normPL);
-            assert t;
-            //m:=30*m; printf "Warning increasing the precision\n";
-            if m eq 0 then
-                vprintf sigma,2 : "m=0 -> sigma is the identity on Q\n";
-                return hom<Q->Q | [Q.i : i in [1..Ngens(Q)]] >;
-            end if;
-
-            // We compute the automorphism of the finite ring OL/PL^m induced 
-            // by the Frobenius automorphism L\otimes Qp.
-            // It is chached in an attribute of A.
-            // This is done in the following way:
-            // - in OL, find an element 'zeta' congruent mod PL^m to an inertial element (=uniformizer) of OLp
-            //   by taking successive q-powers of the image 'frob' of a generator of (OL/PL)^*
-            //   until the sequence stabilizes (this approximation method seems well known 
-            //   Reference: Magma Documentation, Example RngLoc_unram-ext (H49E13).
-            // - We create an auxiliary number field LL<zz>, isomorphic to L via zz:->zeta.
-            // - We have an isomorphism OL/PL^m = ZZ[zz]/p^m*ZZ[zz].
-            // - It follows that zz:->zz^p induces (a conjugate of) the Frobenius automorphism on the quotient
-            if not assigned A`sigma_fin_prec or A`sigma_fin_prec[1] lt m then
-                _,moL:=quo<OL | PL^m >;
-                frob:=moL(L.1); // L.1 generates F_q = OL/pOL, by the way L is constructed above.
-                repeat
-                    old:=frob;
-                    frob:=frob^q;
-                until frob eq old;
-                zeta:=frob@@moL; // zeta is congruent to an inertial element mod m
-                LL<zz>:=NumberField(MinimalPolynomial(zeta) : DoLinearExtension:=true);
-                assert Degree(LL) eq Degree(L);
-                LLtoL:=iso<LL->L | [ zeta ] >;
-                assert2 LLtoL(zz^2) eq zeta^2 and LLtoL(zz+2) eq zeta+2;
-
-                // - We realize ZZ[zz] as a free abelian group F and zz:->zz^p as an additive map sigma_F:F->F.
-                F:=FreeAbelianGroup(Degree(L)); // F = ZZ[zz] as abelian group
-                imgs_zz:=[ F!ChangeUniverse(Eltseq(zz^(p*(i-1))),Integers()) : i in [1..Degree(L)] ];
-                sigma_F:=hom<F->F | [ imgs_zz[i] : i in [1..Ngens(F)] ]>; 
-
-                FtoFOA:=map<F->FOA|x:->fOA((W![ LLtoL(LL!Eltseq(x)):i in [1..AbsoluteDimension(E)]])@@mAW_zbOE)>; 
-                powers_zz_diagonally_inOA_via_zbOE:=[ (FtoFOA(z))@@fOA : z in imgs_zz ];
-                // F=ZZ[zz] -> OA=FOA induced by zz:->sum_i zz*zi where zi is the image of a ZBasis of OA in FOA
-               
-                A`sigma_fin_prec:=<m,F,sigma_F,LL,LLtoL,powers_zz_diagonally_inOA_via_zbOE>;
-            end if;
-            _,F,sigma_F,LL,LLtoL,powers_zz_diagonally_inOA_via_zbOE:=Explode(A`sigma_fin_prec);
-
-            // - To do so, we need to find the ZZ[zz]-module structure of Q. 
-            // - More precisely, we need a sigma-equivariant presentation ZZ[zz]^s->>Q.
-            // - We need a set of generators of J over ZZ[zz] which are fixed by sigma, i.e. in Delta(E).
-            // - If J = OA, since OA = OE \otimes Z[zz] (at p), we can use the images b1,...,b2g of the
-            // ZBasis of OE in OA we computed before, together with the isomorphsm mAW_zbOE:A->L^2g.
-            Fs,embs,projs:=DirectSum([F : i in [1..AbsoluteDimension(E)]]);
-            sigma_Fs:=hom<Fs->Fs|[&+[ embs[i](sigma_F(projs[i](Fs.j))): i in [1..AbsoluteDimension(E)]]
-                                  :j in [1..Ngens(Fs)]]>;
-            // sigma_Fs is simply sigma_F on each component
-            FstoOA:=map<Fs->A | x:-> (W![ LLtoL(LL!Eltseq(projs[i](x))) : i in [1..#projs] ])@@mAW_zbOE >; 
-            // Fs->LL^2g->W->D->A where the last iso is given by mAW_zbO
-            assert2 forall{ i : i in [1..Ngens(Fs)] | FstoOA(Fs.i) in OA };
-            pres:=hom<Fs->Q | [ mQ(FstoOA(Fs.i)) : i in [1..Ngens(Fs)]] >;
-            assert IsSurjective(pres);
-
-            sigma_Q:=hom<Q->Q | [ Q.i@@pres@sigma_Fs@pres : i in [1..Ngens(Q)] ]>;
-            assert2 forall{i : i,j in [1..Ngens(Q)] | sigma_Q(mQ(gQ[i]*gQ[j])) eq mQ(sigma_gQ[i]*sigma_gQ[j]) 
-                            where gQ:=[ Q.k@@mQ : k in [1..Ngens(Q)]]
-                            where sigma_gQ:=[ (sigma_Q(Q.k))@@mQ : k in [1..Ngens(Q)]]
-                         };
-            assert IsSurjective(sigma_Q);
-            assert IsTrivial(Kernel(sigma_Q));
-            return sigma_Q,powers_zz_diagonally_inOA_via_zbOE;
-        end function;
-
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
+        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
     end if;
     return Explode(isog`DiedudonneAlgebraCommEndAlg);
 end intrinsic;

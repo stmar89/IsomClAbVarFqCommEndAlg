@@ -97,7 +97,7 @@ end intrinsic;
 intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd,slopes::MonStgElt)->GrpAb,Map,SeqEnum[AlgEtQElt]
 {Given an isogeny class isog, an order S in the DieudonneAlgebra and string variable slopes with values "0","(0,1)","1" or "all", returns the triple U,u where U=OA'^*/S'^*Delta(OE'^*), where ' denotes the 0,(0,1),1 or p-part, the map u:U->OA together a list of representatives in OA of U.}
     if not assigned S`UnitGroupQuotientAtSlopeFixedBySigma or S`UnitGroupQuotientAtSlopeFixedBySigma[4] ne slopes then
-        _,_,_,_,A,_,OA,_,WR,sigma_OA_mod_I:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,A,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
         if not assigned isog`units_quotient_fixed_sigma_WR_gens then
             fixed_pts_sigma:=function(T)
             // Given an order T in A, representing an order T' in A', 
@@ -107,8 +107,7 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
             // - u is a map u:U->OA giving representatives 
             // - F is the subgroup of elements of U=OA'^*/T'^* fixed by sigma
                 U,u,I:=UnitGroupQuotientAtSlope(isog,T,slopes); //u:U->A
-                Q,q:=ResidueRing(OA,I);
-                sigma:=sigma_OA_mod_I(Q,q,A); // sigma: Q->Q
+                Q,q,sigma:=SigmaOnQuotientOfOA(isog,I); // sigma: Q->Q
                 id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation
                 F:=Kernel(id_sigma);
                 return U,u,F;
@@ -124,8 +123,7 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
         fixed_pts_gens:=[ g@@u : g in isog`units_quotient_fixed_sigma_WR_gens];
         Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
 // alternative method
-Q,q:=ResidueRing(OA,I);
-sigma:=sigma_OA_mod_I(Q,q,A); // sigma: Q->Q
+Q,q,sigma:=SigmaOnQuotientOfOA(isog,I); // sigma: Q->Q
 id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation
 F:=Kernel(id_sigma);
 Q,q0:=quo<U|F>;
