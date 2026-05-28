@@ -22,7 +22,7 @@
     h:=x^6-3*x^4+2*x^3-12*x^2+64;
     assert IsSquarefree(h);
 
-    for slopes in ["(0,1)","all"] do
+    for slopes in ["all","(0,1)"] do
         if assigned isog then
             delete isog; //for the second run
         end if;

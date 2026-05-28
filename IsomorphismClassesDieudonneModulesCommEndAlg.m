@@ -121,8 +121,10 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
         valsJ:=[ Valuation(J,P) : P in plA ];
         deltas:=[];
         for exps in exps_plE do
-            assert #exps eq #plA; 
-            Append(~deltas,&*[nice_unifs[i]^(valsJ[i]-exps[i]) : i in [1..#plA]]);
+            assert #exps eq #plA;
+            delta:=&*[nice_unifs[i]^(valsJ[i]-exps[i]) : i in [1..#plA]];
+            assert2 forall{i:i in [1..#plA]|Valuation(delta,plA[i]) eq valsJ[i]-exps[i]};
+            Append(~deltas,delta);
         end for;
         _,_,gammas:=UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
         II:=[ ((d^-1)*g)*I : d in deltas, g in gammas ];
