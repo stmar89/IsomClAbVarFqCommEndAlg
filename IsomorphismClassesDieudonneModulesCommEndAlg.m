@@ -135,11 +135,8 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
                                  // computing this info might take a lot of time.
         assert2 forall{ d : d in deltas | not IsZeroDivisor(d) };
         assert2 forall{ g : g in gammas | not IsZeroDivisor(g) };
-        //FIXME the next assert fails sometimes...it seems only with "all"...and only when #gammas>1 !!!!
-        // I could track it back to an issue with the computation of gammas, which is being investigate in
-        // UnitsQuotients.m. see the FIXME there.
-        assert2 forall{ i : i in II | [Valuation(OA!!i,P):P in plA] in exps_plE };
-        // FIXME the previous assert can be quite expensive...move to assert3
+        // the next test is very useful, but expensive.
+        assert3 forall{ i : i in II | [Valuation(OA!!i,P):P in plA] in exps_plE };
         output cat:=II;
     end for;
     vprintf Algorithm_2,1 : "done\n";

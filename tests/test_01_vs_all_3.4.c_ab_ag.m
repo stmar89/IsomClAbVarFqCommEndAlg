@@ -15,14 +15,14 @@
 //    SetVerbose("Algorithm_2",2);
 //    SetVerbose("Algorithm_3",2);
 //    SetVerbose("AlphaWTypeAtPlace",2);
-    SetVerbose("UnitGroupQuotients",2);
+//    SetVerbose("UnitGroupQuotients",2);
 
     PP<x>:=PolynomialRing(Integers());
 
     h:=x^6+2*x^5-x^4-6*x^3-4*x^2+32*x+64;
     assert IsSquarefree(h);
 
-    for slopes in ["(0,1)","all"] do
+    for slopes in ["all","(0,1)"] do
         if assigned isog then
             delete isog; //for the second run
         end if;
