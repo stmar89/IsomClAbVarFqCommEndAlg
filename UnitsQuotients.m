@@ -57,87 +57,52 @@ together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).}
                 return Zero(U);
             end function;
             u:=map<U->Algebra(S) | x:->One(S), y:->trivial_preimage(y)>;
-            // without test
-            //u:=map<U->Algebra(S) | x:->One(S), y:->Zero(U)>;
-            return U,u,OneIdeal(OA);
-        end if;
-        indff:=Index(S,ff);
-        assert2 forall{P : P in primes_S_above_ff | indff mod Index(S,P) eq 0 };
-        ks:=[(Valuation(indff,p) div Valuation(Index(S,P),p)) : P in primes_S_above_ff ];
-        prod:=&*([ primes_S_above_ff[i]^ks[i] : i in [1..#primes_S_above_ff]]);
-        if #primes_S eq #primes_S_above_ff then
-            ff_prod:=ff+prod;
+            I:=OneIdeal(OA);
         else
-        // We add the primes in (0,1) -- or above p, depending on slopes --  which do not contain ff: 
-        // if we do not, the representative map will return elements whose valuation is 0 only at the primes
-        // containing ff, but the might not be units at the others. 
-        // Hence, they will not map to units in OA' -- or OA_p.
-            ff_prod:=(ff+prod)*&*[P:P in Seqset(primes_S) diff Seqset(primes_S_above_ff)];
-        end if;
-        I:=OA!!(ff_prod);
-        R,r:=ResidueRingUnits(I); // R=(OA/I)^* , r:R->OA
-        gens:=ResidueRingUnitsSubgroupGenerators(ff_prod); // gens of (S/ff_prod)^*
-        // In Lemma III in ComputationalAppendix.pdf, we show that 
-        //    S meet I = ff_prod.
-        assert2 ff_prod eq (S!!I) meet OneIdeal(S);
-        // This implies that the natural inclusion S < OA induces an injective map
-        //    (S/ff_prod)^* -> R = (OA/I)^*.
-        // Let 
-        //    u0 : R -> U=R/(S/ff_prod)^* 
-        // be the cokernel of the injective map.
-        U,u0:=quo<R | [ g@@r : g in gens]>;
-        // If r:R->A as above is the function giving representatives, then
-        // u = (u0^-1 circ r) gives representatives for U. 
-        u:=map<U->Algebra(S) |  x:-> r(x@@u0), y:->u0(y@@r) >;
-        if GetAssertions() ge 2 then
-            gammas:=[u(g):g in U];
-            assert2 forall{g:g in gammas|g in OA};
-            assert2 #{g@@u:g in gammas} eq #U;
-            nu0,nu01,nu1:=PlacesOfQFAbove_p(isog);
-            if slopes eq "all" then
-                plE:=nu0 cat nu01 cat nu1;
-            elif slopes eq "(0,1)" then
-                plE:=nu01;
+            indff:=Index(S,ff);
+            assert2 forall{P : P in primes_S_above_ff | indff mod Index(S,P) eq 0 };
+            ks:=[(Valuation(indff,p) div Valuation(Index(S,P),p)) : P in primes_S_above_ff ];
+            prod:=&*([ primes_S_above_ff[i]^ks[i] : i in [1..#primes_S_above_ff]]);
+            if #primes_S eq #primes_S_above_ff then
+                ff_prod:=ff+prod;
+            else
+            // We add the primes in (0,1) -- or above p, depending on slopes --  which do not contain ff: 
+            // if we do not, the representative map will return elements whose valuation is 0 only at the primes
+            // containing ff, but the might not be units at the others. 
+            // Hence, they will not map to units in OA' -- or OA_p.
+                ff_prod:=(ff+prod)*&*[P:P in Seqset(primes_S) diff Seqset(primes_S_above_ff)];
             end if;
-            plA:=&cat[PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu):nu in plE];
-            assert2 forall{P:P in plA|I subset P};
-            assert2 forall{g:g in Generators(R),P in plA|r(g) notin P};
-            assert2 forall{g:g in gammas,P in plA|g notin P};
+            I:=OA!!(ff_prod);
+            R,r:=ResidueRingUnits(I); // R=(OA/I)^* , r:R->OA
+            gens:=ResidueRingUnitsSubgroupGenerators(ff_prod); // gens of (S/ff_prod)^*
+            // In Lemma III in ComputationalAppendix.pdf, we show that 
+            //    S meet I = ff_prod.
+            assert2 ff_prod eq (S!!I) meet OneIdeal(S);
+            // This implies that the natural inclusion S < OA induces an injective map
+            //    (S/ff_prod)^* -> R = (OA/I)^*.
+            // Let 
+            //    u0 : R -> U=R/(S/ff_prod)^* 
+            // be the cokernel of the injective map.
+            U,u0:=quo<R | [ g@@r : g in gens]>;
+            // If r:R->A as above is the function giving representatives, then
+            // u = (u0^-1 circ r) gives representatives for U. 
+            u:=map<U->Algebra(S) |  x:-> r(x@@u0), y:->u0(y@@r) >;
+            if GetAssertions() ge 2 then
+                nu0,nu01,nu1:=PlacesOfQFAbove_p(isog);
+                if slopes eq "all" then
+                    plE:=nu0 cat nu01 cat nu1;
+                elif slopes eq "(0,1)" then
+                    plE:=nu01;
+                end if;
+                plA:=&cat[PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu):nu in plE];
+                assert2 forall{P:P in plA|I subset P};
+                assert2 forall{g:g in Generators(R),P in plA|r(g) notin P};
+                assert2 forall{g:g in Generators(U)|u(g) in OA};
+                assert2 forall{g:g in Generators(U)|u(g) in OA};
+                assert2 forall{g:g in Generators(U),P in plA|u(g) notin P};
+                assert3 #{g@@u:g in [u(g):g in U]} eq #U; //this assert is expensive
+            end if;
         end if;
-//// debugging
-//gensS:=[A!x:x in 
-//        [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
-//        <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
-//        <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
-//        <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-//        <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-//        <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-//        <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
-//        <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
-//if S eq Order(gensS) and slopes eq "all" then
-//    gensR:=[r(g):g in Generators(R)];
-//    gensU:=[u(g):g in Generators(U)];
-//    Join([
-//    StripWhiteSpace("gensR=" cat Sprint(PrintSeqAlgEtQElt(gensR))),
-//    StripWhiteSpace("gensU=" cat Sprint(PrintSeqAlgEtQElt(gensU)))
-//    ],"\n");
-//    //good gens
-//    assert R eq sub<R|[(A!x)@@r:x in
-//    [<[3,2,0,0,0,0],[3,3,2,5/4,1/4,0]>,<[5/4,43/16,83/32,73/64,7/16,13/64],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>,<[1,1,1/2,3/4,1/4,0],[3,2,0,0,0,0]>]
-//    ]>;
-//    assert U eq sub<U|[(A!x)@@u:x in
-//    [<[3,3,2,5/4,1/4,0],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>]
-//    ]>;
-//    //bad gens
-//    assert R eq sub<R|[(A!x)@@r:x in
-//    [<[3,2,0,0,0,0],[1,1,1/2,3/4,1/4,0]>,<[9/4,59/16,83/32,73/64,7/16,13/64],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[9/4,59/16,83/32,73/64,7/16,13/64]>,<[1,1,1/2,3/4,1/4,0],[3,2,0,0,0,0]>]
-//    ]>;
-//    assert U eq sub<U|[(A!x)@@u:x in
-//    [<[3,2,0,0,0,0],[-7/4,27/16,83/32,73/64,7/16,13/64]>,<[3,3,2,5/4,1/4,0],[3,2,0,0,0,0]>]
-//    ]>;
-//    //the asserts for R seem to pass. So no issue here, I'd say
-//end if;
-////end debugging
         S`UnitGroupQuotientAtSlope:=<U,u,I,slopes>;
     end if;
     U,u,I:=Explode(S`UnitGroupQuotientAtSlope);
