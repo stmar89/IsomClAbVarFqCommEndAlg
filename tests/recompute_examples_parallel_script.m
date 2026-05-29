@@ -1,6 +1,9 @@
 /*
 parallel script, to run on screen
-    parallel -j 7 -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h_s:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
+    rm ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_output_all.m; \
+    rm ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_output_01.m; \
+    parallel -j 7 -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input \
+        magma -b h_s:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
 */
 
     SetAssertions(2);
@@ -54,8 +57,9 @@ parallel script, to run on screen
         t0:=Cputime();
         iso:=IsomorphismClassesCommEndAlg(isog:slopesDieudonneModules:=slopes);
         t1:=Round(Cputime(t0));
-        output cat:=Sprintf("Using slopesDieudonneModules:=%o and SetAssertions(%o),\n\twe got %o isomorphism classes in %o mins %o secs\n",
-                slopes,GetAssertions(),#iso,t1 div 60,t1 mod 60);
+        output cat:=Sprintf("%o\n\tUsing slopesDieudonneModules:=%o and SetAssertions(%o),\n\twe got %o isomorphism classes in %o mins %o secs\n",
+                IsogenyLabel(h),slopes,GetAssertions(),#iso,t1 div 60,t1 mod 60);
+printf "%o Using slopesDieudonneModules:=%o and SetAssertions(%o),\n\twe got %o isomorphism classes in %o mins %o secs\n",IsogenyLabel(h),slopes,GetAssertions(),#iso,t1 div 60,t1 mod 60;
         t0:=Cputime();
         gen_del_mods:=[GeneralizedDeligneModule(A):A in iso];
         t1:=Round(Cputime(t0));
@@ -112,5 +116,6 @@ parallel script, to run on screen
             output cat:=Sprintf("\t%o,%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#wS,#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo);
         end for;
 
-    print output;
+    file_output:="~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_output_" * (slopes eq "all" select "all" else "01") * ".m";
+    fprintf file_output,"%o",output;
     quit;
