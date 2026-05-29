@@ -15,7 +15,7 @@
 //    SetVerbose("Algorithm_2",2);
 //    SetVerbose("Algorithm_3",2);
 //    SetVerbose("AlphaWTypeAtPlace",2);
-    SetVerbose("UnitGroupQuotients",2);
+//    SetVerbose("UnitGroupQuotients",2);
 
     PP<x>:=PolynomialRing(Integers());
 

@@ -63,12 +63,17 @@ together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).}
         end if;
         indff:=Index(S,ff);
         assert2 forall{P : P in primes_S_above_ff | indff mod Index(S,P) eq 0 };
-        ks:=[ 10 + (Valuation(indff,p) div Valuation(Index(S,P),p)) : P in primes_S_above_ff ];
+        ks:=[(Valuation(indff,p) div Valuation(Index(S,P),p)) : P in primes_S_above_ff ];
         prod:=&*([ primes_S_above_ff[i]^ks[i] : i in [1..#primes_S_above_ff]]);
-        ff_prod:=ff+prod;
-        assert not 1 in ff_prod;
-        assert2 OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
-      
+        if #primes_S eq #primes_S_above_ff then
+            ff_prod:=ff+prod;
+        else
+        // We add the primes in (0,1) -- or above p, depending on slopes --  which do not contain ff: 
+        // if we do not, the representative map will return elements whose valuation is 0 only at the primes
+        // containing ff, but the might not be units at the others. 
+        // Hence, they will not map to units in OA' -- or OA_p.
+            ff_prod:=(ff+prod)*&*[P:P in Seqset(primes_S) diff Seqset(primes_S_above_ff)];
+        end if;
         I:=OA!!(ff_prod);
         R,r:=ResidueRingUnits(I); // R=(OA/I)^* , r:R->OA
         gens:=ResidueRingUnitsSubgroupGenerators(ff_prod); // gens of (S/ff_prod)^*
@@ -95,43 +100,44 @@ together with an ideal I of OA such that OA'/S' = (OA/I)/(S/I).}
                 plE:=nu01;
             end if;
             plA:=&cat[PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu):nu in plE];
-            plA:=[P:P in plA|I subset P];
+            assert2 forall{P:P in plA|I subset P};
+            assert2 forall{g:g in Generators(R),P in plA|r(g) notin P};
             assert2 forall{g:g in gammas,P in plA|g notin P};
         end if;
-// debugging
-gensS:=[A!x:x in 
-        [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
-        <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
-        <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
-        <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-        <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-        <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-        <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
-        <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
-if S eq Order(gensS) and slopes eq "all" then
-    gensR:=[r(g):g in Generators(R)];
-    gensU:=[u(g):g in Generators(U)];
-    Join([
-    StripWhiteSpace("gensR=" cat Sprint(PrintSeqAlgEtQElt(gensR))),
-    StripWhiteSpace("gensU=" cat Sprint(PrintSeqAlgEtQElt(gensU)))
-    ],"\n");
-    //good gens
-    assert R eq sub<R|[(A!x)@@r:x in
-    [<[3,2,0,0,0,0],[3,3,2,5/4,1/4,0]>,<[5/4,43/16,83/32,73/64,7/16,13/64],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>,<[1,1,1/2,3/4,1/4,0],[3,2,0,0,0,0]>]
-    ]>;
-    assert U eq sub<U|[(A!x)@@u:x in
-    [<[3,3,2,5/4,1/4,0],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>]
-    ]>;
-    //bad gens
-    assert R eq sub<R|[(A!x)@@r:x in
-    [<[3,2,0,0,0,0],[1,1,1/2,3/4,1/4,0]>,<[9/4,59/16,83/32,73/64,7/16,13/64],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[9/4,59/16,83/32,73/64,7/16,13/64]>,<[1,1,1/2,3/4,1/4,0],[3,2,0,0,0,0]>]
-    ]>;
-    assert U eq sub<U|[(A!x)@@u:x in
-    [<[3,2,0,0,0,0],[-7/4,27/16,83/32,73/64,7/16,13/64]>,<[3,3,2,5/4,1/4,0],[3,2,0,0,0,0]>]
-    ]>;
-    //the asserts for R seem to pass. So no issue here, I'd say
-end if;
-//end debugging
+//// debugging
+//gensS:=[A!x:x in 
+//        [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
+//        <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
+//        <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
+//        <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
+//        <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
+//        <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
+//        <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
+//        <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
+//if S eq Order(gensS) and slopes eq "all" then
+//    gensR:=[r(g):g in Generators(R)];
+//    gensU:=[u(g):g in Generators(U)];
+//    Join([
+//    StripWhiteSpace("gensR=" cat Sprint(PrintSeqAlgEtQElt(gensR))),
+//    StripWhiteSpace("gensU=" cat Sprint(PrintSeqAlgEtQElt(gensU)))
+//    ],"\n");
+//    //good gens
+//    assert R eq sub<R|[(A!x)@@r:x in
+//    [<[3,2,0,0,0,0],[3,3,2,5/4,1/4,0]>,<[5/4,43/16,83/32,73/64,7/16,13/64],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>,<[1,1,1/2,3/4,1/4,0],[3,2,0,0,0,0]>]
+//    ]>;
+//    assert U eq sub<U|[(A!x)@@u:x in
+//    [<[3,3,2,5/4,1/4,0],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>]
+//    ]>;
+//    //bad gens
+//    assert R eq sub<R|[(A!x)@@r:x in
+//    [<[3,2,0,0,0,0],[1,1,1/2,3/4,1/4,0]>,<[9/4,59/16,83/32,73/64,7/16,13/64],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[9/4,59/16,83/32,73/64,7/16,13/64]>,<[1,1,1/2,3/4,1/4,0],[3,2,0,0,0,0]>]
+//    ]>;
+//    assert U eq sub<U|[(A!x)@@u:x in
+//    [<[3,2,0,0,0,0],[-7/4,27/16,83/32,73/64,7/16,13/64]>,<[3,3,2,5/4,1/4,0],[3,2,0,0,0,0]>]
+//    ]>;
+//    //the asserts for R seem to pass. So no issue here, I'd say
+//end if;
+////end debugging
         S`UnitGroupQuotientAtSlope:=<U,u,I,slopes>;
     end if;
     U,u,I:=Explode(S`UnitGroupQuotientAtSlope);
@@ -165,36 +171,32 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
 
         U,u,I:=UnitGroupQuotientAtSlope(isog,S,slopes); //u:U=OA'^*/S'^* -> A
         fixed_pts_gens:=[ g@@u : g in isog`units_quotient_fixed_sigma_WR_gens];
-F:=sub<U|fixed_pts_gens>;
-assert forall{x:x,y in isog`units_quotient_fixed_sigma_WR_gens| (x*y)@@u in F};
+//F:=sub<U|fixed_pts_gens>;
+//assert forall{x:x,y in isog`units_quotient_fixed_sigma_WR_gens| (x*y)@@u in F};
         Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
-
 // alternative method
 //Q,q,sigma:=SigmaOnQuotientOfOA(isog,I); // sigma: Q->Q
 //id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation
 //F:=Kernel(id_sigma);
 //Q,q0:=quo<U|F>;
 // end alternative method: doesn't seem to make a difference
-
-//QUESTION: is sigma well defined on U? S might not be fixed by it...
-
         q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
-assert forall{x:x in isog`units_quotient_fixed_sigma_WR_gens| x@@q eq Zero(Q)};
-assert forall{x:x,y in isog`units_quotient_fixed_sigma_WR_gens| (x*y)@@q eq Zero(Q)};
-assert forall{x:x,y in Q| (x@q*y@q)@@q eq x+y};
+//assert forall{x:x in isog`units_quotient_fixed_sigma_WR_gens| x@@q eq Zero(Q)};
+//assert forall{x:x,y in isog`units_quotient_fixed_sigma_WR_gens| (x*y)@@q eq Zero(Q)};
+//assert forall{x:x,y in Q| (x@q*y@q)@@q eq x+y};
         gammas:=[q(x):x in Q];
-        assert Q eq sub<Q|[g@@q:g in gammas]>;
+//assert Q eq sub<Q|[g@@q:g in gammas]>;
         
-//hardcoding gammas
-gensS:=[A!x:x in 
-        [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
-        <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
-        <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
-        <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-        <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-        <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-        <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
-        <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
+////hardcoding gammas
+//gensS:=[A!x:x in 
+//        [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
+//        <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
+//        <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
+//        <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
+//        <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
+//        <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
+//        <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
+//        <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
 //if S eq Order(gensS) and slopes eq "all" then 
 //"HARDCODING gammas";
 //gammas:=[A!x:x in 
@@ -205,35 +207,32 @@ gensS:=[A!x:x in
 //  ];
 //end if;
 // END : this makes the failed assert disappear.
-
-
-if S eq Order(gensS) and slopes eq "all" then
-    gensQ:=[q(g):g in Generators(Q)];
-    Join([
-    StripWhiteSpace("gensQ=" cat Sprint(PrintSeqAlgEtQElt(gensQ)))
-    ],"\n");
-    //good gens
-    assert Q eq sub<Q|[(A!x)@@q:x in
-    [<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>]
-    ]>;
-    //bad gens
-    assert Q eq sub<Q|[(A!x)@@q:x in
-    [<[3,2,0,0,0,0],[9/4,59/16,83/32,73/64,7/16,13/64]>]
-    ]>;
-    //the asserts for R seem to pass. So no issue here, I'd say
-end if;
-
-//end debugging
-if #gammas gt 1 then
-    Join([
-    Sprintf("[OA:S]=%o",Index(OA,S)),
-    StripWhiteSpace("S=" cat Sprint(PrintSeqAlgEtQElt(ZBasis(S)))),
-    StripWhiteSpace("F=" cat Sprint(Generators(F))),
-    StripWhiteSpace("gens_F_OA=" cat Sprint(PrintSeqAlgEtQElt([u(g):g in Generators(F)]))),
-    StripWhiteSpace("gammas=" cat Sprint(PrintSeqAlgEtQElt(gammas)))
-    ],"\n");
-end if;
-
+//if S eq Order(gensS) and slopes eq "all" then
+//    gensQ:=[q(g):g in Generators(Q)];
+//    Join([
+//    StripWhiteSpace("gensQ=" cat Sprint(PrintSeqAlgEtQElt(gensQ)))
+//    ],"\n");
+//    //good gens
+//    assert Q eq sub<Q|[(A!x)@@q:x in
+//    [<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>]
+//    ]>;
+//    //bad gens
+//    assert Q eq sub<Q|[(A!x)@@q:x in
+//    [<[3,2,0,0,0,0],[9/4,59/16,83/32,73/64,7/16,13/64]>]
+//    ]>;
+//    //the asserts for R seem to pass. So no issue here, I'd say
+//end if;
+//
+////end debugging
+//if #gammas gt 1 then
+//    Join([
+//    Sprintf("[OA:S]=%o",Index(OA,S)),
+//    StripWhiteSpace("S=" cat Sprint(PrintSeqAlgEtQElt(ZBasis(S)))),
+//    StripWhiteSpace("F=" cat Sprint(Generators(F))),
+//    StripWhiteSpace("gens_F_OA=" cat Sprint(PrintSeqAlgEtQElt([u(g):g in Generators(F)]))),
+//    StripWhiteSpace("gammas=" cat Sprint(PrintSeqAlgEtQElt(gammas)))
+//    ],"\n");
+//end if;
         S`UnitGroupQuotientAtSlopeFixedBySigma:=<Q,q,gammas,slopes>;
 
         vprintf UnitGroupQuotients : "\n#US,#USfixed,gammas in Q = %o,%o,%o\n",
@@ -247,61 +246,9 @@ end if;
                 plE:=nu01;
             end if;
             plA:=&cat[PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu):nu in plE];
-            //FIXME I think there is something wrong here:
-            // I get a failed assert2 below (the second one) for 3.4.a_ad_c.m and 3.4.a_ad_c.
-            // It occurs only #gammas>1, but not always. With "(0,1)", we always have #gamma=1.
-            // If the assert2 does not fail, the size of the output with "all" is the same as with "(0,1)".
-            // Also, the assert in IsomClassesDieudon... marked with a fixme does not fail either.
-            // This suggests that gammas are not a set of representative of what the quotient we want to compute.
-            assert2 forall{g:g in gammas,P in [P:P in plA|I subset P]|g notin P};
-            //assert2 forall{g:g in gammas,P in plA|g notin P};
+            assert2 forall{g:g in gammas,P in plA|g notin P};
         end if;
     end if;
     Q,q,gammas:=Explode(S`UnitGroupQuotientAtSlopeFixedBySigma);
     return Q,q,gammas;
 end intrinsic;
-
-/*
-    // Debugging
-    SetColumns(0);
-    SetAssertions(3);
-
-    AttachSpec("~/AbVarFq/spec");
-    //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
-
-    SetVerbose("DieudonneModules",2);
-    SetVerbose("Algorithm_2",2);
-    SetVerbose("Algorithm_3",2);
-    SetVerbose("AlphaWTypeAtPlace",2);
-    SetVerbose("UnitGroupQuotients",2);
-
-    PP<x>:=PolynomialRing(Integers());
-
-    h:=x^6-3*x^4+2*x^3-12*x^2+64;
-    assert IsSquarefree(h);
-    isog:=IsogenyClass(h);
-    slopes:="all";
-    _,_,_,_,A,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-    gensS:=[A!x:x in 
-            [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
-            <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
-            <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
-            <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-            <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-            <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-            <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
-            <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
-    S:=Order(gensS);
-    UnitGroupQuotientAtSlopeFixedBySigma(isog,S,slopes);
-
-
-    //bad:
-    //gens_F_OA := [A!x:x in [<[3,2,0,0,0,0],[3,3,2,5/4,1/4,0]>,
-                <[9/4,59/16,83/32,73/64,7/16,13/64],[-7/4,27/16,83/32,73/64,7/16,13/64]>]];
-    //good?
-    //gens_F_OA := [A!x:x in [<[9/4,43/16,35/32,41/64,7/16,13/64],[1,1,1/2,3/4,1/4,0]>,
-            <[13/4,75/16,83/32,73/64,7/16,13/64],[-11/4,11/16,83/32,73/64,7/16,13/64]>]];
-*/
