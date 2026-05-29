@@ -1,13 +1,9 @@
 /*
 parallel script, to run on screen
-    parallel -j 7 -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
+    parallel -j 7 -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h_s:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
 */
 
-    // The next variable determines wheather we save again the isom
-    // classes. See the end of the file.
-    //SAVE:=true;
-    SAVE:=false;
-    //SetAssertions(2);
+    SetAssertions(2);
 
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
@@ -43,32 +39,78 @@ parallel script, to run on screen
     end function;
 
     PP<x>:=PolynomialRing(Integers());
-    // the input variable is called "h"
-    h:=eval(h);
-    assert IsSquarefree(h);
-    isog:=IsogenyClass(h);
-    g:=Dimension(isog);
-    q:=FiniteField(isog);
-    t,p,a:=IsPrimePower(q); assert t;
-    label:=IsogenyLabel(h);
-
-    t0:=Cputime();
-    iso:=IsomorphismClasses(isog);
-    n_iso:=#iso;
-    t1:=Cputime(t0);
-    t1:=Truncate(t1) div 60; // in minutes
-
-    printf "isogeny class %o \tisomorphism classes %o\tcomputed in %o minutes\n",label,n_iso,t1;
-
-    // to SAVE again the output
-    if SAVE then
-        fld:="~/IsomClAbVarFqCommEndAlg/examples/";
-        assert label notin Split(Pipe("ls " cat fld,"r"));
-        str:=SaveAbVarFqCommEndAlg(iso);
-        fprintf fld*label,"%o",str;
-        delete isog;
-        delete iso;
-        isog:=IsogenyClass(h);
-        assert n_iso eq #LoadAbVarFqCommEndAlg(isog,Read(fld*label)); 
-    end if;
+    // the input variable is called "h_s"
+    h_s:=eval(h_s);
+    h:=h_s[1];
+    slopes:=h_s[2];
+    output:="";
     
+        output cat:=Sprintf("-------------------------\n");
+
+        isog:=IsogenyClass(h);
+        g:=Dimension(isog);
+        q:=FiniteField(isog);
+        t,p,a:=IsPrimePower(q); assert t;
+        t0:=Cputime();
+        iso:=IsomorphismClassesCommEndAlg(isog:slopesDieudonneModules:=slopes);
+        t1:=Round(Cputime(t0));
+        output cat:=Sprintf("Using slopesDieudonneModules:=%o and SetAssertions(%o),\n\twe got %o isomorphism classes in %o mins %o secs\n",
+                slopes,GetAssertions(),#iso,t1 div 60,t1 mod 60);
+        t0:=Cputime();
+        gen_del_mods:=[GeneralizedDeligneModule(A):A in iso];
+        t1:=Round(Cputime(t0));
+        output cat:=Sprintf("\tGeneralizedDeligneModules computed in %o mins %o secs\n",
+                t1 div 60,t1 mod 60);
+        nu0,nu01,nu1:=PlacesOfQFAbove_p(isog);
+        nus:=nu0 cat nu01 cat nu1;
+        data_nus:=[<Slope(nu),RamificationIndex(nu),GCD(a,InertiaDegree(nu))>:nu in nus];
+        data_nus:=StripWhiteSpace(Sprint(data_nus));
+        output cat:=Sprintf("\t<s_nu,e_nu,g_nu> = %o\n",data_nus);
+
+        R:=ZFVOrder(isog);
+        E:=Algebra(R);
+
+        oo:=OverOrders(R);
+        OE:=MaximalOrder(E);
+        _,P,_:=PrimesOfZFVAbove_p(isog);
+        assert #P eq 1;
+        P:=P[1];
+        // P is the local-local maximal ideal of R above p
+
+        is_maximal_at_01:=function(S)
+        // check if the overorder S of R is maximal locally at its local-local part.
+            return S!!OneIdeal(OE) eq OneIdeal(S) + S!!OE!!P;
+        end function;
+
+        Ep,mEp:=TotallyRealSubAlgebra(E);
+        OEp:=MaximalOrder(Ep);
+        output cat:=Sprintf("\tp is %o totally split in E^+\n\n",(#PlacesAboveRationalPrime(Ep,p) eq g select "" else "not "));
+        OEp:=[mEp(z):z in ZBasis(OEp)];
+        contains_OEp:=func< S | forall{z:z in OEp|z in S}>;
+
+
+        Q,mQ,F,V,_,_,J:=SemilinearOperators(isog);
+        ind:=[Index(OE,S):S in oo];
+        ParallelSort(~ind,~oo);
+        Reverse(~oo);
+        ends:=[ EndomorphismRing(A) : A in iso ];
+        output cat:=Sprintf("For each overorder S, we print the following string of data:\n\tiS = which overorder of Z[pi,q/pi]\n\t[OE:S]\n\tw(S) = #iso away from DM\n\td(S) = #Dieudonné modules with End S\n\th(S)=#Pic(S)\n\ta numbers of the DM with End S\n\tis S maximal at (0,1)?\n\tdoes S contain O_{E^+}?\n\tindices of minimal overorders\n\n");
+        for iS->S in oo do
+            dmS:={@ dmA where _,dmA:=IsomDataCommEndAlg(A) : A in iso | EndomorphismRing(A) eq S @};
+            wS:={@ wA where wA:=IsomDataCommEndAlg(A) : A in iso | EndomorphismRing(A) eq S @};
+            // a-numbers
+            a_nums:=[];
+            for dm in dmS do
+                assert dm subset J;
+                M:=sub<Q|[mQ(z):z in ZBasis(dm)]>;
+                FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
+                VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
+                Append(~a_nums,Ilog(q,Index(M,FM+VM)));
+            end for;
+            // indices of minimal overorders (to find the place of S in the graph of inclusions)
+            ind_min_oo:=[ Index(oo,T) : T in MinimalOverOrders(S) ];
+            output cat:=Sprintf("\t%o,%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#wS,#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo);
+        end for;
+
+    print output;
+    quit;
