@@ -44,7 +44,6 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
         a:=Ilog(p,FiniteField(isog));
         OA:=MaximalOrder(A);
         OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m*OA);
-        //FIXME this sigma is already computed in SemilinearOperatorsWType...
         PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
         f_nu:=InertiaDegree(nu);
         g_nu:=GCD(a,f_nu); //q=p^a
@@ -272,7 +271,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
     if not assigned isog`SemilinearOperatorsWType then
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
-        _,_,_,_,A,pi_A,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+        _,_,_,_,A,pi_A,OA,_,WR,A_as_vector_space_over_L_data,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
 
         require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
         pps0,pps01,pps1:=PrimesOfSAbove_p(isog,WR);
@@ -308,7 +307,7 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
         //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
         // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
         // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-        QOA,qOA,sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=SigmaOnQuotientOfOA(isog,p^m1*OA);
+        QOA,qOA,sigma_QOA:=SigmaOnQuotientOfOA(isog,p^m1*OA);
 
         PPs:=[];
         alpha_s:=[];
@@ -347,6 +346,15 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
         // It suffices to check if for powers of zz in OA.
         if GetAssertions() ge 2 then
             vprintf Algorithm_3,2 : "\tTesting semilinearity of F and V...";
+            E:=DeligneAlgebra(isog);
+            _,_,_,mAW_zbOE:=Explode(A_as_vector_space_over_L_data);
+            W:=Codomain(mAW_zbOE);
+            FOA,fOA,_:=Explode(OA_as_abelian_group_data);
+            _,F,_,LL,LLtoL,imgs_zz:=Explode(A`sigma_fin_prec);
+            // - We construct the embedding F=ZZ[zz] -> OA=FOA induced by zz:->sum_i zz*zi 
+            //   where zi is the image of a ZBasis of OA in FOA
+            FtoFOA:=map<F->FOA|x:->fOA((W![ LLtoL(LL!Eltseq(x)):i in [1..AbsoluteDimension(E)]])@@mAW_zbOE)>; 
+            powers_zz_diagonally_inOA_via_zbOE:=[ (FtoFOA(z))@@fOA : z in imgs_zz ];
             for z in powers_zz_diagonally_inOA_via_zbOE do
                 sigma_z:=z@qOA@sigma_QOA@@qOA;
                 z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
