@@ -142,7 +142,7 @@ intrinsic PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog::IsogenyClass
         if gP gt 2 then
             // the following does nothing if gP is 1 or 2
             PP:=&*pp;
-            Q,mQ,sigma:=SigmaOnQuotientOfOA(PP);
+            Q,mQ,sigma:=SigmaOnQuotientOfOA(isog,PP);
             PP0:=pp[1];
             gens:=[mQ(x):x in Generators(PP0)];
             output:=[PP0];
