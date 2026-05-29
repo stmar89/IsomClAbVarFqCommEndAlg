@@ -127,83 +127,20 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
                 F:=Kernel(id_sigma);
                 return U,u,F;
             end function;
-
             // only for WR: F = Delta(OE')^*W'R^*/W'R^* inside OA'^*/W'R^*
             U,u,F:=fixed_pts_sigma(WR);
             isog`units_quotient_fixed_sigma_WR_gens:=[u(F.i) : i in [1..Ngens(F)]];
             delete U,u,F;
         end if;
-
         U,u,I:=UnitGroupQuotientAtSlope(isog,S,slopes); //u:U=OA'^*/S'^* -> A
         fixed_pts_gens:=[ g@@u : g in isog`units_quotient_fixed_sigma_WR_gens];
-//F:=sub<U|fixed_pts_gens>;
-//assert forall{x:x,y in isog`units_quotient_fixed_sigma_WR_gens| (x*y)@@u in F};
         Q,q0:=quo<U|fixed_pts_gens>; //q0: U->U/F=Q
-// alternative method
-//Q,q,sigma:=SigmaOnQuotientOfOA(isog,I); // sigma: Q->Q
-//id_sigma:=hom< U->U | [ U.i-(U.i@u@q@sigma@@q@@u) : i in [1..Ngens(U)]]>; //additive notation
-//F:=Kernel(id_sigma);
-//Q,q0:=quo<U|F>;
-// end alternative method: doesn't seem to make a difference
         q:=map<Q->Algebra(S) |  x:->u(x@@q0), y:->q0(y@@u) >;
-//assert forall{x:x in isog`units_quotient_fixed_sigma_WR_gens| x@@q eq Zero(Q)};
-//assert forall{x:x,y in isog`units_quotient_fixed_sigma_WR_gens| (x*y)@@q eq Zero(Q)};
-//assert forall{x:x,y in Q| (x@q*y@q)@@q eq x+y};
         gammas:=[q(x):x in Q];
-//assert Q eq sub<Q|[g@@q:g in gammas]>;
-        
-////hardcoding gammas
-//gensS:=[A!x:x in 
-//        [<[0,0,1/4,1/4,-1/4,-1/4],[0,0,0,0,0,0]>,<[0,0,0,1/8,1/4,1/8],[0,0,-1/4,0,1/4,0]>,
-//        <[0,0,0,1/8,1/4,1/8],[0,0,1/4,0,-1/4,0]>,<[0,0,0,-1/4,0,1/4],[0,0,0,1/8,1/4,1/8]>,
-//        <[0,0,1/4,0,-1/4,0],[0,0,0,-1/8,-1/4,-1/8]>,
-//        <[-1/4,-3/16,-3/32,-9/64,-3/16,3/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-//        <[1/4,3/16,3/32,1/64,-1/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-//        <[1/4,-5/16,-5/32,1/64,-5/16,-11/64],[1/4,-1/16,-1/32,-3/64,-1/16,1/64]>,
-//        <[0,1/4,1/8,-1/16,1/4,3/16],[0,1/4,1/8,1/16,0,-3/16]>,<[0,1/4,1/8,1/16,0,-3/16],[0,-1/4,1/8,3/16,-1/4,-1/16]>,
-//        <[0,0,-1/4,1/4,0,1/2],[0,0,0,1/8,0,-1/8]>,<[0,1/4,-1/8,-1/16,1/4,-1/16],[0,-1/4,1/8,-3/16,1/4,-3/16]>]];
-//if S eq Order(gensS) and slopes eq "all" then 
-//"HARDCODING gammas";
-//gammas:=[A!x:x in 
-//  // good?
-//  [<[3,2,0,0,0,0],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[5/4,43/16,83/32,73/64,7/16,13/64]>]
-//  // bad
-//  //[<[3,2,0,0,0,0],[3,2,0,0,0,0]>,<[3,2,0,0,0,0],[-7/4,27/16,83/32,73/64,7/16,13/64]>]
-//  ];
-//end if;
-// END : this makes the failed assert disappear.
-//if S eq Order(gensS) and slopes eq "all" then
-//    gensQ:=[q(g):g in Generators(Q)];
-//    Join([
-//    StripWhiteSpace("gensQ=" cat Sprint(PrintSeqAlgEtQElt(gensQ)))
-//    ],"\n");
-//    //good gens
-//    assert Q eq sub<Q|[(A!x)@@q:x in
-//    [<[3,2,0,0,0,0],[-11/4,11/16,83/32,73/64,7/16,13/64]>]
-//    ]>;
-//    //bad gens
-//    assert Q eq sub<Q|[(A!x)@@q:x in
-//    [<[3,2,0,0,0,0],[9/4,59/16,83/32,73/64,7/16,13/64]>]
-//    ]>;
-//    //the asserts for R seem to pass. So no issue here, I'd say
-//end if;
-//
-////end debugging
-//if #gammas gt 1 then
-//    Join([
-//    Sprintf("[OA:S]=%o",Index(OA,S)),
-//    StripWhiteSpace("S=" cat Sprint(PrintSeqAlgEtQElt(ZBasis(S)))),
-//    StripWhiteSpace("F=" cat Sprint(Generators(F))),
-//    StripWhiteSpace("gens_F_OA=" cat Sprint(PrintSeqAlgEtQElt([u(g):g in Generators(F)]))),
-//    StripWhiteSpace("gammas=" cat Sprint(PrintSeqAlgEtQElt(gammas)))
-//    ],"\n");
-//end if;
         S`UnitGroupQuotientAtSlopeFixedBySigma:=<Q,q,gammas,slopes>;
-
         vprintf UnitGroupQuotients : "\n#US,#USfixed,gammas in Q = %o,%o,%o\n",
-                            #U,#Q,StripWhiteSpace(Sprint([g@@q:g in gammas]));
+                                     #U,#Q,StripWhiteSpace(Sprint([g@@q:g in gammas]));
         if GetAssertions() ge 2 then
-            assert2 forall{g:g in gammas|g in OA};
             nu0,nu01,nu1:=PlacesOfQFAbove_p(isog);
             if slopes eq "all" then
                 plE:=nu0 cat nu01 cat nu1;
@@ -211,7 +148,8 @@ intrinsic UnitGroupQuotientAtSlopeFixedBySigma(isog::IsogenyClassFq,S::AlgEtQOrd
                 plE:=nu01;
             end if;
             plA:=&cat[PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu):nu in plE];
-            assert2 forall{g:g in gammas,P in plA|g notin P};
+            assert2 forall{g:g in Generators(Q)|q(g) in OA};
+            assert2 forall{g:g in Generators(Q),P in plA|q(g) notin P};
         end if;
     end if;
     Q,q,gammas:=Explode(S`UnitGroupQuotientAtSlopeFixedBySigma);
