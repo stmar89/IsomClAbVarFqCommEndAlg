@@ -81,7 +81,8 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
             if slopesDieudonneModules eq "(0,1)" then
                 // We create N
                 DeltaJ:=DeltaIdeal(isog,J);
-                k:=Valuation(Index(DeltaJ+DM,DeltaJ meet DM),p);
+                DeltaJ_DM:=DeltaJ+DM;
+                k:=Valuation(Index(DeltaJ_DM,DeltaJ),p)+Valuation(Index(DeltaJ_DM,DM),p);
                 mm0,mm01,mm1:=PrimesOfZFVAbove_p(isog);
                 m_k:=#mm01 eq 1 select Ideal(WR,[Delta_map(z):z in ZBasis(mm01[1]^k)]) else OneIdeal(WR);
                 nn_k:=#mm0+#mm1 eq 0 select OneIdeal(WR) 
@@ -93,7 +94,8 @@ intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
             // We create K
             K_p:=R!!DeltaInverseIdealpPart(isog,N);
             K_coprime_p:=J;
-            ind:=Index(K_p+K_coprime_p,K_p meet K_coprime_p);
+            sum:=K_p+K_coprime_p;
+            ind:=Index(sum,K_p)*Index(sum,K_coprime_p);
             k:=Valuation(ind,p);
             pk:=p^k;
             ind_coprime_p:=ind div pk;
