@@ -72,12 +72,15 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
         nus:=nus0 cat nus01 cat nus1;
         unifs:=UniformizersInQFAt_p(isog,nus);
         oOA:=Order(I)!!OneIdeal(OA);
-        cc:=OA!!ColonIdeal(oOA,I);
-        exps:=[];
-        for nu in nus do
-            M_nu:=Max([Valuation(cc,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]);
-            Append(~exps,M_nu);
-        end for;
+        // OLD
+        // cc:=OA!!ColonIdeal(oOA,I);
+        // exps:=[];
+        // for nu in nus do
+        //     M_nu:=Max([Valuation(cc,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]);
+        //     Append(~exps,M_nu);
+        // end for;
+        // NEW: avoids the ColonIdeal
+        exps:=[-Min([Valuation(OA!!I,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]:nu in nus];
         dp:=&*[unifs[i]^exps[i]:i in [1..#nus]];
         dpI:=Delta_map(dp)*I;
         d:=Index(oOA+dpI,oOA);
