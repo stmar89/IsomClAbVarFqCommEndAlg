@@ -80,7 +80,7 @@ intrinsic DeltaInverseIdealpPart(isog::IsogenyClassFq, I::AlgEtQIdl)->AlgEtQIdl
         //     Append(~exps,M_nu);
         // end for;
         // NEW: avoids the ColonIdeal
-        exps:=[-Min([Valuation(OA!!I,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]:nu in nus];
+        exps:=[-Min([Valuation(OA!!I,P) : P in PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu)]):nu in nus];
         dp:=&*[unifs[i]^exps[i]:i in [1..#nus]];
         dpI:=Delta_map(dp)*I;
         d:=Index(oOA+dpI,oOA);
@@ -110,12 +110,30 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
     unifs:=UniformizersInQFAt_p(isog,nus);
     p:=CharacteristicFiniteField(isog);
 
-    pExponent:=function(A,B)
+    // pExponent:=function(A,B)
+    // // Given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B),
+    // // but only a quotient isomorphic to its p-part.
+    //     vp_ind:=Valuation(Index(A,B),p);
+    //     // now I only compute the quotient of the p-part.
+    //     vp_exp:=Valuation(Exponent(Quotient(A,B+p^vp_ind*A)),p);
+    //     return vp_exp;
+    // end function;
+
+    pExponent:=function(A,B : prec:=0)
     // Given B c A, returns the vp(Exponent(Quotient(A,B))) without computing Quotient(A,B),
     // but only a quotient isomorphic to its p-part.
-        vp_ind:=Valuation(Index(A,B),p);
-        // now I only compute the quotient of the p-part.
-        vp_exp:=Valuation(Exponent(Quotient(A,B+p^vp_ind*A)),p);
+        ZBasisLLL(A);
+        ZBasisLLL(B);
+        if prec eq 0 then
+            prec:=Valuation(Index(A,B),p);
+        end if;
+        if prec eq 0 then
+            return 0;
+        end if;
+        zbB:=ZBasis(B);
+        M:=Matrix(pAdicRing(p,prec),AbsoluteCoordinates(zbB,A));
+        n:=#zbB;
+        vp_exp:=Valuation(SmithForm(M)[n,n]);
         return vp_exp;
     end function;
 
@@ -159,7 +177,8 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
         ZBasisLLL(I);
         D_scale:=true;
         if I subset J then
-            if pExponent(J,I) le m0 then
+            vpInd:=Valuation(Index(J,I),p);
+            if vpInd le m0 or pExponent(J,I:prec:=vpInd) le m0 then
                 D_scale:=false;
             end if;
         else
@@ -170,7 +189,8 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
             y:=Index(xI+J,J);
             assert (y mod p) ne 0; // y coprime p
             yxI:=y*xI;
-            if pExponent(J,yxI) le m0 then
+            vpInd_2:=Valuation(Index(J,yxI),p);
+            if vpInd_2 le m0 or pExponent(J,yxI:prec:=vpInd_2) le m0 then
                 vprintf Delta_scaling,1 : "\nsuccess...",i;
                 D_scale:=false;
                 ZBasisLLL(yxI);
@@ -181,8 +201,11 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
         if D_scale then
             vprintf Delta_scaling,1 : "\nDelta-scaling the %o-th ideal into J...",i;
             I:=Delta_scale_inside(I,J);
-            vpN:=pExponent(J,I);
-            m0:=Max(m0,vpN);
+            vpInd_3:=Valuation(Index(J,I),p);
+            if vpInd_3 gt m0 then // vpN <= vpInd_3 
+                vpN:=pExponent(J,I:prec:=vpInd_3);
+                m0:=Max(m0,vpN);
+            end if;
             IIs[i]:=I;
         end if;
     end for;
