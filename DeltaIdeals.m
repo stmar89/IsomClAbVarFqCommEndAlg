@@ -133,7 +133,7 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
         zbB:=ZBasis(B);
         M:=Matrix(pAdicRing(p,prec),AbsoluteCoordinates(zbB,A));
         n:=#zbB;
-        vp_exp:=Valuation(SmithForm(M)[n,n]);
+        vp_exp:=Valuation(ElementaryDivisors(M)[n]);
         return vp_exp;
     end function;
 
