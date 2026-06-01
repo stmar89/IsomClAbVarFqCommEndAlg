@@ -3,7 +3,7 @@
 */
 
     SetColumns(0);
-    SetAssertions(2);
+    //SetAssertions(2);
 
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
@@ -22,7 +22,8 @@
     h:=x^6+2*x^5-x^4-6*x^3-4*x^2+32*x+64;
     assert IsSquarefree(h);
 
-    for slopes in ["all","(0,1)"] do
+    //for slopes in ["all","(0,1)"] do
+    for slopes in ["all"] do
         if assigned isog then
             delete isog; //for the second run
         end if;
@@ -38,7 +39,9 @@
         printf "Using slopesDieudonneModules:=%o and SetAssertions(%o),\n\twe got %o isomorphism classes in %o mins %o secs\n",
                 slopes,GetAssertions(),#iso,t1 div 60,t1 mod 60;
         t0:=Cputime();
+SetProfile(true);
         gen_del_mods:=[GeneralizedDeligneModule(A):A in iso];
+SetProfile(false);
         t1:=Round(Cputime(t0));
         printf "\tGeneralizedDeligneModules computed in %o mins %o secs\n",
                 t1 div 60,t1 mod 60;
