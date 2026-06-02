@@ -1,0 +1,7 @@
+    
+    rm ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2/input.m; \
+    rm ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2/output.m; \
+    parallel -j 20 -a ~/IsomClAbVarFqCommEndAlg/tests/weil_poly_all.txt \
+        magma -b cc:={} ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2/parallel_make_input.m & \
+    parallel -j 20 -a ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2/input.m \
+        magma -b cc:={} ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2/parallel_script.m
