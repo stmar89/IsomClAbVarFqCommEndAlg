@@ -1,5 +1,9 @@
 /* vim: set syntax=magma : */
 /*
+    The profiler with (0,1) measured 10000 ses for IsomorphismClassesCommEndAlg.
+    Around 5240 secs spent in DeltaScaleInside of which
+    around 4000 secs were spent in many calls of pExponent.
+    I have now opitmized these two. Let's try again.
 */
 
     SetColumns(0);
@@ -20,8 +24,10 @@
 
     h:=x^6 + 11*x^5 + 60*x^4 + 208*x^3 + 480*x^2 + 704*x + 512;
     assert IsSquarefree(h);
+    graphs:=[* *];
 
     for slopes in ["(0,1)","all"] do
+        SetProfile(true);
         if assigned isog then
             delete isog; //for the second run
         end if;
@@ -41,6 +47,10 @@
         t1:=Round(Cputime(t0));
         printf "\tGeneralizedDeligneModules computed in %o mins %o secs\n",
                 t1 div 60,t1 mod 60;
+        SetProfile(false);
+        Append(~graphs,ProfileGraph());
+        ProfileReset();
+                
         nu0,nu01,nu1:=PlacesOfQFAbove_p(isog);
         nus:=nu0 cat nu01 cat nu1;
         data_nus:=[<Slope(nu),RamificationIndex(nu),GCD(a,InertiaDegree(nu))>:nu in nus];
