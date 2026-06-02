@@ -60,3 +60,8 @@
             end if;
         end if;
     end for;
+
+    file_out:="~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2_output.txt";
+    for h in output do
+        fprintf file_out,"%o\n",StripWhiteSpace(Sprint(Coefficients(h)));
+    end for;
