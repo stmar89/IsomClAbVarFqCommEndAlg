@@ -1,6 +1,6 @@
 /*
 parallel script, to run on screen
-    parallel -j 10 --shuf -a ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2_output.txt magma -b cc:={} ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2_parallel_script.m
+    parallel -j 10 -a ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2_output.txt magma -b cc:={} ~/IsomClAbVarFqCommEndAlg/tests/gnu_gt_2_parallel_script.m
 */
 
     //SetAssertions(2);
