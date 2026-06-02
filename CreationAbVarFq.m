@@ -114,6 +114,7 @@ returns the unique abelian variety in isog with EndomorphismRing S whose l-Tate 
                     end if;
                 end for;
                 require S eq Order(&cat[ ZBasis(T) : T in end_test ]) : "The local info provided by I and M determine and order which is different from S.";
+            end if;
         end if;
     end if;
     AV:=New(AbelianVarietyFq);
