@@ -48,6 +48,13 @@ Changelog
          </ul>
          This version has been tested with Magma 2.29-6.
 </li>
+<li> <code>v1.0.2</code> Bugfix:
+         <ul>
+         <li> The representative function returned with units_quotient_fixed_sigma now gives representatives which are units at all places of OA' and not just modulo ff_prod.</li>
+         </ul>
+         This version has been tested with Magma 2.29-6.
+         The bug above did not affect the content of the referenced paper below.
+</li>
 </ul>
 
 References
