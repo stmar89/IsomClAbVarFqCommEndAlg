@@ -31,7 +31,7 @@ declare attributes AbelianVarietyFq : IsomDataCommEndAlg;
 /////////////////////////////////////////////////////
 
 intrinsic IsomDataCommEndAlg(A::AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl,AlgEtQIdl,AlgEtQOrd
-{Given an abelian variety over Fq with commutative Fq-endomorphism algebra, returns the tuple <I,M,L,S> as defined in AbelianVarietyCommEndAlg.}
+{Given an abelian variety over Fq with commutative Fq-endomorphism algebra, returns the tuple <I,M,L,S,slope> as defined in AbelianVarietyCommEndAlg.}
     return Explode(A`IsomDataCommEndAlg);
 end intrinsic;
 
@@ -74,8 +74,8 @@ returns the unique abelian variety in isog with EndomorphismRing S whose l-Tate 
                     if #places_01 gt 0 then
                         MT:=Ideal(WR,[ Delta_map(t)*m : t in ZBasis(T) , m in ZBasis(M) ]);
                         M_MT:=M+MT;
-                        assert assigned WR`PrimesOfSlopeIn01;
-                        sendsMtoM:=forall{ P : P in WR`PrimesOfSlopeIn01 | M_MT eq M + P*(M_MT) };
+                        _,ppWR01,_:=PrimesOfSAbove_p(isog,WR);
+                        sendsMtoM:=forall{ P : P in ppWR01 | M_MT eq M + P*(M_MT) };
                         // M = MT at (0,1)
                     else
                         sendsMtoM:=true;
@@ -101,14 +101,10 @@ returns the unique abelian variety in isog with EndomorphismRing S whose l-Tate 
                     else
                         sendsItoI:=true; 
                     end if;
-                    if #places_01 gt 0 then
-                        MT:=Ideal(WR,[ Delta_map(t)*m : t in ZBasis(T) , m in ZBasis(M) ]);
-                        assert M subset MT;
-                        sendsMtoM:=IsCoprime(Index(MT,M),p);
-                        // M = MT at p
-                    else
-                        sendsMtoM:=true;
-                    end if;
+                    MT:=Ideal(WR,[ Delta_map(t)*m : t in ZBasis(T) , m in ZBasis(M) ]);
+                    assert M subset MT;
+                    sendsMtoM:=IsCoprime(Index(MT,M),p);
+                    // M = MT at p
                     if sendsItoI and sendsMtoM then
                         Append(~end_test,T);
                     end if;

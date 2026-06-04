@@ -3,7 +3,7 @@
 */
 
     SetColumns(0);
-    SetAssertions(2);
+    SetAssertions(3);
 
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
