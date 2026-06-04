@@ -568,14 +568,14 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
         assert2 forall{P : P in primes_01_S_above_ff | indff mod Index(S,P) eq 0 };
         ks:=[ Valuation(indff,p) div Valuation(Index(S,P),p) : P in primes_01_S_above_ff ];
         prod:=&*([ primes_01_S_above_ff[i]^ks[i] : i in [1..#primes_01_S_above_ff]]);
-        if #primes_01_S eq #primes_S_above_ff then
+        if #primes_01_S eq #primes_01_S_above_ff then
             ff_prod:=ff+prod;
         else
             // We add the primes in (0,1) which do not contain ff: 
             // if we do not, the representative map will return elements whose valuation is 0 only at the primes
             // containing ff, but the might not be units at the others. 
             // Hence, they will not map to units in OA'.
-            ff_prod:=(ff+prod)*&*[P:P in Seqset(primes_01_S) diff Seqset(primes_S_above_ff)];
+            ff_prod:=(ff+prod)*&*[P:P in Seqset(primes_01_S) diff Seqset(primes_01_S_above_ff)];
         end if;
         assert not 1 in ff_prod;
         assert2 OneIdeal(S) meet S!!(OA!!ff_prod) eq ff_prod;        
