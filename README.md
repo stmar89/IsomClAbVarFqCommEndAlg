@@ -50,6 +50,14 @@ Changelog
 </li>
 </ul>
 
+TODO
+--
+<ul>
+<li>This code should version > v1.0.2</li>
+<li>The ComputaitonalAppendix does not reflect the structure of the intrinsics. It should be updated</li>
+<li>In the changelog, I should describe that the intrinisc DieudonneAlgebra... is slighlty not retrocompatible, since some of its output are now their own new intrinsics.</li>
+</ul>
+
 References
 --
 Check my webpage for more up-to-date bibliography info.
