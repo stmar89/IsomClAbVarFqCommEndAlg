@@ -48,7 +48,7 @@ intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
     pics:=[* [ iso[3] : iso in classes | Order(iso[3]) eq S ] : S in ends *];
     Is:={@ iso[1] : iso in classes @};
     dms:={@ iso[2] : iso in classes @};
-    slopes:={@ isog[5] @}; //either "(0,1)" or "all"
+    slopes:={@ iso[5] : iso in classes @}; //either "(0,1)" or "all"
     assert #slopes eq 1;
     assert slopes[1] in {"(0,1)","all"};
     slopes:=slopes[1] eq "(0,1)" select "\"(0,1)\"" else "\"all\"";
@@ -150,14 +150,17 @@ end intrinsic;
 
 /*
     
-    // The following code recomputes the isomorphism classes for the examples in the paper, saves them, 
-    // and test that loading is successful.
-    // It will trigger a failed assert if any of the files already exists. Do not forget to erase them beforehand.
+    // The following code recomputes the isomorphism classes for the examples in the paper, 
+    // produces the string to save them, and test that loading is successful.
+
+    SetDebugOnError(true);
+    SetAssertions(2);
 
     AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+
     fld:="~/IsomClAbVarFqCommEndAlg/examples/";
     PP<x>:=PolynomialRing(Integers());
     check:=Split(Pipe("ls " cat fld,"r"));
@@ -169,26 +172,24 @@ end intrinsic;
     <x^6 - x^5 - 3*x^4 + 45*x^3 - 27*x^2 - 81*x + 729,"3.9.ab_ad_bt">
     ];
 
-    for input in inputs do
+    for method in ["(0,1)","all"], input in inputs do
         h,file:=Explode(input);
         printf "%o : ",file;
-        assert file notin check;
         assert IsSquarefree(h);
         isog:=IsogenyClass(h);
 
         // saving data
         t0:=Cputime();
-        iso:=IsomorphismClasses(isog);
+        iso:=IsomorphismClassesCommEndAlg(isog:slopesDieudonneModules:=method);
         t1:=Cputime(t0);
         tot:=#iso;
-        printf "computed %o isomorphism classes in %o seconds; saving...",tot,t1;
+        printf "computed %o isomorphism classes with method %o in %o seconds; saving...",tot,method,t1;
         str:=SaveAbVarFqCommEndAlg(iso);
-        fprintf fld*file,"%o",str;
         printf "loading...";
         delete isog;
         delete iso;
         isog:=IsogenyClass(h);
-        assert tot eq #LoadAbVarFqCommEndAlg(isog,Read(fld*file)); 
+        assert tot eq #LoadAbVarFqCommEndAlg(isog,str); 
         printf "done\n";
     end for;
 
