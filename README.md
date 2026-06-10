@@ -25,7 +25,7 @@ Use the magma command `AttachSpec("spec")` after opening magma in the folder whe
 In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tree/main/examples) you will find files containing the code to reproduce the examples from the paper in the reference below. This should help to get a quick start on the functionalities.
 
 As in [`AbVarFq`](https://github.com/stmar89/AbVarFq), the abelian varieties have type `AbelianVarietyFq`.
-In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S>`, where `I` is a `Z[pi,q/pi]`-ideal which encodes the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
+In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S,slope>`, where `I` is a `Z[pi,q/pi]`-ideal encoding the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
 
 One can compute the action of the semilinear Frobenius and Verschiebung on each `M` (in an appropriate finite quotient) using `SemilinearOperators`. We refer to the documentation of that intrinsic for details.
 
@@ -50,7 +50,13 @@ Changelog
   
   This version has been tested with Magma 2.29-7.
   
-  The bug above did not affect the content of the referenced paper below.
+  The bug above did not affect the content of the paper referenced below.
+  
+- <code>v1.1.0-alpha</code>
+  * New functionality: The computation of the isomorphism classes now can be performed in two differnent ways, discussed above. We stress that the method `"(0,1)"` is mathematically identical to the one implemented in `v1.0.2` described in the referenced paper together with the [`accompanying appendix`](Computational_Appendix.pdf) , while the method `"all"` is an undocumented but easy generalization. Several intrinsics take as input a parameter called `slopes` or `slopesDieudonneModules` determining which of the two methods should be used.
+  * Code refactoring: The large monolitic intrinsics `DieudonneAlgebraCommEndAlg` and `IsomorphismClassesDieudonneModulesCommEndAlg` have been divided intro several intermediate intrinsics. Several functions returned as output by `DieudonneAlgebraCommEndAlg` are now their own intrinsics. We refer to the documentation for a description of the new intriniscs.
+ 
+  This version has been tested with Magma 2.29-7.
 
 References
 --
