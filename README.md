@@ -6,7 +6,7 @@ Description
 A Magma package to compute (unpolarized) Fq-isomorphism classes of abelian varieties over Fq belonging to an isogeny class with commutative Fq-endomorphism ring, for any finite field Fq.
 
 For the theory on which this code is based, see the `References` section at the bottom.
-The package contains the implementation of the algorithms in the paper, together with the ones contained in the [`accompanying appendix`](Computational_Appendix.pdf).
+The package contains the implementation of the algorithms in the paper, together with the ones contained in the accompanying [`appendix`](Computational_Appendix.pdf).
 The appendix contains also several technical intermediate lemmas.
 
 Please send comments and bug reports to `stefano.marseglia89@gmail.com`.
@@ -16,25 +16,41 @@ Installation
 - Clone the repository [`AlgEt`](https://github.com/stmar89/AlgEt). If you are on a version of Magma prior to 2.29 then attach all `spec`  files. If you are using Magma 2.29 or more recent, then attach only `specMtrx` and `specMod`.
 - Clone the repository [`AbVarFq`](https://github.com/stmar89/AbVarFq) and make sure to attach the corresponding `spec` file.
 
+Quick start
+---
+The main intrinsic provided by the package is is `IsomorphismClassesCommEndAlg`. Here is a first example:
+```
+AttachSpec("~/AbVarFq/spec"); AttachSpec("~/AlgEt/specMod"); AttachSpec("~/AlgEt/specMtrx"); //AttachSpec("~/AlgEt/spec"); // this spec file in is Magma since 2.29
+AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");    
+PP<x>:=PolynomialRing(Integers());
+isog:=IsogenyClass(x^6-3*x^4+2*x^3-12*x^2+64);
+E:=DeligneAlgebra(isog);
+iso:=IsomorphismClassesCommEndAlg(isog);
+A:=iso[1];
+ends:=[EndomorphismRing(A):A in iso];
+[ Index(MaximalOrder(E),S) : S in ends ];
+```
+In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tree/main/examples) you will find files containing the code to reproduce the examples from the paper in the reference below. This should help to get a quick start on the functionalities.
+
 Details
 --
 
 For complete descriptions and more details we refer to the [`List of commands`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/blob/main/doc/ListOfCommands.md).
 Use the magma command `AttachSpec("spec")` after opening magma in the folder where you have downloaded the repo.
 
-In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tree/main/examples) you will find files containing the code to reproduce the examples from the paper in the reference below. This should help to get a quick start on the functionalities.
-
 As in [`AbVarFq`](https://github.com/stmar89/AbVarFq), the abelian varieties have type `AbelianVarietyFq`.
-In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S>`, where `I` is a `Z[pi,q/pi]`-ideal which encodes the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
+In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S>`, where `I` is a `Z[pi,q/pi]`-ideal encoding the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
 
-One can compute the action of the semilinear Frobenius and Verschiebung on each `M` (in an appropriate finite quotient) using `SemilinearOperators`. We refer to the documentation of that intrinsic for details.
+The representation as tuple `<I,M,J,S>` is slightly different from the isomorphism classes of objects in the category `C_pi` from Definition 5.1 and Theorem 5.2 of the main paper.
+The intrinsic `GeneralizedDeligneModule` takes as input an abelian variety whose attribute `IsomDataCommEndAlg` is assigned and computes a pair `<II,MM>` which belongs to `C_pi` (after tensoring `MM` with the p-adic integers).
+The ideal `II` encodes the local information away from the characteristic of `Fq`, `MM` is the Dieudonné module (not just its local-local part), and the p-parts of `II` and `MM` are compatible. See Remark IX in the [`appendix`](Computational_Appendix.pdf) for details.
 
-The representation `IsomDataCommEndAlg=<I,M,J,S>` is slightly different from what we have in `Algorithm 7` in the paper. There we represent each isomorphism class by a 5-tuple `(I0,M,I1,(I^l)_l,J)` where `I0` is the étale-local part of the Dieudonné module, `M` its local-local part, `I1` its local-étale, `I^l` represents the l-Tate modules (l \neq p), and `J` is an invertible ideal of the endomorphism ring. So, `I` in the code is equivalent to the combined information of `I0`,`I1` and all the `I^l`, while `M` and `J` are the same. See `Remark 7.6` in the paper for further discussion.
-
-We provide a second way to represent abelian varieties over `Fq` with commutative endomorphism algebra, which we call `Generalized Deligne Module`.
-A `Generalized Deligne Module` is a pair `<II,MM>` which belongs to the category defined in Definition 5.1 of the reference below (after tensoring `MM` with the p-adic integers).
-The ideal `II` encodes the local information away from the characteristic of `Fq`, `MM` is the Dieudonné module and the p-part of `II` and `MM` are compatible.
-This representation can be computed using the intrinsic `GeneralizedDeligneModule` on any abelian variety whose attribute `IsomDataCommEndAlg` is assigned.
+In order to recover all isomorphism classes, as tuples `<I,M,J,S>`, we do the following:
+  - The isomorphism classes of the `I`s are computed using the intrinsic `IsomorphismClassesAwayFromLocalLocalCommEndAlg`; see Algorithm B in the [`appendix`](Computational_Appendix.pdf).
+  - The isomorphism classes of the `M`s are computed using the intrinsic `IsomorphismClassesDieudonneModulesCommEndAlg`, which is a combination of Algorithm A from the [`appendix`](Computational_Appendix.pdf) together with Algorithms 1 and 2 from the main paper.
+  - The action of the semilinear Frobenius and Verschiebung on each `M` (in an appropriate finite quotient) is recovered by the intrinsic `SemilinearOperators`.
+  - The endomorphism ring `S` of each isomorphism class can be recovered using the intrinsic `EndomorphismRing` from [`AbVarFq`](https://github.com/stmar89/AbVarFq); see Algorithm C in the [`appendix`](Computational_Appendix.pdf).
+  - All tuples `<I,M,J,S>` are computed by the intrinsic `IsomorphismClassesCommEndAlg`, which is based on the wrapper Algorithm D from the [`appendix`](Computational_Appendix.pdf).
 
 Changelog
 --
@@ -46,7 +62,7 @@ Changelog
          
   This version has been tested with Magma 2.29-6.
 - <code>v1.0.2</code> Bugfix:
-  * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`accompanying appendix`](Computational_Appendix.pdf).</li>
+  * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`appendix`](Computational_Appendix.pdf).
   
   This version has been tested with Magma 2.29-7.
   
