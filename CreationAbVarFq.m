@@ -40,12 +40,13 @@ end intrinsic;
 /////////////////////////////////////////////////////
 
 intrinsic AbelianVarietyCommEndAlg(isog::IsogenyClassFq,tup:Tup)->AbelianVarietyFq
-{Given an isogeny class of abelian varieties over Fq with commutative Fq-endomorphism algebra, i.e. whose Weil polynomial is squarefree, and a tuple <I,M,L,S> where
+{Given an isogeny class of abelian varieties over Fq with commutative Fq-endomorphism algebra, i.e. whose Weil polynomial is squarefree, and a tuple <I,M,L,S,slope> where
 - I is a fractional ideal over the ZFVOrder of isog;
 - M is a WR\{F,V\}-ideal (see DieudonneAlgebraCommEndAlg for definitions);
 - S in an overorder of the ZFVOrder;
 - L is an invertible fractional S-ideal;
-returns the unique abelian variety in isog with EndomorphismRing S whose l-Tate modules are isomorphic to I (for all l neq p), the étale-local and local-étale part of the Dieudonné module are determined by I, while the local-local part is determined by M, and L determines its position in the orbit of the class group of S acting on the local information just described.}
+- slope is either "(0,1)" or "all" depending on which method was used;
+returns the unique abelian variety in isog with EndomorphismRing S such that: the l-Tate modules are isomorphic to I (for all l neq p), if slope is "(0,1)" also the étale-local and local-étale part of the Dieudonné module are determined by I, while the local-local part is determined by M, while if slope is "all" then the Dieudonné module is only determined by M; L determines its position in the orbit of the class group of S acting on the local information just described.}
     require IsSquarefree(isog) : "The isogeny class needs to have squarefree Weil polynomial.";
     R:=ZFVOrder(isog);
     I,M,L,S,slopes:=Explode(tup);
