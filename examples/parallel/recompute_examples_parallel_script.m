@@ -1,12 +1,13 @@
 /*
 parallel script, to run on screen
-    parallel -j 7 -a ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_input magma -b h_s:={} ~/IsomClAbVarFqCommEndAlg/tests/recompute_examples_parallel_script.m
+    rm 2.4.a_e 3.8.l_ci_ia 3.9.ab_ad_bt 4.4.ag_s_abk_cq 4.4.b_b_e_ae && \
+    parallel -a ~/IsomClAbVarFqCommEndAlg/examples/parallel/recompute_examples_parallel_input magma -b c:={} ~/IsomClAbVarFqCommEndAlg/examples/parallel/recompute_examples_parallel_script.m
 */
 
     // The next variable determines wheather we save again the isom
     // classes. See the end of the file.
-    //SAVE:=true;
-    SAVE:=false;
+    SAVE:=true;
+    //SAVE:=false;
     SetAssertions(2);
 
     AttachSpec("~/AbVarFq/spec");
@@ -43,8 +44,8 @@ parallel script, to run on screen
     end function;
 
     PP<x>:=PolynomialRing(Integers());
-    // the input variable is called "h"
-    h:=eval(h);
+    // the input variable is called "c"
+    h:=eval(c);
     assert IsSquarefree(h);
     isog:=IsogenyClass(h);
     g:=Dimension(isog);
