@@ -7,7 +7,7 @@ A Magma package to compute (unpolarized) Fq-isomorphism classes of abelian varie
 
 For the theory on which this code is based, see the `References` section at the bottom.
 The package contains the implementation of the algorithms in the paper, together with the ones contained in the accompanying [`appendix`](Computational_Appendix.pdf).
-The appendix contains also several technical intermediate lemmas.
+The appendix contains also several technical intermediate lemmas and algorithms, also discussed below.
 
 Please send comments and bug reports to `stefano.marseglia89@gmail.com`.
 
@@ -18,9 +18,9 @@ Installation
 
 Quick start
 ---
-The main intrinsic provided by the package is is `IsomorphismClassesCommEndAlg`. Here is a first example:
+The main intrinsic provided by the package is `IsomorphismClassesCommEndAlg`. Here is a first example:
 ```
-AttachSpec("~/AbVarFq/spec"); AttachSpec("~/AlgEt/specMod"); AttachSpec("~/AlgEt/specMtrx"); //AttachSpec("~/AlgEt/spec"); // this spec file in is Magma since 2.29
+AttachSpec("~/AbVarFq/spec"); AttachSpec("~/AlgEt/specMod"); AttachSpec("~/AlgEt/specMtrx"); //AttachSpec("~/AlgEt/spec"); // this spec file is part of Magma since 2.29
 AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");    
 PP<x>:=PolynomialRing(Integers());
 isog:=IsogenyClass(x^6-3*x^4+2*x^3-12*x^2+64);
@@ -30,7 +30,7 @@ A:=iso[1];
 ends:=[EndomorphismRing(A):A in iso];
 [ Index(MaximalOrder(E),S) : S in ends ];
 ```
-In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tree/main/examples) you will find files containing the code to reproduce the examples from the paper in the reference below. This should help to get a quick start on the functionalities.
+In the folder [`examples`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/tree/main/examples), you'll find the code to reproduce the examples from the paper in the reference below.
 
 Details
 --
@@ -41,8 +41,8 @@ Use the magma command `AttachSpec("spec")` after opening magma in the folder whe
 As in [`AbVarFq`](https://github.com/stmar89/AbVarFq), the abelian varieties have type `AbelianVarietyFq`.
 In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S>`, where `I` is a `Z[pi,q/pi]`-ideal encoding the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
 
-The representation as tuple `<I,M,J,S>` is slightly different from the isomorphism classes of objects in the category `C_pi` from Definition 5.1 and Theorem 5.2 of the main paper.
-The intrinsic `GeneralizedDeligneModule` takes as input an abelian variety whose attribute `IsomDataCommEndAlg` is assigned and computes a pair `<II,MM>` which belongs to `C_pi` (after tensoring `MM` with the p-adic integers).
+The representation as tuple `<I,M,J,S>` is slightly different from the isomorphism classes of objects in the category C_&pi; from Definition 5.1 and Theorem 5.2 of the main paper.
+The intrinsic `GeneralizedDeligneModule` takes as input an abelian variety whose attribute `IsomDataCommEndAlg` is assigned and computes a pair `<II,MM>` which belongs to C_&pi; (after tensoring `MM` with the p-adic integers).
 The ideal `II` encodes the local information away from the characteristic of `Fq`, `MM` is the Dieudonné module (not just its local-local part), and the p-parts of `II` and `MM` are compatible. See Remark IX in the [`appendix`](Computational_Appendix.pdf) for details.
 
 In order to recover all isomorphism classes, as tuples `<I,M,J,S>`, we do the following:
@@ -54,11 +54,11 @@ In order to recover all isomorphism classes, as tuples `<I,M,J,S>`, we do the fo
 
 Changelog
 --
-- <code>v1.0.0</code> Version accompanying the submission of the paper.</li>
+- <code>v1.0.0</code> Version accompanying the submission of the paper.
 - <code>v1.0.1</code> Bugfixes:
-  - A bug affecting the correct loading of the examples has been fixed.</li>
-  - The primes of the `Dieudonne Algebra` above a given place of the `Deligne Algebra` are now sorted according to the action of `sigma`.</li>
-  - A bug affecting in some cases the computation of the precision required to verify when a `WR`-ideal is a `WR{F,V}`-ideal leading to incorrect outputs, is now fixed.</li>
+  - A bug affecting the correct loading of the examples has been fixed.
+  - The primes of the `Dieudonne Algebra` above a given place of the `Deligne Algebra` are now sorted according to the action of `sigma`.
+  - A bug affecting in some cases the computation of the precision required to verify when a `WR`-ideal is a `WR{F,V}`-ideal leading to incorrect outputs, is now fixed.
          
   This version has been tested with Magma 2.29-6.
 - <code>v1.0.2</code> Bugfix:
@@ -66,7 +66,7 @@ Changelog
   
   This version has been tested with Magma 2.29-7.
   
-  The bug above did not affect the content of the referenced paper below.
+  The bug above does not affect the content of the referenced paper below.
 
 References
 --
