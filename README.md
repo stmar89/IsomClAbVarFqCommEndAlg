@@ -38,25 +38,19 @@ This representation can be computed using the intrinsic `GeneralizedDeligneModul
 
 Changelog
 --
-<ul>
-<li> <code>v1.0.0</code> Version accompanying the submission of the paper.</li>
-<li> <code>v1.0.1</code> Bugfixes:
-         <ul>
-         <li> A bug affecting the correct loading of the examples has been fixed.</li>
-         <li> The primes of the DieudonneAlgebra above a given place of the DeligneAlgebra are now sorted according to the action of sigma.</li>
-         <li> A bug affecting in some cases the computation of the precision required to verify when a WR-ideal is a WR{F,V}-ideal leading to incorrect outputs, is now fixed.</li>
-         </ul>
-         This version has been tested with Magma 2.29-6.
-</li>
-</ul>
-
-TODO
---
-<ul>
-<li>This code should version > v1.0.2</li>
-<li>The ComputaitonalAppendix does not reflect the structure of the intrinsics. It should be updated</li>
-<li>In the changelog, I should describe that the intrinisc DieudonneAlgebra... is slighlty not retrocompatible, since some of its output are now their own new intrinsics.</li>
-</ul>
+- <code>v1.0.0</code> Version accompanying the submission of the paper.</li>
+- <code>v1.0.1</code> Bugfixes:
+  - A bug affecting the correct loading of the examples has been fixed.</li>
+  - The primes of the `Dieudonne Algebra` above a given place of the `Deligne Algebra` are now sorted according to the action of `sigma`.</li>
+  - A bug affecting in some cases the computation of the precision required to verify when a `WR`-ideal is a `WR{F,V}`-ideal leading to incorrect outputs, is now fixed.</li>
+         
+  This version has been tested with Magma 2.29-6.
+- <code>v1.0.2</code> Bugfix:
+  * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`accompanying appendix`](Computational_Appendix.pdf).</li>
+  
+  This version has been tested with Magma 2.29-7.
+  
+  The bug above did not affect the content of the referenced paper below.
 
 References
 --
