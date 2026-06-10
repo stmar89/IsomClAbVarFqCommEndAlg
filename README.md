@@ -77,8 +77,8 @@ Changelog
   The bug above did not affect the content of the paper referenced below.
   
 - <code>v1.1.0-alpha</code>
-  * New functionality: The computation of the isomorphism classes now can be performed in two differnent ways using methods `"(0,1)"` or `"all"`.
-  * Code refactoring: The large monolitic intrinsics `DieudonneAlgebraCommEndAlg` and `IsomorphismClassesDieudonneModulesCommEndAlg` have been divided intro several intermediate intrinsics. Several functions returned as output by `DieudonneAlgebraCommEndAlg` are now their own intrinsics. We refer to the documentation for a description of the new intriniscs.
+  * New functionality: The computation of the isomorphism classes now can be performed in two different ways using methods `"(0,1)"` or `"all"`.
+  * Code refactoring: The large monolithic intrinsics `DieudonneAlgebraCommEndAlg` and `IsomorphismClassesDieudonneModulesCommEndAlg` have been divided into several intermediate intrinsics. Several functions returned as output by `DieudonneAlgebraCommEndAlg` are now their own intrinsics. We refer to the documentation for a description of the new intriniscs.
  
   This version has been tested with Magma 2.29-7.
 
