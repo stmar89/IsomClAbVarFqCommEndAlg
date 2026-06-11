@@ -43,6 +43,13 @@ intrinsic BarOnDieudonneAlgebra(isog:IsogenyClassFq)->Map
     return isog`BarOnDieudonneAlgebra;
 end intrinsic;
 
+//intrinsic BarOnPlacesOfDieudonneAlgebra(isog:IsogenyClassFq,P::AlgEtQIdl)->Map
+//{}
+//    if not assigned isog`BarOnPlaces then
+//    end if;
+//    return isog`???;
+//end intrinsic;
+
 /*
 
     SetDebugOnError(true);
