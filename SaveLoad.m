@@ -24,6 +24,9 @@
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
+// TODO FIXME add save-load delta
+
+
 intrinsic SaveAbVarFqCommEndAlg(classes::SeqEnum[AbelianVarietyFq])->MonStgElt
 {Given a sequence of abelian vareities belonging to an isogney class over Fq with commutative Fq-endomorphism algebra, returns a string containing all the info about the isomorphism classes of the varietis. This string can be loaded using LoadAbVarFqCommEndAlg defined below.}
     isog:=IsogenyClass(classes[1]);
