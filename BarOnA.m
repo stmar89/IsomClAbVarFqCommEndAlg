@@ -23,12 +23,18 @@
 /////////////////////////////////////////////////////
 
 declare attributes IsogenyClassFq : BarOnDieudonneAlgebra;
+declare attributes AlgEtQOrd      : Bar;
+declare attributes AlgEtQIdl      : Bar;
 
-intrinsic BarOnDieudonneAlgebra(isog:IsogenyClassFq)->Map
+/////////////////////////////////////////////////////
+// Bar on Dieudonne Algebra
+/////////////////////////////////////////////////////
+
+intrinsic BarOnDieudonneAlgebra(isog::IsogenyClassFq)->Map
 {Given an isogeny class isog, returns the étale algebra automorphism of the DieudonneAlgebra A=E \otimes L induced by the CM-conjugation of the DeligneAlgebra E of isog.}
     if not assigned isog`BarOnDieudonneAlgebra then
         q:=FiniteField(isog);
-        L,_,_,_,A,pi_A,_,_,_,A_as_vector_space_over_L_data,_:=DieudonneAlgebraCommEndAlg(isog);
+        L,_,_,_,A,pi_A,_,_,_,A_as_vector_space_over_L_data:=DieudonneAlgebraCommEndAlg(isog);
         _,_,mAW,_:=Explode(A_as_vector_space_over_L_data);
         W:=Codomain(mAW);
         // We need to apply the CM involution which is defined to be bar on E, and identity on L.
@@ -43,12 +49,40 @@ intrinsic BarOnDieudonneAlgebra(isog:IsogenyClassFq)->Map
     return isog`BarOnDieudonneAlgebra;
 end intrinsic;
 
-//intrinsic BarOnPlacesOfDieudonneAlgebra(isog:IsogenyClassFq,P::AlgEtQIdl)->Map
-//{}
-//    if not assigned isog`BarOnPlaces then
-//    end if;
-//    return isog`???;
-//end intrinsic;
+/////////////////////////////////////////////////////
+// Bar on ideals and orders
+/////////////////////////////////////////////////////
+
+intrinsic BarOnOrder(isog::IsogenyClassFq,S::AlgEtQOrd)->AlgEtQOrd
+{Given an order S in the DieudonneAlgebra of isog, returns the order bar(S).}
+    if not assigned S`Bar then
+        bar:=BarOnDieudonneAlgebra(isog);
+        zbSb:=[bar(z):z in ZBasis(S)];
+        if forall{z:z in zbSb|z in S} then
+            S`Bar:=S;
+        else
+            Sb:=Order(zbSb);
+            S`Bar:=Sb;
+        end if;
+    end if;
+    return S`Bar;
+end intrinsic;
+
+intrinsic BarOnIdeal(isog::IsogenyClassFq,I::AlgEtQIdl)->AlgEtQIdl
+{Given a fractional ideal I of some order S in the DieudonneAlgebra of isog, returns the fractional bar(S)-ideal bar(I).}
+    if not assigned I`Bar then
+        bar:=BarOnDieudonneAlgebra(isog);
+        zbIb:=[bar(z):z in ZBasis(I)];
+        if forall{z:z in zbIb|z in I} then
+            I`Bar:=I;
+        else
+            Sb:=BarOnOrder(isog,Order(I));
+            Ib:=Ideal(Sb,zbIb);
+            I`Bar:=Ib;
+        end if;
+    end if;
+    return I`Bar;
+end intrinsic;
 
 /*
 
@@ -77,6 +111,31 @@ end intrinsic;
         assert IsSquarefree(h);
         isog:=IsogenyClass(h);
         bar:=BarOnDieudonneAlgebra(isog);
+        _,_,_,_,_,_,_,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+        oo:=OverOrders(WR);
+        for S in oo do
+            if BarOnOrder(isog,S) eq S then
+                p0,p01,p1:=PrimesOfSAbove_p(isog,S);
+                assert 
+                forall{P:P in p0|#[Q:Q in p01|BarOnIdeal(isog,P) eq Q] eq 0 and #[Q:Q in p1|BarOnIdeal(isog,P) eq Q] eq 1}
+                and
+                forall{P:P in p1|#[Q:Q in p01|BarOnIdeal(isog,P) eq Q] eq 0 and #[Q:Q in p0|BarOnIdeal(isog,P) eq Q] eq 1}
+                and
+                forall{P:P in p01|#[Q:Q in p01|BarOnIdeal(isog,P) eq Q] eq 1 and #[Q:Q in p0|BarOnIdeal(isog,P) eq Q] eq 0
+                                                                 and #[Q:Q in p1|BarOnIdeal(isog,P) eq Q] eq 0};
+            else
+                p0,p01,p1:=PrimesOfSAbove_p(isog,S);
+                p0b,p01b,p1b:=PrimesOfSAbove_p(isog,BarOnOrder(isog,S));
+                assert 
+                forall{P:P in p0b|#[Q:Q in p01|BarOnIdeal(isog,P) eq Q] eq 0 and #[Q:Q in p1|BarOnIdeal(isog,P) eq Q] eq 1}
+                and
+                forall{P:P in p1b|#[Q:Q in p01|BarOnIdeal(isog,P) eq Q] eq 0 and #[Q:Q in p0|BarOnIdeal(isog,P) eq Q] eq 1}
+                and
+                forall{P:P in p01b|#[Q:Q in p01|BarOnIdeal(isog,P) eq Q] eq 1 and #[Q:Q in p0|BarOnIdeal(isog,P) eq Q] eq 0
+                                                                 and #[Q:Q in p1|BarOnIdeal(isog,P) eq Q] eq 0};
+
+            end if;
+        end for;
     end for;
 
 */
