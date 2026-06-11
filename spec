@@ -5,6 +5,7 @@ CRT_expansion.m
 CreationAbVarFq.m
 PrimesIsog.m
 DieudonneModules.m
+BarOnA.m
 Sigma.m
 DeltaIdeals.m
 SemilinearOperators.m
