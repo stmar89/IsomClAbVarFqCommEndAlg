@@ -9,6 +9,7 @@ BarOnA.m
 Sigma.m
 DeltaIdeals.m
 SemilinearOperators.m
+WKICM_WR.m
 IsomorphismClassesDieudonneModulesCommEndAlg.m
 IsomorphismClasses.m
 GenDeligneModules.m
