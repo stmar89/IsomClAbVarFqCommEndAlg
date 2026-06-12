@@ -25,9 +25,17 @@
     nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
     _,_,_,_,A,_,OA,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
     R:=ZFVOrder(isog);
+    //
+
     E:=DeligneAlgebra(isog);
     pi:=PrimitiveElement(E);
-    pps0:=[P:P in PrimesAbove(p*R)|pi in P and not q/pi in P];
+    pps:=PrimesAbove(p*R);
+    pps0:=[P:P in pps|not pi in P and q/pi in P];
+    pps01:=[P:P in pps|pi in P and q/pi in P];
+    pps1:=[P:P in pps|pi in P and not q/pi in P];
+    ppsw:=[P:P in pps|not pi in P and not q/pi in P];
+    conj0:=#pps0 eq #pps1 and #pps01 eq 1 and #ppsw eq 0;
+
     R_gnus_pps0:=[GCD(a,Ilog(p,Index(R,P))):P in pps0];
     PPs0,PPs01,PPs1:=PrimesOfSAbove_p(isog,WR);
     PP0_above_pp0:=[#[PP:PP in PPs0|forall{x:x in Generators(pps0[i])|Delta_map(x) in PP}]:i in [1..#pps0]];
@@ -71,11 +79,12 @@
         Append(~data_nus,Sprintf("[1,%o,f]",gnu));
     end for;
 
-    output:=Sprintf("a=%o:data_nus=%o:PP0_above_pp0=%o:R_gnus_pps0=%o:conj1=%o:conj2=%o:conj3=%o:s=%o",
+    output:=Sprintf("a=%o:data_nus=%o:PP0_above_pp0=%o:R_gnus_pps0=%o:conj0=%o:conj1=%o:conj2=%o:conj3=%o:s=%o",
             a,
             sprint(data_nus),
             sprint(PP0_above_pp0),
             sprint(R_gnus_pps0),
+            conj0 select "t" else "f",
             conj1 select "t" else "f",
             conj2 select "t" else "f",
             conj3 select "t" else "f",
