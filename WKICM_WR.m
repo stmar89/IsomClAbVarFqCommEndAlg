@@ -193,14 +193,15 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
             PP:=above_P[1];
             WR_PP:=local_order(WR,PP,OA,p);
             local_wks[PP]:=[WR!!I : I in WKICM(WR_PP)];
-            above_P_sort:=[PP];
+            above_P_sort:={PP};
             for i in [2..#above_P] do
                 PP_old:=PP;
                 PP:=apply_sigma(PP_old);
+                Include(~above_P_sort,PP);
                 assert forall{I:I in local_wks[PP_old]| ff subset I and I subset WR!!OneIdeal(OA)};
                 local_wks[PP]:=[apply_sigma(I):I in local_wks[PP_old]];
             end for;
-            assert2 Seqset(above_P) eq Seqset(above_P_sort);
+            assert2 Seqset(above_P) eq above_P_sort;
         end for;
 
         // Slope 1
