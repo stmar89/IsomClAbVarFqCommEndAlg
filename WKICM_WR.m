@@ -179,6 +179,12 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
         pps0:=[P:P in pps|not pi in P and q/pi in P];
         if exists{P:P in pps0|GCD(a,Ilog(p,Index(R,P))) gt 1} then
             ff:=Conductor(WR);
+            prod:=[PP:PP in PPs0|not ff subset PP] cat 
+                 [PP:PP in PPs01|not ff subset PP] cat
+                 [PP:PP in PPs0|not ff subset PP];
+            if #prod gt 0 then
+                ff*:=&*prod; // we want to use apply sigma also on max ideals which can be invertible
+            end if;
             OAff,mOAff,sigma:=SigmaOnQuotientOfOA(isog,OA!!ff);
             apply_sigma:=func<I|Ideal(WR,[z@mOAff@sigma@@mOAff:z in ZBasis(I)] cat ZBasis(ff))>;
         end if;
