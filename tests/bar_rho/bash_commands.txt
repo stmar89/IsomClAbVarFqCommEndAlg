@@ -1,6 +1,6 @@
     
     rm ~/IsomClAbVarFqCommEndAlg/tests/bar_rho/output.m; \
     rm ~/IsomClAbVarFqCommEndAlg/tests/bar_rho/joblog; \
-    parallel -j 20 --timeout 3600 --joblog ~/IsomClAbVarFqCommEndAlg/tests/bar_rho/joblog \
+    parallel --shuf -j 20 --timeout 3600 --joblog ~/IsomClAbVarFqCommEndAlg/tests/bar_rho/joblog \
         -a ~/IsomClAbVarFqCommEndAlg/tests/weil_poly_sq_not_prime-ord-almord.txt \
         magma -b s:={} ~/IsomClAbVarFqCommEndAlg/tests/bar_rho/parallel_script.m
