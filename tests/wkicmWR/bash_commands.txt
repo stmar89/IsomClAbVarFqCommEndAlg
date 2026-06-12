@@ -1,6 +1,6 @@
     
     rm ~/IsomClAbVarFqCommEndAlg/tests/wkicmWR/output.m; \
     rm ~/IsomClAbVarFqCommEndAlg/tests/wkicmWR/joblog; \
-    parallel --shuf -j 20 --timeout 3600 --joblog ~/IsomClAbVarFqCommEndAlg/tests/wkicmWR/joblog \
+    parallel -j 20 --timeout 3600 --joblog ~/IsomClAbVarFqCommEndAlg/tests/wkicmWR/joblog \
         -a ~/IsomClAbVarFqCommEndAlg/tests/wkicmWR/input.m \
         magma -b s:={} ~/IsomClAbVarFqCommEndAlg/tests/wkicmWR/parallel_script.m

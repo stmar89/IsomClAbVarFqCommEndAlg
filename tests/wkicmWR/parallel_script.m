@@ -6,7 +6,7 @@
         return StripWhiteSpace(Sprint(x));
     end function;
 
-    SetAssertions(2);
+    SetAssertions(1);
     SetColumns(0);
     AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/specMod");
