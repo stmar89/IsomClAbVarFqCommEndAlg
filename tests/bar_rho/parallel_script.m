@@ -16,7 +16,7 @@
 
     PP<x>:=PolynomialRing(Integers());
     cc:=[StringToInteger(c):c in Split(s,"[,]")];
-    h:=PP!(eval(cc));
+    h:=PP!cc;
     
     isog:=IsogenyClass(h);
     q:=FiniteField(isog);
