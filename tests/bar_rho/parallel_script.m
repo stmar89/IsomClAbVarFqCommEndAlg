@@ -57,7 +57,7 @@
             if is_rho_id then
                 conj3:=forall{i:i in [2..#NUs]|NUs[i] eq bar_NUs[i]};
             else
-                conj3:=IsEven(gnu) and forall{i:i in [1..#NUS]|bar_NUs[i] eq NUs[(i+(gnu div 2)) mod gnu};
+                conj3:=IsEven(gnu) and forall{i:i in [1..#NUS]|bar_NUs[i] eq NUs[(i+(gnu div 2)) mod gnu]};
             end if;
             is_rho_id:=is_rho_id select "t" else "f";
             Append(~data_nus,Sprintf("[%o,%o,%o,%o]",sl,gnu,conj_st,is_rho_id));
