@@ -163,16 +163,16 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
             return WKICM(WR);
         end if;
 
-t0:=Cputime();
+//t0:=Cputime();
         // Slope in (0,1), if any.
         if #PPs01 eq 1 then
             PP:=PPs01[1];
             WR_PP:=local_order(WR,PP,OA,p);
             local_wks[PP]:=[WR!!I : I in WKICM(WR_PP)];
         end if;
-t1:=Cputime(t0);
+//t1:=Cputime(t0);
 
-t0:=Cputime();
+//t0:=Cputime();
         // Slope 0
         q:=FiniteField(isog);
         _,a:=IsPowerOf(q,p);
@@ -213,22 +213,22 @@ t0:=Cputime();
             end for;
             assert2 Seqset(above_P) eq above_P_sort;
         end for;
-t2:=Cputime(t0);
+//t2:=Cputime(t0);
 
-t0:=Cputime();
+//t0:=Cputime();
         // Slope 1
         for PP in PPs0 do
-            time PPb:=BarOnIdeal(isog,PP);
+            PPb:=BarOnIdeal(isog,PP);
             assert IsDefined(local_wks,PP);
-            time local_wks[PPb]:=[BarOnIdeal(isog,I): I in local_wks[PP]];
+            local_wks[PPb]:=[BarOnIdeal(isog,I): I in local_wks[PP]];
         end for;
-t3:=Cputime(t0);
+//t3:=Cputime(t0);
 
-t0:=Cputime();
+//t0:=Cputime();
         // Glueing the local data
         output:=glue_local_wks(WR,local_wks,p);
-t4:=Cputime(t0);
-print t1,t2,t3,t4;
+//t4:=Cputime(t0);
+//print t1,t2,t3,t4;
 
         assert3 #output eq #wk_test and 
                 forall{I:I in output|exists{J:J in wk_test|IsWeaklyEquivalent(I,J)}}
