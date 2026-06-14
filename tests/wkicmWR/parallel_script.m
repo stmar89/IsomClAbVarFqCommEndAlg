@@ -19,6 +19,16 @@
     h:=PP!cc;
 
     isog:=IsogenyClass(h);
+    p:=CharacteristicFiniteField(isog);
+    q:=FiniteField(isog);
+    a:=Ilog(p,q);
+    R:=ZFVOrder(isog);
+    E:=DeligneAlgebra(isog);
+    pi:=PrimitiveElement(E);
+    pps:=PrimesAbove(p*R);
+    pps0:=[P:P in pps|not pi in P and q/pi in P and not IsInvertible(P)];
+    gnus:=[GCD(a,Ilog(p,Index(R,P))):P in pps0];
+
     _,_,_,_,_,_,_,_,WR:=DieudonneAlgebraCommEndAlg(isog);
     t0:=Cputime();
     new:=#WeakEquivalenceClassMonoidWR(isog);
@@ -32,17 +42,8 @@
 
     test:=new eq old select "OK " else "ERR";
 
-    p:=CharacteristicFiniteField(isog);
-    q:=FiniteField(isog);
-    a:=Ilog(p,q);
-    R:=ZFVOrder(isog);
-    E:=DeligneAlgebra(isog);
-    pi:=PrimitiveElement(E);
-    pps:=PrimesAbove(p*R);
-    pps0:=[P:P in pps|not pi in P and q/pi in P];
-    gnus:=[GCD(a,Ilog(p,Index(R,P))):P in pps0];
 
-    out:=Sprintf("%o\tt_old=%o\tt_new=%o\tgnus_0=%o\t%o",test,t_old,t_new,sprint(gnus),s);
+    out:=Sprintf("%o\tt_old=%o\tt_new=%o\tsing_gPs_0=%o\t%o",test,t_old,t_new,sprint(gnus),s);
     printf "%o\n",out;
     fprintf file_out,"%o\n",out;
 
