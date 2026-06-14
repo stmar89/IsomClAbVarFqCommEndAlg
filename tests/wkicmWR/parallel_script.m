@@ -29,6 +29,8 @@
     pps0:=[P:P in pps|not pi in P and q/pi in P and not IsInvertible(P)];
     gnus:=[GCD(a,Ilog(p,Index(R,P))):P in pps0];
 
+    if #gnus eq 0 then quit; end if;
+
     _,_,_,_,_,_,_,_,WR:=DieudonneAlgebraCommEndAlg(isog);
     t0:=Cputime();
     new:=#WeakEquivalenceClassMonoidWR(isog);
