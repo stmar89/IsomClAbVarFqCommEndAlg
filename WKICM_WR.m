@@ -153,22 +153,26 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
     _,_,_,_,A,_,OA,Delta_map,WR:=DieudonneAlgebraCommEndAlg(isog);
     if not assigned WR`WKICM then
         PPs0,PPs01,PPs1:=PrimesOfSAbove_p(isog,WR);
+        ff:=Conductor(WR);
+        PPs0:=[PP:PP in PPs0|ff subset PP];
         p:=CharacteristicFiniteField(isog);
         assert #PPs01 le 1;
-        assert2 {BarOnIdeal(isog,PP):PP in PPs0} eq Seqset(PPs1);
         local_wks:=AssociativeArray(); // to store the wkicm's above each prime
         if #PPs0 eq 0 then
             // Early exit, we cannot really optimize
             return WKICM(WR);
         end if;
-        
+
+t0:=Cputime();
         // Slope in (0,1), if any.
         if #PPs01 eq 1 then
             PP:=PPs01[1];
             WR_PP:=local_order(WR,PP,OA,p);
             local_wks[PP]:=[WR!!I : I in WKICM(WR_PP)];
         end if;
+t1:=Cputime(t0);
 
+t0:=Cputime();
         // Slope 0
         q:=FiniteField(isog);
         _,a:=IsPowerOf(q,p);
@@ -178,13 +182,13 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
         pps:=PrimesAbove(p*R);
         pps0:=[P:P in pps|not pi in P and q/pi in P];
         if exists{P:P in pps0|GCD(a,Ilog(p,Index(R,P))) gt 1} then
-            ff:=Conductor(WR);
-            prod:=[PP:PP in PPs0|not ff subset PP] cat 
-                 [PP:PP in PPs01|not ff subset PP] cat
-                 [PP:PP in PPs0|not ff subset PP];
-            if #prod gt 0 then
-                ff*:=&*prod; // we want to use apply sigma also on max ideals which can be invertible
-            end if;
+//            ff:=Conductor(WR);
+//            prod:=[PP:PP in PPs0|not ff subset PP] cat 
+//                 [PP:PP in PPs01|not ff subset PP] cat
+//                 [PP:PP in PPs0|not ff subset PP];
+//            if #prod gt 0 then
+//                ff*:=&*prod; // we want to use apply sigma also on max ideals which can be invertible
+//            end if;
             OAff,mOAff,sigma:=SigmaOnQuotientOfOA(isog,OA!!ff);
             apply_sigma:=func<I|Ideal(WR,[z@mOAff@sigma@@mOAff:z in ZBasis(I)] cat ZBasis(ff))>;
         end if;
@@ -209,16 +213,22 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
             end for;
             assert2 Seqset(above_P) eq above_P_sort;
         end for;
+t2:=Cputime(t0);
 
+t0:=Cputime();
         // Slope 1
-        for PP in PPs1 do
-            PPb:=BarOnIdeal(isog,PP);
-            assert IsDefined(local_wks,PPb);
-            local_wks[PP]:=[BarOnIdeal(isog,I): I in local_wks[PPb]];
+        for PP in PPs0 do
+            time PPb:=BarOnIdeal(isog,PP);
+            assert IsDefined(local_wks,PP);
+            time local_wks[PPb]:=[BarOnIdeal(isog,I): I in local_wks[PP]];
         end for;
+t3:=Cputime(t0);
 
+t0:=Cputime();
         // Glueing the local data
         output:=glue_local_wks(WR,local_wks,p);
+t4:=Cputime(t0);
+print t1,t2,t3,t4;
 
         assert3 #output eq #wk_test and 
                 forall{I:I in output|exists{J:J in wk_test|IsWeaklyEquivalent(I,J)}}
