@@ -108,9 +108,12 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
     vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",StripWhiteSpace(Sprint(exps_plE));
     vprintf Algorithm_2,2 : "nice_unifs = %o\n",StripWhiteSpace(Sprint(PrintSeqAlgEtQElt(nice_unifs)));
 
-    // DUALITY could speed up the next computation. 
-    // It would have to run for all plA of slope <1/2 and =1/2, and deduce the output for >1/2 from the first.
-    wk:=[ WR!!I : I in WKICM(WR_plE)];
+    if slopes eq "(0,1)" then
+        wk:=[ WR!!I : I in WKICM(WR_plE)];
+    else
+        // we use duality and sigma
+        wk:=WeakEquivalenceClassMonoidWR(isog);
+    end if;
     vprintf Algorithm_2,1 : "number of W_R'-isomorphism classes = %o\n",#wk;
 
     vprintf Algorithm_2,1 : "Computing candidates...";
