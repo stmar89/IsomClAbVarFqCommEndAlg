@@ -52,7 +52,7 @@ glue_local_wks:=function(E,wk_pp,p)
             if not IsIntegral(I) then
                 I:=SmallRepresentative(I); // I c E with small norm
             end if;
-            k:=Valuation(Index(E,I),p);
+            k:=Floor(Valuation(Index(E,I),p)/Valuation(Index(E,P),p));
             Append(~wk_exps,k);
             Append(~wk_idls,I);
         end for;
@@ -163,16 +163,13 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
             return WKICM(WR);
         end if;
 
-//t0:=Cputime();
         // Slope in (0,1), if any.
         if #PPs01 eq 1 then
             PP:=PPs01[1];
             WR_PP:=local_order(WR,PP,OA,p);
             local_wks[PP]:=[WR!!I : I in WKICM(WR_PP)];
         end if;
-//t1:=Cputime(t0);
 
-//t0:=Cputime();
         // Slope 0
         q:=FiniteField(isog);
         _,a:=IsPowerOf(q,p);
@@ -182,13 +179,6 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
         pps:=PrimesAbove(p*R);
         pps0:=[P:P in pps|not pi in P and q/pi in P];
         if exists{P:P in pps0|GCD(a,Ilog(p,Index(R,P))) gt 1} then
-//            ff:=Conductor(WR);
-//            prod:=[PP:PP in PPs0|not ff subset PP] cat 
-//                 [PP:PP in PPs01|not ff subset PP] cat
-//                 [PP:PP in PPs0|not ff subset PP];
-//            if #prod gt 0 then
-//                ff*:=&*prod; // we want to use apply sigma also on max ideals which can be invertible
-//            end if;
             OAff,mOAff,sigma:=SigmaOnQuotientOfOA(isog,OA!!ff);
             apply_sigma:=func<I|Ideal(WR,[z@mOAff@sigma@@mOAff:z in ZBasis(I)] cat ZBasis(ff))>;
         end if;
@@ -213,22 +203,16 @@ intrinsic WeakEquivalenceClassMonoidWR(isog::IsogenyClassFq)->SeqEnum[AlgEtQIdl]
             end for;
             assert2 Seqset(above_P) eq above_P_sort;
         end for;
-//t2:=Cputime(t0);
 
-//t0:=Cputime();
         // Slope 1
         for PP in PPs0 do
             PPb:=BarOnIdeal(isog,PP);
             assert IsDefined(local_wks,PP);
             local_wks[PPb]:=[BarOnIdeal(isog,I): I in local_wks[PP]];
         end for;
-//t3:=Cputime(t0);
 
-//t0:=Cputime();
         // Glueing the local data
         output:=glue_local_wks(WR,local_wks,p);
-//t4:=Cputime(t0);
-//print t1,t2,t3,t4;
 
         assert3 #output eq #wk_test and 
                 forall{I:I in output|exists{J:J in wk_test|IsWeaklyEquivalent(I,J)}}
@@ -252,9 +236,9 @@ end intrinsic;
     PP<x>:=PolynomialRing(Integers());
     check:=Split(Pipe("ls " cat fld,"r"));
     inputs:=[
-    //<x^6-3*x^4+2*x^3-12*x^2+64,"3.4.a_ad_c">,
-    //<x^6+2*x^5-x^4-6*x^3-4*x^2+32*x+64,"3.4.c_ab_ag">,
-    //<(x^2-2*x+4)*(x^2+2*x+4),"2.4.a_e">,
+    <x^6-3*x^4+2*x^3-12*x^2+64,"3.4.a_ad_c">,
+    <x^6+2*x^5-x^4-6*x^3-4*x^2+32*x+64,"3.4.c_ab_ag">,
+    <(x^2-2*x+4)*(x^2+2*x+4),"2.4.a_e">,
     <x^8+x^7+x^6+4*x^5-4*x^4+16*x^3+16*x^2+64*x + 256,"4.4.b_b_e_ae">,
     <x^8 - 6*x^7 + 18*x^6 - 36*x^5 + 68*x^4 - 144*x^3 + 288*x^2 - 384*x + 256,"4.4.ag_s_abk_cq">,
     <x^6 + 11*x^5 + 60*x^4 + 208*x^3 + 480*x^2 + 704*x + 512,"3.8.l_ci_ia">,
