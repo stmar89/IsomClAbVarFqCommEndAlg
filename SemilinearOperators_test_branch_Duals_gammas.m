@@ -24,6 +24,8 @@
 // Copyright 2024, S. Marseglia
 /////////////////////////////////////////////////////
 
+//FIXME all the code here is before the modular rewrite.
+
 declare verbose alpha_at_precision,3;
 
 declare attributes IsogenyClassFq : alpha,

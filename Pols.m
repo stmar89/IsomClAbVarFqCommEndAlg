@@ -22,6 +22,8 @@
 // Copyright 2026, S. Marseglia
 /////////////////////////////////////////////////////
 
+//FIXME all the code here is before the modular rewrite.
+
 declare verbose Pols,3;
 
 // the first 2 are taken from AbVarFqIsogenies

@@ -22,6 +22,8 @@
 // Copyright 2026, S. Marseglia
 /////////////////////////////////////////////////////
 
+//FIXME all the code here is before the modular rewrite.
+
 declare attributes AbelianVarietyFq : DualAbVarFq;
 
 declare attributes IsogenyClassFq : glueing_gen_deligne_module_data_dual;
