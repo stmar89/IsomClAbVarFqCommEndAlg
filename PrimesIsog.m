@@ -26,6 +26,7 @@
 
 declare attributes IsogenyClassFq : SingPrimesOfZFVAwayFrom_p,
                                     PlacesOfQFAbove_p,
+                                    SortPlacesOfQFAbove_p,
                                     UniformizersInQFAt_p,
                                     PrimesOfZFVAbove_p,
                                     PlacesOfDieudonneAlgebraAbove_p,
@@ -36,7 +37,7 @@ declare attributes AlgEtQOrd :      PrimesOfSAbove_p;
 declare attributes AlgEtQIdl :      Slope;
 
 /////////////////////////////////////////////////////////////////////////
-/////////////////////// Primes in Deligna Algebra ///////////////////////
+/////////////////////// Primes in Deligne Algebra ///////////////////////
 /////////////////////////////////////////////////////////////////////////
 
 intrinsic SingPrimesOfZFVAwayFrom_p(isog:IsogenyClassFq)->SeqEnum[AlgEtQIdl]
@@ -209,4 +210,51 @@ If the vararg CheckMaximal is set to false, the instrinsic will accept as input 
         end if;
     end if;
     return P`Slope;
+end intrinsic;
+
+/////////////////////////////////////////////////////////////////////////
+/// Sort Primes in Deligne Algebra according to BarOnA and rho //////////
+/////////////////////////////////////////////////////////////////////////
+
+intrinsic SortPlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum,SeqEnum[AlgEtQIdl],SeqEnum[AlgEtQIdl]
+{Returns the places of the DeligneAlgebra above p divided into three sequences conj_pairs,rho_id,rho_notid where:
+- conj_pairs consists of ordered pairs <nu,bar(nu)> which are not conjugate-stable;
+- rho_id consists of conjugate-stable places nu such that the permutation rho on the places of the DieudonneAlgebra above nu induced by the CM-conjugation has order 1;
+- rho_notid consists of conjugate-stable places nu such that the permutation rho has order 2.} 
+    if not assigned isog`SortPlacesOfQFAbove_p then
+        conj_pairs:=[];
+        rho_id:=[];
+        rho_notid:=[];
+        nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
+        conj_pairs cat:= [ <nu,ComplexConjugate(nu)>) : nu in nus0];
+        nus01_temp:=nus01;
+        while #nus01_temp ne 0 then
+            nu:=nus01_temp[1];
+            test,nub:=IsConjugateStable(nu);
+            if not test then
+                Append(~conj_pairs,<nu,nub>);
+                Exclude(~nus01_temp,nu);
+                Exclude(~nus01_temp,nub);
+            else
+                PPs:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
+                is_rho_id:=BarOnIdeal(PPs[1]) eq PPs[1];
+                if is_rho_id then
+                    Append(~rho_id,nu);
+                    assert2 forall{PP:PP in PPs| PP eq BarOnIdeal(PP)};
+                else
+                    Append(~rho_notid,nu);
+                    if GetAssertions() ge 2 then
+                        gnu:=#PPs;
+                        assert2 IsEven(gnu);
+                        PPss:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
+                        PPss:=PPss cat PPss;
+                        assert2 forall{i:i in [1..gnu]|BarOnIdeal(PPss[i]) eq PPss[i+(gnu div 2)]};
+                    end if;
+                end if;
+                Exclude(~nus01_temp,nu);
+            end if;
+        end while;
+        isog`SortPlacesOfQFAbove_p:=<conj_pairs,rho_id,rho_notid>;
+    end if;
+    return Explode(isog`SortPlacesOfQFAbove_p);
 end intrinsic;
