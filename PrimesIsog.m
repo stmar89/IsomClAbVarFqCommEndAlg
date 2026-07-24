@@ -226,9 +226,9 @@ intrinsic SortPlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum,SeqEnum[AlgEtQIdl]
         rho_id:=[];
         rho_notid:=[];
         nus0,nus01,nus1:=PlacesOfQFAbove_p(isog);
-        conj_pairs cat:= [ <nu,ComplexConjugate(nu)>) : nu in nus0];
+        conj_pairs cat:= [ <nu,ComplexConjugate(nu)> : nu in nus0];
         nus01_temp:=nus01;
-        while #nus01_temp ne 0 then
+        while #nus01_temp ne 0 do
             nu:=nus01_temp[1];
             test,nub:=IsConjugateStable(nu);
             if not test then
@@ -237,10 +237,10 @@ intrinsic SortPlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum,SeqEnum[AlgEtQIdl]
                 Exclude(~nus01_temp,nub);
             else
                 PPs:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
-                is_rho_id:=BarOnIdeal(PPs[1]) eq PPs[1];
+                is_rho_id:=BarOnIdeal(isog,PPs[1]) eq PPs[1];
                 if is_rho_id then
                     Append(~rho_id,nu);
-                    assert2 forall{PP:PP in PPs| PP eq BarOnIdeal(PP)};
+                    assert2 forall{PP:PP in PPs| PP eq BarOnIdeal(isog,PP)};
                 else
                     Append(~rho_notid,nu);
                     if GetAssertions() ge 2 then
@@ -248,13 +248,44 @@ intrinsic SortPlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum,SeqEnum[AlgEtQIdl]
                         assert2 IsEven(gnu);
                         PPss:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
                         PPss:=PPss cat PPss;
-                        assert2 forall{i:i in [1..gnu]|BarOnIdeal(PPss[i]) eq PPss[i+(gnu div 2)]};
+                        assert2 forall{i:i in [1..gnu]|BarOnIdeal(isog,PPss[i]) eq PPss[i+(gnu div 2)]};
                     end if;
                 end if;
                 Exclude(~nus01_temp,nu);
             end if;
         end while;
+        assert2 #test eq #Seqset(test) and Seqset(nus0 cat nus01 cat nus1) eq test
+                where test:=Flat(conj_pairs) cat rho_id cat rho_notid;
         isog`SortPlacesOfQFAbove_p:=<conj_pairs,rho_id,rho_notid>;
     end if;
     return Explode(isog`SortPlacesOfQFAbove_p);
 end intrinsic;
+
+/*
+    TESTS
+    
+    PP<x>:=PolynomialRing(Integers());
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=Split(Read("tests/weil_poly_sq_not_prime-ord-almord.txt"));
+    for s in all do
+        cc:=[StringToInteger(c):c in Split(s,"[,]")];
+        g:=(#cc-1) div 2;
+        q:=Round(cc[1]^(1/g));
+        test,p,a:=IsPrimePower(q);
+        if a lt 4 then
+            h:=PP!cc;
+            isog:=IsogenyClass(h);
+            l1,l2,l3:=SortPlacesOfQFAbove_p(isog);
+            #l1,#l2,#l3;
+        end if;
+    end for;
+
+
+
+
+
+
+*/
