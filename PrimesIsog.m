@@ -254,8 +254,8 @@ intrinsic SortPlacesOfQFAbove_p(isog:IsogenyClassFq)->SeqEnum,SeqEnum[AlgEtQIdl]
                 Exclude(~nus01_temp,nu);
             end if;
         end while;
-        assert2 #test eq #Seqset(test) and Seqset(nus0 cat nus01 cat nus1) eq test
-                where test:=Flat(conj_pairs) cat rho_id cat rho_notid;
+        assert2 #test eq #Seqset(test) and Seqset(nus0 cat nus01 cat nus1) eq Seqset(test)
+                where test:=&cat[[nu[1],nu[2]]:nu in conj_pairs] cat rho_id cat rho_notid;
         isog`SortPlacesOfQFAbove_p:=<conj_pairs,rho_id,rho_notid>;
     end if;
     return Explode(isog`SortPlacesOfQFAbove_p);
@@ -265,6 +265,7 @@ end intrinsic;
     TESTS
     
     PP<x>:=PolynomialRing(Integers());
+    SetAssertions(2);
     AttachSpec("~/AbVarFq/spec");
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
