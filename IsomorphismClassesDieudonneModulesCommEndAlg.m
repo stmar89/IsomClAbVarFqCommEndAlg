@@ -54,6 +54,18 @@ intrinsic ExponentsWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[Seq
     return exps;
 end intrinsic;
 
+intrinsic ExponentsWTypeDualAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
+{//TODO
+}
+    //TODO
+end intrinsic;
+
+intrinsic ExponentsConjStabRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
+{//TODO
+}
+    //TODO
+end intrinsic;
+
 intrinsic ExponentsWType(isog::IsogenyClassFq,slopes::MonStgElt)->SeqEnum[SeqEnum[RngIntElt]]
 {Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the isomorphism classes of WR\{F,V\}-ideals or WR'\{F',V'\}-ideals -- depending on whether slopes is "all" or "(0,1)" -- with maximal endomorphism OE.}
     require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
@@ -75,9 +87,47 @@ intrinsic ExponentsWType(isog::IsogenyClassFq,slopes::MonStgElt)->SeqEnum[SeqEnu
     return isog`ExponentsWType[1];
 end intrinsic;
 
-intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgElt)->SeqEnum[AlgEtQIld]
-{Given an isogeny class isog, if slopes is "all" then returns a sequence of fraction WR-ideals I whose extension I*OA to the maximal order OA of the DieudonneAlgebra A is stable by the action of F and V, modulo Delta-isomorphisms; if slopes is "(0,1)" then on the local-local part of the previously described output is returned.}
+intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
+{//TODO
+}
+    if not assigned isog`ExponentsDual then
+        exps_nus:=AssociativeArray();
+        conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
+        for pair in conj_pairs do
+            nu,nub:=Explode(pair);
+            exps_nus[nu]:=ExponentsWTypeAtPlace(isog,nu);
+            exps_nus[nub]:=ExponentsWTypeDualAtPlace(isog,nu);
+        end for;
+        for nu in rho_id do
+            exps_nus[nu]:=ExponentsWTypeAtPlace(isog,nu);
+        end for;
+        for nu in rho_notid do
+            exps_nus[nu]:=ExponentsConjStabRhoNotId(isog,nu);
+        end for;
+
+        plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
+        plE:=plE0 cat plE01 cat plE1;
+        exps_nus:=[exps_nus[nu]:nu in plE]; // now the entries are sorted in the usual way.
+
+        exps_nus_cc:=CartesianProduct(exps_nus);
+        exps_plE:=[];
+        for cc in exps_nus_cc do
+            Append(~exps_plE,&cat[ c : c in cc ]); 
+        end for;
+        isog`ExponentsDual:=<exps_plE,slopes>;
+    end if;
+    return isog`ExponentsDual;
+end intrinsic;
+
+intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgElt : dual:=false)->SeqEnum[AlgEtQIld]
+{Given an isogeny class isog, if slopes is "all" then returns a sequence of fraction WR-ideals I whose extension I*OA to the maximal order OA of the DieudonneAlgebra A is stable by the action of F and V, modulo Delta-isomorphisms; if slopes is "(0,1)" then on the local-local part of the previously described output is returned.
+//TODO describe dual
+}
     require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
+    if dual then
+        require slopes eq "all" : "When dual is true, we need to use all slopes";
+    end if;
+
     _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
     p:=CharacteristicFiniteField(isog);
 
@@ -104,7 +154,12 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
     // Currently, we are calling Uniformizers for places of A only here. If this changes, we might
     // want to make an intrinsic that stores them in some smart way...
     nice_unifs:=Uniformizers(plA);
-    exps_plE:=ExponentsWType(isog,slopes);
+    if not dual then
+        exps_plE:=ExponentsWType(isog,slopes);
+    elif dual then
+        exps_plE:=ExponentsDual(isog);
+    end if;
+
     vprintf Algorithm_2,2 : "F-V stable O_A' ideals = %o \n",StripWhiteSpace(Sprint(exps_plE));
     vprintf Algorithm_2,2 : "nice_unifs = %o\n",StripWhiteSpace(Sprint(PrintSeqAlgEtQElt(nice_unifs)));
 
@@ -147,9 +202,15 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
     return output;
 end intrinsic;
 
-intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slopes::MonStgElt : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
-{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperatorsWType. The second argument slopes can have values "(0,1)" or "all" and determined whether only the local-local part of the whole Dieudonne modules are computed.}
+intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slopes::MonStgElt : dual:=false , IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperatorsWType. The second argument slopes can have values "(0,1)" or "all" and determined whether only the local-local part of the whole Dieudonne modules are computed.
+//TODO describe dual
+}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
+    if dual then
+        require slopes eq "all" : "When dual is true, we need to use all slopes";
+    end if;
+
     plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
     _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
     if slopes eq "(0,1)" then
@@ -169,7 +230,11 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
 
     // We construct the OA{F,V}-ideal J in whose quotient we will compute the approximations of the semilinear
     // operators to check the F-V-stability of the candidates.
-    exps:=ExponentsWType(isog,slopes)[1];
+    if not dual then
+        exps:=ExponentsWType(isog,slopes)[1];
+    elif dual then
+        exps_plE:=ExponentsDual(isog);
+    end if;
     //"WARNING: changing J for test purposes";exps:=exps_01[2];
     plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // sorted by sigma !!!
     assert #plA eq #exps;
