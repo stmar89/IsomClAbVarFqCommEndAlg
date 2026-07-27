@@ -272,7 +272,7 @@ intrinsic AlphaDualAtConjStablePlaceRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl,
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`AlphaDualAtConjStablePlaceRhoNotId,nu_Hash) then
-        //TODO
+        //TODO: this needs to be done from scratch
         isog`AlphaDualAtConjStablePlaceRhoNotId[nu_Hash]:=alpha_nu;
     end if;
     return isog`AlphaDualAtConjStablePlaceRhoNotId[nu_Hash];
