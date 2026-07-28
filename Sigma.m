@@ -103,7 +103,7 @@ intrinsic SigmaOnQuotientOfOA(isog::IsogenyClassFq,I::AlgEtQIdl)->GrpAb,Map,Map
             if GetAssertions() ge 2 then
                 for J in [J:J in Keys(isog`SigmaOnQuotientOfOA)|J ne I and J subset I] do
                     QJ,mQJ,sigma_QJ:=Explode(isog`SigmaOnQuotientOfOA[J]);
-                    assert forall{QJ.i:i in [1..Ngens(QJ)]|QJ.i@sigma_QJ@@mQJ@mQ eq QJ.i@@QJ@mQ@sigma_Q};
+                    assert forall{QJ.i:i in [1..Ngens(QJ)]|QJ.i@sigma_QJ@@mQJ@mQ eq QJ.i@@mQJ@mQ@sigma_Q};
                 end for;
             end if;
         end if;

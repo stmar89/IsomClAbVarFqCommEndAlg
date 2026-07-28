@@ -50,6 +50,7 @@ intrinsic ExponentsWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[Seq
         if &+tup eq Integers()!(g_nu*Valuation(pi,nu)/a) then
             exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g_nu]];
             Append(~exps,exp);
+            assert forall{e:e in exp|e ge 0};
         end if;
     end for;
     return exps;
@@ -60,17 +61,19 @@ intrinsic ExponentsWTypeDualAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum
 // NEW 20260728
     p:=CharacteristicFiniteField(isog);
     a:=Ilog(p,FiniteField(isog));
-    f_nu:=InertiaDegree(P);
+    f_nu:=InertiaDegree(nu);
     g_nu:=GCD(a,f_nu); //q=p^a
-    e_nu:=RamificationIndex(P);
+    e_nu:=RamificationIndex(nu);
     pi:=PrimitiveElement(DeligneAlgebra(isog));
 
     exps:=[];
     cp:=CartesianProduct([ [-e_nu..0] : i in [1..g_nu]]);
     for tup0 in cp do
         tup:=[ tup0[i] : i in [1..g_nu] ];
-        if &+tup eq -Integers()!(g_nu*Valuation(pi,P)/a) then
+        if &+tup eq -Integers()!(g_nu*Valuation(pi,nu)/a) then
             exp:=Reverse([ i eq g_nu select 0 else Self(g_nu-i) - tup[i] : i in Reverse([1..g_nu])]);
+            m:=Min(exp);
+            exp:=[e+m: e in exp]; // make them all positive
             Append(~exps,exp);
         end if;
     end for;
@@ -97,11 +100,14 @@ intrinsic ExponentsConjStabRhoNotIdAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->
     // -e<=n_i<=0   for i=g2+1,...,g-1
     // -e<=n_g<=e
     // sum_i n_i=0
-    cp:=CartesianProduct([ [0..e_nu] : i in [1..g2-1]] cat [[0]] cat [[-e_nu..0] : i in [g2+1..g-1]] cat [[-e_nu..e_nu]]);
+    cp:=[[0..e_nu]:i in [1..g2-1]] cat [[0]] cat [[-e_nu..0]:i in [g2+1..g-1]] cat [[-e_nu..e_nu]];
+    cp:=CartesianProduct(cp);
     for tup0 in cp do
         tup:=[ tup0[i] : i in [1..g] ];
         if &+tup eq 0 then // n_g = -sum_i n_i where n_i=exp[i+1]-exp[i]
             exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g]];
+            m:=Min(exp);
+            exp:=[e+m: e in exp]; // make them all positive
             Append(~exps,exp);
         end if;
     end for;
@@ -157,7 +163,7 @@ intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
         for cc in exps_nus_cc do
             Append(~exps_plE,&cat[ c : c in cc ]); 
         end for;
-        isog`ExponentsDual:=<exps_plE,slopes>;
+        isog`ExponentsDual:=exps_plE;
     end if;
     return isog`ExponentsDual;
 end intrinsic;

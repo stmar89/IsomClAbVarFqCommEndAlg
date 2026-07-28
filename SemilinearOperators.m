@@ -104,7 +104,7 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
         // but it might not be an element of OA, since t_nu is picked as an element which is a unit
         // at every place of E above p. 
         // This is an issues since we can only take preimages to U from OA.
-        // So, we use the following workaround:
+        // So, we use the following workaround: //TODO why does this work
         // w_nu is in OE and congrunent to t_nu^val_nu/pi at nu and 1 at every other place above p
         // The precision is chosen to be a majorative of RamificationIndex(pp)*m -- to match the quotient 
         // we are using -- plus Valuation(PP,pi) leq Valuation(PP,q)=RamificationIndex(pp)*a.
@@ -144,11 +144,14 @@ intrinsic AlphaDualAtNonConjStablePlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::Rn
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`AlphaDualAtNonConjStablePlace,nu_Hash) then
+        m:=2*m; //FIXME: later we need to take the pre-image on RR:=Rs_nu[g_nu] by the multiplication by the 
+                // the exact element u0. I think we need to double the precision to make sure that q_alpha_nu
+                // is computed at precision m.
         _,_,_,_,A,pi_A,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
         p:=CharacteristicFiniteField(isog);
+        q:=FiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
         OA:=MaximalOrder(A);
-        // FIXME is sigma computed at the correct precision?
         OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m*OA);
         PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
         f_nu:=InertiaDegree(nu);
@@ -206,7 +209,7 @@ intrinsic AlphaDualAtNonConjStablePlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::Rn
         // but it might not be an element of OA, since t_nu is picked as an element which is a unit
         // at every place of E above p. 
         // This is an issues since we can only take preimages to U from OA.
-        // So, we use the following workaround:
+        // So, we use the following workaround: //TODO why does this work
         // w_nu is in OE and congrunent to t_nu^val_nu/pi at nu and 1 at every other place above p
         // The precision is chosen to be a majorative of RamificationIndex(pp)*m -- to match the quotient 
         // we are using -- plus Valuation(PP,pi) leq Valuation(PP,q)=RamificationIndex(pp)*a.
@@ -234,9 +237,9 @@ intrinsic AlphaDualAtNonConjStablePlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::Rn
         assert2 forall{i:i in [1..g_nu]|X-pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qOA_mod_I@(sigma^i)@@qOA_mod_I:i in [0..a-1]];
 
         // NEW 20260724 for q_alpha_nu
-        // FIXME We need to take a preimage by the map multiplication-by-u0
-        //       Do we need to double the precision of the computation of u0 above?????
-        mult_u0:=hom<RR->RR|[((RR.i@@r)*u0)@r : i in [1..Ngens(RR)]]> where RR:=Rs_nu[g_nu] where r:=rs_nu[g_nu];
+        RR:=Rs_nu[g_nu];
+        rr:=rs_nu[g_nu];
+        mult_u0:=hom<RR->RR|[((RR.i@@rr)*u0)@rr : i in [1..Ngens(RR)]]>;
         q_u0:=(rs_nu[g_nu](A!q))@@mult_u0;
 
         q_gamma_A:=(&+[i lt g_nu select 
@@ -263,8 +266,10 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`AlphaDualAtConjStablePlaceRhoId,nu_Hash) then
         _,_,_,_,A,pi_A,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
+        bar_onA:=BarOnDieudonneAlgebra(isog);
         p:=CharacteristicFiniteField(isog);
-        a:=Ilog(p,FiniteField(isog));
+        q:=FiniteField(isog);
+        a:=Ilog(p,q);
         OA:=MaximalOrder(A);
         OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m*OA);
         PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
@@ -323,7 +328,7 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         // but it might not be an element of OA, since t_nu is picked as an element which is a unit
         // at every place of E above p. 
         // This is an issues since we can only take preimages to U from OA.
-        // So, we use the following workaround:
+        // So, we use the following workaround: //TODO why does this work?
         // w_nu is in OE and congrunent to t_nu^val_nu/pi at nu and 1 at every other place above p
         // The precision is chosen to be a majorative of RamificationIndex(pp)*m -- to match the quotient 
         // we are using -- plus Valuation(PP,pi) leq Valuation(PP,q)=RamificationIndex(pp)*a.
@@ -363,12 +368,12 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         // The precision is chosen to match the one of the quotients we are using, plus the fact that 
         // we are dividing by p^g_nu
         UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],
-                [PP in primes_of_A_above_place_of_E(A,nu) select UbU else pg_nu:PP in pA])/pg_nu;
+                [PP in PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu) select UbU else pg_nu:PP in pA])/pg_nu;
         assert U in OA;
         assert bU in OA;
         assert UU in OA;
-        assert Valuation(UU,P) eq 0 where P:=primes_of_A_above_place_of_E(A,nu)[g_nu];
-        PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in primes_of_A_above_place_of_E(A,nu)];
+        assert Valuation(UU,P) eq 0 where P:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu)[g_nu];
+        PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu)];
         PPs_nu_m_prod:=&*(PPs_nu_m);
         assert2 forall{k:k in [1..g_nu]|&*[bU@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I:i in [0..a_div_g_nu-1]]-(q/pi_A) in PPs_nu_m[k]};
         assert2 forall{k:k in [1..g_nu]|&*[ U@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
@@ -411,7 +416,90 @@ intrinsic AlphaDualAtConjStablePlaceRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl,
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`AlphaDualAtConjStablePlaceRhoNotId,nu_Hash) then
-        //TODO: this needs to be done from scratch
+        p:=CharacteristicFiniteField(isog);
+        a:=Ilog(p,FiniteField(isog));
+        assert IsEven(a);
+        pa2:=p^(a div 2);
+        t_nu:=UniformizersInQFAt_p(isog,[nu])[1]; // in E
+        E:=DeligneAlgebra(isog);
+        OE:=MaximalOrder(E);
+        pi:=PrimitiveElement(E);
+        // pi/p^(a/2) is in OE_nu^*, we want gamma such that bar(gamma)/gamma = pi/p^(a/2).
+        UE,uE:=ResidueRingUnits(OE,nu^(RamificationIndex(nu)+m)); // uE:UE->OE
+        bar_id:=iso<UE->UE|[-UE.i+(ComplexConjugate(UE.i@uE)@@uE):i in [1..Ngens(UE)]]>;
+
+        pE0,pE01,pE1:=PlacesOfQFAbove_p(isog);
+        pE:=pE0 cat pE01 cat pE1;
+        gamma:=pi/pa2;
+        //gamma:=CRT([pp^(Dimension(E)*(m+a)):pp in pE],[pp eq nu select pi/pa2 else E!pa2 : pp in pE])/pa2;
+        //assert gamma in OE;
+        gamma:=gamma@@uE@@bar_id@uE; // pi/(p^(a div 2)) is a unit at nu, but might not be in OE. TODO?
+
+        _,_,_,_,A,pi_A,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
+        bar_onA:=BarOnDieudonneAlgebra(isog);
+        OA:=MaximalOrder(A);
+        OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m*OA);
+        PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
+        f_nu:=InertiaDegree(nu);
+        g_nu:=GCD(a,f_nu); //q=p^a
+        assert #PPs_nu eq g_nu;
+
+        Rs_nu:=[];
+        rs_nu:=<>;
+        Us_nu:=[];
+        us_nu:=<>;
+        PPs_nu_m:=[];
+        for PP in PPs_nu do
+            PP_m:=PP^(RamificationIndex(PP)*m);
+            Append(~PPs_nu_m,PP_m);
+            R,r:=ResidueRing(OA,PP_m);
+            U,u:=ResidueRingUnits(OA,PP_m);
+            Append(~Rs_nu,R);
+            Append(~rs_nu,r);
+            Append(~Us_nu,U);
+            Append(~us_nu,u);
+        end for;
+        PPs_nu_m_prod:=&*PPs_nu_m;
+
+        Q,embs,projs:=DirectSum(Rs_nu);
+        pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
+                                   y:->CRT(PPs_nu_m,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
+        pi_Q:=pr(pi_A);
+        assert2 forall{x:x in Generators(Q)|pr(x@@pr) eq x};
+
+        U,U_embs,U_projs:=DirectSum(Us_nu);
+        U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
+                                     y:->CRT(PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
+        sigma_U:=hom<U->U | [U.i@@U_pr@qOA_mod_I@sigma@@qOA_mod_I@U_pr : i in [1..Ngens(U)]]>; 
+        assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
+
+        image_phi:=function(gamma)
+            // gamma in US_nu[gnu] = (OA/PP_{nu,gnu}^m)^*
+            // phi does the following two steps
+            // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_{nu,i}^m
+            // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
+            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+            // Action of the Frobenius on U
+            img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+            assert2 sigma_U(img) eq img;
+            return img;
+        end function;
+        phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
+
+        gammaU:=U_pr(Delta_map(gamma));
+        eps_A:=(&+([ i lt g_nu select U_embs[i](Zero(Us_nu[i])) 
+                               else gammaU@@phi@U_embs[g_nu] : i in [1..g_nu]]))@@U_pr; // (1,...,1,eps)
+        eps_A_inv:=(&+([ i lt g_nu select U_embs[i](Zero(Us_nu[i])) 
+                               else -gammaU@@phi@U_embs[g_nu] : i in [1..g_nu]]))@@U_pr; // (1,...,1,eps^-1)
+        eps_A_bar:=bar_onA(eps_A); // (1,...,1,bar(eps),1,...,1)
+        p_half:=(&+([i le (g_nu div 2) select embs[i](rs_nu[i](One(A))) 
+                                      else embs[i](rs_nu[i](p*One(A))) : i in [1..g_nu]]))@@pr; // (1,...,1,p,...,p)
+        alpha_nu:=eps_A_inv*eps_A_bar*p_half; 
+        assert2 forall{i:i in [1..(g_nu div 2)-1]|alpha_nu-1 in PPs_nu_m[i]};
+        assert2 forall{i:i in [(g_nu div 2)+1..g_nu-1]|alpha_nu-p in PPs_nu_m[i]};
+        assert2 alpha_nu-eps_A_bar in PPs_nu_m[g_nu div 2];
+        assert2 alpha_nu-p*eps_A_inv in PPs_nu_m[g_nu];
+        assert2 forall{i:i in [1..g_nu]|X-pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qOA_mod_I@(sigma^i)@@qOA_mod_I:i in [0..a-1]];
         isog`AlphaDualAtConjStablePlaceRhoNotId[nu_Hash]:=alpha_nu;
     end if;
     return isog`AlphaDualAtConjStablePlaceRhoNotId[nu_Hash];
@@ -662,7 +750,7 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
     if not assigned isog`SemilinearOperatorsDualComp then
         p:=CharacteristicFiniteField(isog);
         a:=Ilog(p,FiniteField(isog));
-        _,_,_,_,A,pi_A,OA,_,_,A_as_vector_space_over_L_data,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog); // TODO pi_A, A_as_vector_space_over_L_data and OA_as_abelian_group_data are used in the assert, which I have not moved in yet
+        _,_,_,_,A,pi_A,OA,_,_,A_as_vector_space_over_L_data,OA_as_abelian_group_data:=DieudonneAlgebraCommEndAlg(isog);
         bar_onA:=BarOnDieudonneAlgebra(isog);
 
         // Quotients
@@ -714,59 +802,97 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
         //      - We designed the intrinsic AlphaDualAtConjStablePlaceRhoNotId for this purpose.
 
         PPs:=AssociativeArray(); // PPs[nu]:=(prod of primes of A above nu)^(ramif of any of these)
-        PPs_m0:=AssociativeArray(); // PPs[nu]:=(prod of primes of A above nu)^(m0*ramif of any of these)
+        PPs_m0_1:=AssociativeArray(); // PPs[nu]:=(prod of primes of A above nu)^(m0*ramif of any of these)
         nus:=&cat[[pair[1],pair[2]]:pair in conj_pairs] cat rho_id cat rho_notid;
         for nu in nus do
             PP:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
             e:=RamificationIndex(PP[1]);
             PP:=(&*PP)^e;
             PPs[myHash(nu)]:=PP;
-            PPs_m0[myHash(nu)]:=PP^m0;
+            PPs_m0_1[myHash(nu)]:=PP^(m0+1);
         end for;
         delta_inv:=AssociativeArray();
         images_gens_Qm0:=AssociativeArray();
         images_gens_Qm0_1:=AssociativeArray();
-        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0[myHash(nu)]:nu in nus]); // precision m0
         for pair in conj_pairs do
-            // FIXME double check m2 vs m1 vs m0
-            m2:=m0+(a-1); //beause we need to take preimage via mult by p^(a-1)
+            m2:=m0+a; //beause we need to take preimage via mult by p^(a-1)
             nu:=pair[1];
             nub:=pair[2];
             delta_inv[myHash(nu)]:=One(A);
             delta_inv[myHash(nub)]:=One(A);
             alpha,q_alpha:=AlphaDualAtNonConjStablePlace(isog,nu,m2);
             q_alpha_b:=bar_onA(q_alpha);
-            // FIXME PPmb should be a power of PPs[nub]...but which?
-            S,s:=Quotient(PPmb^-(a-1),Pmb^m); //FIXME is m the right exponent here? 
-            T,t:=ResidueRing(OA,PPmb^(m+a-1)); //FIXME is m the right exponent here?
-            mult:=<iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>,s,t>;
+            PPb:=PPs[myHash(nub)];
+            //FIXME 
+            S,s:=Quotient(PPb^-(a-1),PPb^m2); 
+            T,t:=ResidueRing(OA,PPb^(m2+a-1)); 
+            mult:=iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>;
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
-            images_gens_Qm0[myHash(nub)]:=[(q_alpha_b*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0)]];
-            images_gens_Qm0_1[myHash(nub)]:=[(q_alpha_b*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0_1)]];
+//            images_gens_Qm0[myHash(nub)]:=[(q_alpha_b*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0)]];
+//            images_gens_Qm0_1[myHash(nub)]:=[(q_alpha_b*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0_1)]];
+            images_gens_Qm0[myHash(nub)]:=[(q_alpha_b*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)@t@@mult@@s) : i in [1..Ngens(Qm0)]];
+            images_gens_Qm0_1[myHash(nub)]:=[(q_alpha_b*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)@t@@mult@@s) : i in [1..Ngens(Qm0_1)]];
         end for;
         for nu in rho_id do
             g_nu:=GCD(Ilog(CharacteristicFiniteField(isog),FiniteField(isog)),InertiaDegree(nu));
-            m2:=m0+g_nu;
+            m2:=m0+1+g_nu;
             alpha,delta_inv:=AlphaDualAtConjStablePlaceRhoId(isog,nu,m2);
             delta_inv[myHash(nu)]:=delta_inv;
-            PPms[myHash(nu)]:=PPm;
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
         end for;
         for nu in rho_notid do
-            alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m0);
+            alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m0+1);
             delta_inv[myHash(nu)]:=One(A);
-            PPms[myHash(nu)]:=PPm;
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
         end for;
-        // FIXME finish the next 2 lines
-        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J() : i in [1..Ngens(Qm0)] ]>;
-        FQm0_1:=hom<Qm0_1->Qm0_1|[qm0_1(Jnus_J(image_qq(Qm0_1.i,qm0_1))) : i in [1..Ngens(Qm0_1)] ]>;
+        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0_1[myHash(nu)]:nu in nus]); // precision m0
+        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([images_gens_Qm0[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0)] ]>;
+        FQm0_1:=hom<Qm0_1->Qm0_1| [qm0_1(Jnus_J([images_gens_Qm0_1[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0_1)] ]>;
+        assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
+        // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
+        assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
+        assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
 
+        mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
+        assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
+        assert Image(mp) subset Image(FQm0_1);
 
-        //TODO add all assert and assert2
+        z_gamma_s:=[];
+        for i in [1..Ngens(Qm0)] do
+            gamma:=Qm0.i;
+            x_gamma:=gamma@@pr;
+            z_gamma:=(mp(x_gamma))@@FQm0_1;
+            Append(~z_gamma_s,z_gamma);
+        end for;
+        VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
+        assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
+        assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
+
+        // We check semilinearity for F, V: F*x = sigma(x)*F and x*V=V*sigma(x)  forall x in L?
+        // It suffices to check if for powers of zz in OA.
+        if GetAssertions() ge 2 then
+            vprintf Algorithm_3,2 : "\tTesting semilinearity of F and V...";
+            E:=DeligneAlgebra(isog);
+            _,_,_,mAW_zbOE:=Explode(A_as_vector_space_over_L_data);
+            W:=Codomain(mAW_zbOE);
+            FOA,fOA,_:=Explode(OA_as_abelian_group_data);
+            _,F,_,LL,LLtoL,imgs_zz:=Explode(A`sigma_fin_prec);
+            // - We construct the embedding F=ZZ[zz] -> OA=FOA induced by zz:->sum_i zz*zi 
+            //   where zi is the image of a ZBasis of OA in FOA
+            FtoFOA:=map<F->FOA|x:->fOA((W![ LLtoL(LL!Eltseq(x)):i in [1..AbsoluteDimension(E)]])@@mAW_zbOE)>; 
+            powers_zz_diagonally_inOA_via_zbOE:=[ (FtoFOA(z))@@fOA : z in imgs_zz ];
+            for z in powers_zz_diagonally_inOA_via_zbOE do
+                sigma_z:=z@qOA@sigma_QOA@@qOA;
+                z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+                sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(sigma_z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
+                assert2 forall{i:i in [1..Ngens(Qm0)]|FQm0(z_action_Qm0(Qm0.i)) eq sigma_z_action_Qm0(FQm0(Qm0.i))};
+                assert2 forall{i:i in [1..Ngens(Qm0)]|z_action_Qm0(VQm0(Qm0.i)) eq VQm0(sigma_z_action_Qm0(Qm0.i))};
+            end for;
+            vprintf Algorithm_3,2 : "all good.\n";
+        end if;
         isog`SemilinearOperatorsDualComp:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
     end if;
     return Explode(isog`SemilinearOperatorsDualComp);
@@ -779,3 +905,39 @@ intrinsic SemilinearOperators(isog::IsogenyClassFq)->GrpAb,Map,Map,Map,AlgEtQIdl
     return Explode(isog`SemilinearOperatorsWType);
 end intrinsic;
 
+/*
+    TESTS
+    
+    PP<x>:=PolynomialRing(Integers());
+    SetAssertions(2);
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=Split(Read("tests/weil_poly_sq_not_prime-ord-almord.txt"));
+    m0:=10;
+    for s in all do
+        cc:=[StringToInteger(c):c in Split(s,"[,]")];
+        g:=(#cc-1) div 2;
+        q:=Round(cc[1]^(1/g));
+        test,p,a:=IsPrimePower(q);
+        if a lt 4 then
+            h:=PP!cc;
+            isog:=IsogenyClass(h);
+            l1,l2,l3:=SortPlacesOfQFAbove_p(isog);
+            printf "%o,%o,%o\n",#l1,#l2,#l3;
+            exps:=ExponentsDual(isog)[1];
+            plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
+            plE:=plE0 cat plE01 cat plE1;
+            plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE];
+            assert #plA eq #exps;
+            JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
+            _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+            assert JOA subset OA;
+            J:=WR!!JOA;
+            ZBasisLLL(J);
+            _:=SemilinearOperatorsDualComp(isog,J,m0);
+        end if;
+    end for;
+
+*/
