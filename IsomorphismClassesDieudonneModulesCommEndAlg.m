@@ -279,6 +279,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
         exps_plE:=ExponentsDual(isog);
     end if;
     //"WARNING: changing J for test purposes";exps:=exps_01[2];
+    // FIXME We want J to be integral and as close as possible to OA
     plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // sorted by sigma !!!
     assert #plA eq #exps;
     JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
