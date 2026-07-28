@@ -26,7 +26,8 @@ declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 
 declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg,
-                                    ExponentsWType;
+                                    ExponentsWType,
+                                    ExponentsDual;
 
 ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// IsomorphismClassesDieudonneModules ////////////////////////
@@ -83,18 +84,24 @@ intrinsic ExponentsConjStabRhoNotIdAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->
     p:=CharacteristicFiniteField(isog);
     a:=Ilog(p,FiniteField(isog));
     f_nu:=InertiaDegree(nu);
-    g_nu:=GCD(a,f_nu); //q=p^a
+    g:=GCD(a,f_nu); //q=p^a
     e_nu:=RamificationIndex(nu);
     pi:=PrimitiveElement(DeligneAlgebra(isog));
-    assert IsEven(g_nu); // If rho has order 2 then, g_nu has to be even
-    g_nu_2:=g_nu div 2;
+    assert IsEven(g); // If rho has order 2 then, g has to be even
+    g2:=g div 2;
 
     exps:=[];
-    cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu_2]] cat [[-e_nu..0] : i in [g_nu_2+1..g_nu]]);
+    // we get the following retrictions for n_i:
+    // 0<=n_i<=e    for i=1,...,g2-1
+    // 0=n_{g2}
+    // -e<=n_i<=0   for i=g2+1,...,g-1
+    // -e<=n_g<=e
+    // sum_i n_i=0
+    cp:=CartesianProduct([ [0..e_nu] : i in [1..g2-1]] cat [[0]] cat [[-e_nu..0] : i in [g2+1..g-1]] cat [[-e_nu..e_nu]]);
     for tup0 in cp do
-        tup:=[ tup0[i] : i in [1..g_nu] ];
+        tup:=[ tup0[i] : i in [1..g] ];
         if &+tup eq 0 then // n_g = -sum_i n_i where n_i=exp[i+1]-exp[i]
-            exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g_nu]];
+            exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g]];
             Append(~exps,exp);
         end if;
     end for;
