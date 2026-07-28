@@ -33,7 +33,7 @@ declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg,
 ////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic ExponentsWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
-{Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the nu-components the isomorphism classes of WR\{F,V\}-ideals with maximal endomorphism OE.}
+{Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the nu-components the isomorphism classes of WR\{F,V\}-ideals with maximal endomorphism OE for nu such that F_nu=alpha_nu*sigma with alpha_nu of W-type.}
     // The combinatorics is taken from Waterhouse's paper
     p:=CharacteristicFiniteField(isog);
     a:=Ilog(p,FiniteField(isog));
@@ -55,19 +55,54 @@ intrinsic ExponentsWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[Seq
 end intrinsic;
 
 intrinsic ExponentsWTypeDualAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
-{//TODO
-}
-    //TODO
+{Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the nu-components the isomorphism classes of WR\{F,V\}-ideals with maximal endomorphism OE for nu non-conjugate-stable such that F_bar(nu)=alpha_bar(nu)*sigma with alpha_bar(nu) of W-type.}
+// NEW 20260728
+    p:=CharacteristicFiniteField(isog);
+    a:=Ilog(p,FiniteField(isog));
+    f_nu:=InertiaDegree(P);
+    g_nu:=GCD(a,f_nu); //q=p^a
+    e_nu:=RamificationIndex(P);
+    pi:=PrimitiveElement(DeligneAlgebra(isog));
+
+    exps:=[];
+    cp:=CartesianProduct([ [-e_nu..0] : i in [1..g_nu]]);
+    for tup0 in cp do
+        tup:=[ tup0[i] : i in [1..g_nu] ];
+        if &+tup eq -Integers()!(g_nu*Valuation(pi,P)/a) then
+            exp:=Reverse([ i eq g_nu select 0 else Self(g_nu-i) - tup[i] : i in Reverse([1..g_nu])]);
+            Append(~exps,exp);
+        end if;
+    end for;
+    return exps;
 end intrinsic;
 
-intrinsic ExponentsConjStabRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
-{//TODO
+intrinsic ExponentsConjStabRhoNotIdAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum[SeqEnum[RngIntElt]]
+{Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the nu-components the isomorphism classes of WR\{F,V\}-ideals with maximal endomorphism OE for nu conjugate-stable such that bar induces a permutation of order 2 on the places of A above nu. We asseume that F_nu=alpha_nu*sigma for alpha_nu=(1,...,1,bar(eps),p,...,p,p/eps) as describd in //TODO add ref to paper, or give details about eps
 }
-    //TODO
+// NEW 20260728
+    p:=CharacteristicFiniteField(isog);
+    a:=Ilog(p,FiniteField(isog));
+    f_nu:=InertiaDegree(nu);
+    g_nu:=GCD(a,f_nu); //q=p^a
+    e_nu:=RamificationIndex(nu);
+    pi:=PrimitiveElement(DeligneAlgebra(isog));
+    assert IsEven(g_nu); // If rho has order 2 then, g_nu has to be even
+    g_nu_2:=g_nu div 2;
+
+    exps:=[];
+    cp:=CartesianProduct([ [0..e_nu] : i in [1..g_nu_2]] cat [[-e_nu..0] : i in [g_nu_2+1..g_nu]]);
+    for tup0 in cp do
+        tup:=[ tup0[i] : i in [1..g_nu] ];
+        if &+tup eq 0 then // n_g = -sum_i n_i where n_i=exp[i+1]-exp[i]
+            exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g_nu]];
+            Append(~exps,exp);
+        end if;
+    end for;
+    return exps;
 end intrinsic;
 
 intrinsic ExponentsWType(isog::IsogenyClassFq,slopes::MonStgElt)->SeqEnum[SeqEnum[RngIntElt]]
-{Given an isogeny class isog and a place nu of the Deligne Algebra, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the isomorphism classes of WR\{F,V\}-ideals or WR'\{F',V'\}-ideals -- depending on whether slopes is "all" or "(0,1)" -- with maximal endomorphism OE.}
+{Given an isogeny class isog, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the isomorphism classes of WR\{F,V\}-ideals or WR'\{F',V'\}-ideals -- depending on whether slopes is "all" or "(0,1)" -- with maximal endomorphism ring OE.}
     require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
     if not assigned isog`ExponentsWType or isog`ExponentsWType[2] ne slopes then
         plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
@@ -88,8 +123,9 @@ intrinsic ExponentsWType(isog::IsogenyClassFq,slopes::MonStgElt)->SeqEnum[SeqEnu
 end intrinsic;
 
 intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
-{//TODO
+{Given an isogeny class isog, one can represent the isomorphism classes of Dieudonne Modules with maximal endomorphism rings as OA\{F,V\}-ideal in the DieudonneAlgebra A. These ideals can be efficiently described as vectors of powers of uniformizers. In particular, the property of being F-V-stable can be checked using the exponents of this power representation, assuming that the maximal ideal of A above nu are sorted according to the action of sigma. This intrinsic returns a sequence of the exponents, each one represented as a sequence of integers, describing the isomorphism classes of WR\{F,V\}-ideals with maximal endomorphism ring OE. We assume that F and V are constructed to be compatible with duality. //TODO details about this compatibility
 }
+// NEW 20260728
     if not assigned isog`ExponentsDual then
         exps_nus:=AssociativeArray();
         conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
@@ -102,7 +138,7 @@ intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
             exps_nus[nu]:=ExponentsWTypeAtPlace(isog,nu);
         end for;
         for nu in rho_notid do
-            exps_nus[nu]:=ExponentsConjStabRhoNotId(isog,nu);
+            exps_nus[nu]:=ExponentsConjStabRhoNotIdAtPlace(isog,nu);
         end for;
 
         plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
@@ -120,7 +156,7 @@ intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
 end intrinsic;
 
 intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgElt : dual:=false)->SeqEnum[AlgEtQIld]
-{Given an isogeny class isog, if slopes is "all" then returns a sequence of fraction WR-ideals I whose extension I*OA to the maximal order OA of the DieudonneAlgebra A is stable by the action of F and V, modulo Delta-isomorphisms; if slopes is "(0,1)" then on the local-local part of the previously described output is returned.
+{Given an isogeny class isog, if slopes is "all" then returns a sequence of fractional WR-ideals I whose extension I*OA to the maximal order OA of the DieudonneAlgebra A is stable by the action of F and V, modulo Delta-isomorphisms; if slopes is "(0,1)" then on the local-local part of the previously described output is returned.
 //TODO describe dual
 }
     require slopes in {"(0,1)","all"} : "Invalid parameter slopes";
