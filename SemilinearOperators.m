@@ -30,7 +30,30 @@ declare attributes IsogenyClassFq : AlphaWType,
                                     AlphaDualAtConjStablePlaceRhoId,
                                     AlphaDualAtConjStablePlaceRhoNotId,
                                     SemilinearOperatorsWType,
-                                    SemilinearOperatorsDualComp;
+                                    SemilinearOperatorsDualComp,
+                                    delta_inv;
+
+integral_approx:=function(a,b,m,nu)
+// Input: nu a place in nus
+//        a,b in O, such that a/b is in O_nu
+//        m a positive integer
+// Output: an element y of O such that val_nu(y-x)>=m. 
+    x:=a/b;
+    if x in O then
+        return x;
+    end if;
+    O:=Order(nu);
+    aO:=a*O;
+    bO:=b*O;
+    fac_bO:=Factorization(bO);
+    supp_b:={@ g[1]:g in fac_bO @};
+    nus:=Setseq(Include(supp_b,nu));
+    cs:=[i eq Index(nus,nu) select One(O) else b:i in [1..#nus]];
+    c:=CRT([mu^m:mu in nus],cs)
+    y:=c*a/b;
+    assert y in O;
+    return y;
+end function;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////Alpha of W-type/////////////////////////////////////
@@ -271,38 +294,41 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         q:=FiniteField(isog);
         a:=Ilog(p,q);
         OA:=MaximalOrder(A);
-        OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m*OA);
         PPs_nu:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu);
         f_nu:=InertiaDegree(nu);
         g_nu:=GCD(a,f_nu); //q=p^a
         assert #PPs_nu eq g_nu;
+        // In the construction of delta_nu, we need to divide by g_nu. 
+        // We increase the precision accordingly.
+        m2:=m+g_nu;
+        OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m2*OA);
 
         Rs_nu:=[];
         rs_nu:=<>;
         Us_nu:=[];
         us_nu:=<>;
-        PPs_nu_m:=[];
+        PPs_nu_m2:=[];
         for PP in PPs_nu do
-            PP_m:=PP^(RamificationIndex(PP)*m);
-            Append(~PPs_nu_m,PP_m);
-            R,r:=ResidueRing(OA,PP_m);
-            U,u:=ResidueRingUnits(OA,PP_m);
+            PP_m2:=PP^(RamificationIndex(PP)*m2);
+            Append(~PPs_nu_m2,PP_m2);
+            R,r:=ResidueRing(OA,PP_m2);
+            U,u:=ResidueRingUnits(OA,PP_m2);
             Append(~Rs_nu,R);
             Append(~rs_nu,r);
             Append(~Us_nu,U);
             Append(~us_nu,u);
         end for;
-        PPs_nu_m_prod:=&*PPs_nu_m;
+        PPs_nu_m2_prod:=&*PPs_nu_m2;
 
         Q,embs,projs:=DirectSum(Rs_nu);
         pr:=map<Algebra(OA) -> Q | x:->&+[embs[i](rs_nu[i](x)) : i in [1..g_nu]], 
-                                   y:->CRT(PPs_nu_m,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
+                                   y:->CRT(PPs_nu_m2,[projs[i](y)@@rs_nu[i] : i in [1..g_nu]])>;
         pi_Q:=pr(pi_A);
         assert2 forall{x:x in Generators(Q)|pr(x@@pr) eq x};
 
         U,U_embs,U_projs:=DirectSum(Us_nu);
         U_pr:=map<Algebra(OA) -> U | x:->&+[U_embs[i](x@@us_nu[i]) : i in [1..g_nu]], 
-                                     y:->CRT(PPs_nu_m ,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
+                                     y:->CRT(PPs_nu_m2,[(U_projs[i](y))@us_nu[i] : i in [1..g_nu]])>;
         sigma_U:=hom<U->U | [U.i@@U_pr@qOA_mod_I@sigma@@qOA_mod_I@U_pr : i in [1..Ngens(U)]]>; 
         assert2 forall{ x : x in Generators(U) | U_pr(x@@U_pr) eq x};
 
@@ -334,9 +360,9 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         // we are using -- plus Valuation(PP,pi) leq Valuation(PP,q)=RamificationIndex(pp)*a.
         pE0,pE01,pE1:=PlacesOfQFAbove_p(isog);
         pE:=pE0 cat pE01 cat pE1;
-        w_nu:=CRT([pp^(Dimension(E)*(m+a)):pp in pE],[pp eq nu select t_nu^val_nu else pi : pp in pE])/pi; // in OE
+        w_nu:=CRT([pp^(RamificationIndex(nu)+m2+a):pp in pE],[pp eq nu select t_nu^val_nu else pi : pp in pE])/pi;
         assert w_nu in MaximalOrder(E);
-        wU:=-U_pr(Delta_map(w_nu)); // in E->A->U
+        wU:=-U_pr(Delta_map(w_nu)); // pi/t_nu^val_nu in E->A->U
 
         gamma0:=wU@@phi; // in Us[g_nu], the last component of U
         gamma_A:=(&+[i lt g_nu select 
@@ -349,54 +375,54 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         alpha_nu:=gamma_A*beta_A;
         // it is desirable that alpha_nu is not a zero divisor of A
         while IsZeroDivisor(alpha_nu) do
-            alpha_nu+:=Random(PPs_nu_m_prod);
+            alpha_nu+:=Random(PPs_nu_m2_prod);
         end while;
         // Check that alpha_nu of W-type: 1 in all components but the last one, and with sigma-norm = pi_nu
-        assert2 forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m[i]};
-        assert2 forall{i:i in [1..g_nu]|X-pi_A in PPs_nu_m[i]} where X:=&*[alpha_nu@qOA_mod_I@(sigma^i)@@qOA_mod_I:i in [0..a-1]];
+        assert2 forall{i:i in [1..g_nu-1]|alpha_nu-1 in PPs_nu_m2[i]};
+        assert2 forall{i:i in [1..g_nu]|X-pi_A in PPs_nu_m2[i]} where X:=&*[alpha_nu@qOA_mod_I@(sigma^i)@@qOA_mod_I:i in [0..a-1]];
 
-        // We compute the element delta_nu satisfying delta_nu/sigma(delta_nu)*bar(alpha_nu) = p/alpha_nu  
-        // computed at precision m, that is, in OA/PP where PP:=\prod P^(m*e) where 
-        // P runs over the places of A above nu and e_nu is the ramification at nu (=ramif at each P)
-        // We pick delta_1 satisfying delta_1=bar(delta_1) 
+        // delta_inv_nu
+        // FIXME the below computes delta, not delta_inv. The former is not integral if g_nu > 1!
         pg_nu:=A!(p^g_nu);
         a_div_g_nu:=Integers()!(a/g_nu);
         U:=&*[alpha_nu@qOA_mod_I@(sigma^i)@@qOA_mod_I:i in [0..g_nu-1]]; // = (u_nu,...,u_nu) in A
         bU:=bar_onA(U);
         pA:=PlacesAboveRationalPrime(A,p);
         UbU:=U*bU;
+        // FIXME workaround: 
         // The precision is chosen to match the one of the quotients we are using, plus the fact that 
         // we are dividing by p^g_nu
-        UU:=CRT([PP^(Dimension(A)*(m+g_nu)):PP in pA],
-                [PP in PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu) select UbU else pg_nu:PP in pA])/pg_nu;
+        UU:=CRT([PP^(RamificationIndex(PP)+m+g_nu):PP in pA],
+                [PP in PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu) select UbU 
+                                                                                    else pg_nu:PP in pA])/pg_nu;
         assert U in OA;
         assert bU in OA;
         assert UU in OA;
         assert Valuation(UU,P) eq 0 where P:=PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu)[g_nu];
-        PPs_nu_m:=[PP^(RamificationIndex(PP)*m):PP in PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu)];
+        PPs_nu_m:=[PP^(RamificationIndex(PP)+m):PP in PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu)];
         PPs_nu_m_prod:=&*(PPs_nu_m);
         assert2 forall{k:k in [1..g_nu]|&*[bU@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I:i in [0..a_div_g_nu-1]]-(q/pi_A) in PPs_nu_m[k]};
-        assert2 forall{k:k in [1..g_nu]|&*[ U@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I : i in [0..a_div_g_nu-1] ] - pi_A in PPs_nu_m[k]};
-        assert2 forall{k:k in [1..g_nu]|&*[UU@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I:i in [0..a_div_g_nu-1]] - 1 in PPs_nu_m[k]};
+        assert2 forall{k:k in [1..g_nu]|&*[ U@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I:i in [0..a_div_g_nu-1] ]-pi_A in PPs_nu_m[k]};
+        assert2 forall{k:k in [1..g_nu]|&*[UU@qOA_mod_I@(sigma^(g_nu*i))@@qOA_mod_I:i in [0..a_div_g_nu-1]]-1 in PPs_nu_m[k]};
         U_gnu,u_gnu:=ResidueRingUnits(OA,PPs_nu_m[g_nu]);
         UU:=UU@@u_gnu; // in U_gnu
 
-        rho_g_nu:=Index(PPs_nu_m,Ideal(OA,[bar_onA(z):z in ZBasis(PPs_nu_m[g_nu])]));
-        bar_onU_gnu_over_id:=iso<U_gnu->U_gnu|[(U_gnu.i@u_gnu@bar_onA@@u_gnu)-U_gnu.i:i in [1..Ngens(U_gnu)]]>;
+        bar_onU_gnu_over_id:=iso<U_gnu->U_gnu|[(U_gnu.i@u_gnu@bar_onA@@u_gnu)-U_gnu.i :i in [1..Ngens(U_gnu)]]>;
         U_gnu_TP:=Kernel(bar_onU_gnu_over_id);
         // tau = sigma^g_nu
-        tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qOA_mod_I@(sigma^g_nu)@@qOA_mod_I@@u_gnu : i in [1..Ngens(U_gnu)]]>;
+        tau:=iso<U_gnu->U_gnu|[U_gnu.i@u_gnu@qOA_mod_I@(sigma^g_nu)@@qOA_mod_I@@u_gnu :i in [1..Ngens(U_gnu)]]>;
         assert forall{i:i in [1..Ngens(U_gnu)]|(tau^(a_div_g_nu))(U_gnu.i) eq U_gnu.i};
         // tau/id only on U_gnu_TP
-        tau_over_id:=hom<U_gnu_TP->U_gnu_TP|[ U_gnu_TP!((U_gnu_TP.i@tau)-U_gnu_TP.i) : i in [1..Ngens(U_gnu_TP)]]>;
-        assert &+[UU@(tau^i):i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
+        tau_over_id:=hom<U_gnu_TP->U_gnu_TP|[U_gnu_TP!((U_gnu_TP.i@tau)-U_gnu_TP.i) :i in [1..Ngens(U_gnu_TP)]]>;
+        assert &+[UU@(tau^i) :i in [0..(a_div_g_nu)-1]] eq Zero(U_gnu); // N_{LE_nu/E_nu} = 1
         delta1:=((U_gnu_TP!UU)@@tau_over_id)@u_gnu; //in A
         
-        delta_nu:=[delta1*p^-(i-1):i in [1..rho_g_nu]] cat [delta1*bU*p^-(i-1):i in [rho_g_nu+1..g_nu]];
+        // FIXME workaround: 
+        delta_nu:=[delta1*p^-(i-1):i in [1..g_nu]];
         delta_nu:=[pg_nu*x:x in delta_nu]; // to make sure that it is in OA
         assert forall{x:x in delta_nu|x in OA};
         delta_nu:=pg_nu^-1 * CRT(PPs_nu_m,delta_nu); //in A
-
+        assert delta_nu in OA;
         // to make sure that the lift is not a zero divisor
         while IsZeroDivisor(delta_nu) do
             delta_nu+:=Random(PPs_nu_m_prod);
@@ -811,15 +837,15 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             PPs[myHash(nu)]:=PP;
             PPs_m0_1[myHash(nu)]:=PP^(m0+1);
         end for;
-        delta_inv:=AssociativeArray();
+        delta_inv_nus:=AssociativeArray();
         images_gens_Qm0:=AssociativeArray();
         images_gens_Qm0_1:=AssociativeArray();
         for pair in conj_pairs do
             m2:=m0+a; //beause we need to take preimage via mult by p^(a-1)
             nu:=pair[1];
             nub:=pair[2];
-            delta_inv[myHash(nu)]:=One(A);
-            delta_inv[myHash(nub)]:=One(A);
+            delta_inv_nus[myHash(nu)]:=One(A);
+            delta_inv_nus[myHash(nub)]:=One(A);
             alpha,q_alpha:=AlphaDualAtNonConjStablePlace(isog,nu,m2);
             q_alpha_b:=bar_onA(q_alpha);
             PPb:=PPs[myHash(nub)];
@@ -834,20 +860,21 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             images_gens_Qm0[myHash(nub)]:=[(q_alpha_b*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)@t@@mult@@s) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nub)]:=[(q_alpha_b*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)@t@@mult@@s) : i in [1..Ngens(Qm0_1)]];
         end for;
+        m2:=m0+1+a; // m0+1+g_nu suffices, but this is a bit easier for the CRT.
         for nu in rho_id do
             g_nu:=GCD(Ilog(CharacteristicFiniteField(isog),FiniteField(isog)),InertiaDegree(nu));
-            m2:=m0+1+g_nu;
             alpha,delta_inv:=AlphaDualAtConjStablePlaceRhoId(isog,nu,m2);
-            delta_inv[myHash(nu)]:=delta_inv;
+            delta_inv_nus[myHash(nu)]:=delta_inv;
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
         end for;
         for nu in rho_notid do
             alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m0+1);
-            delta_inv[myHash(nu)]:=One(A);
+            delta_inv_nus[myHash(nu)]:=One(A);
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
         end for;
+        delta_inv:=CRT([PPs_m0_1[myHash(nu)]^a:nu in nus],[delta_inv_nus[myHash(nu)]:nu in nus]);
         J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0_1[myHash(nu)]:nu in nus]); // precision m0
         FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([images_gens_Qm0[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0)] ]>;
         FQm0_1:=hom<Qm0_1->Qm0_1| [qm0_1(Jnus_J([images_gens_Qm0_1[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0_1)] ]>;
@@ -893,6 +920,7 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             end for;
             vprintf Algorithm_3,2 : "all good.\n";
         end if;
+        isog`delta_inv:=delta_inv;
         isog`SemilinearOperatorsDualComp:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
     end if;
     return Explode(isog`SemilinearOperatorsDualComp);
@@ -906,7 +934,7 @@ intrinsic SemilinearOperators(isog::IsogenyClassFq)->GrpAb,Map,Map,Map,AlgEtQIdl
 end intrinsic;
 
 /*
-    TESTS
+    // TEST Dual approach
     
     PP<x>:=PolynomialRing(Integers());
     SetAssertions(2);
@@ -914,30 +942,35 @@ end intrinsic;
     AttachSpec("~/AlgEt/specMod");
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
-    all:=Split(Read("tests/weil_poly_sq_not_prime-ord-almord.txt"));
+    all:=Split(Read("~/IsomClAbVarFqCommEndAlg/tests/weil_poly_sq_not_prime-ord-almord.txt"));
     m0:=10;
     for s in all do
-        cc:=[StringToInteger(c):c in Split(s,"[,]")];
-        g:=(#cc-1) div 2;
-        q:=Round(cc[1]^(1/g));
-        test,p,a:=IsPrimePower(q);
-        if a lt 4 then
-            h:=PP!cc;
-            isog:=IsogenyClass(h);
-            l1,l2,l3:=SortPlacesOfQFAbove_p(isog);
-            printf "%o,%o,%o\n",#l1,#l2,#l3;
-            exps:=ExponentsDual(isog)[1];
-            plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
-            plE:=plE0 cat plE01 cat plE1;
-            plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE];
-            assert #plA eq #exps;
-            JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
-            _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-            assert JOA subset OA;
-            J:=WR!!JOA;
-            ZBasisLLL(J);
-            _:=SemilinearOperatorsDualComp(isog,J,m0);
-        end if;
+        try
+            cc:=[StringToInteger(c):c in Split(s,"[,]")];
+            g:=(#cc-1) div 2;
+            q:=Round(cc[1]^(1/g));
+            test,p,a:=IsPrimePower(q);
+            if a lt 4 then
+                h:=PP!cc;
+                isog:=IsogenyClass(h);
+                conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
+                exps:=ExponentsDual(isog)[1];
+                plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
+                plE:=plE0 cat plE01 cat plE1;
+                plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE];
+                assert #plA eq #exps;
+                JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
+                _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+                assert JOA subset OA;
+                J:=WR!!JOA;
+                ZBasisLLL(J);
+                _:=SemilinearOperatorsDualComp(isog,J,m0);
+                printf "%o,%o,%o\n",#conj_pairs,#rho_id,#rho_notid;
+            end if;
+        catch e
+            printf "%o,%o,%o,%o ERROR\n",#conj_pairs,#rho_id,#rho_notid,s;
+            e;
+        end try;
     end for;
 
 */
