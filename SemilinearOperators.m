@@ -49,7 +49,7 @@ integral_approx:=function(a,b,m,nu)
     supp_b:={@ g[1]:g in fac_bO @};
     nus:=Setseq(Include(supp_b,nu));
     cs:=[i eq Index(nus,nu) select One(O) else b:i in [1..#nus]];
-    c:=CRT([mu^m:mu in nus],cs)
+    c:=CRT([mu^m:mu in nus],cs);
     y:=c*a/b;
     assert y in O;
     return y;
