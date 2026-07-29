@@ -32,7 +32,8 @@ intrinsic ChineseRemainderTheoremFunctions(J::AlgEtQIdl,Is::SeqEnum[AlgEtQIdl])-
     S:=Order(Is[1]);
     N:=#Is;
     require forall{i : i in [2..N] | Order(Is[i]) eq S} and Order(J) eq S:"the ideals must be of the same order";
-    Q,q:=Quotient(J,&meet(Is)*J);
+    II:=&meet(Is);
+    Q,q:=Quotient(J,II*J);
     quots:=[];
     maps:=<>;
     for I in Is do
@@ -54,7 +55,6 @@ intrinsic ChineseRemainderTheoremFunctions(J::AlgEtQIdl,Is::SeqEnum[AlgEtQIdl])-
         assert #as eq N;
         return (&+[embs[j](maps[j](as[j])) : j in [1..N] ])@@isom@@q;
     end function;
-    II:=&meet(Is);
     assert forall{s : s in ZBasis(J) | func2(func1(s)) -s in J*II};
     return func1,func2;
 end intrinsic;
