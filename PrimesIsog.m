@@ -131,34 +131,40 @@ intrinsic PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog::IsogenyClass
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p,nu_Hash) then
-        _,_,_,_,A,_,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
-        // When we construct the WR{F,V}-ideals with maximal endomorphism ring,
-        // we are assuming that the primes of A above each given place are sorted according to 
-        // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
-        // like in all the examples in the paper.
-        // More precisely, we will sort the ideal by [sigma^(g-1)(PP0),...,sigma(PP0),PP0],
-        // where PP0 is an arbitrarily chosen ideal.
-        pp:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu); //unsorted
-        gP:=#pp;
-        if gP gt 2 then
-            // the following does nothing if gP is 1 or 2
-            PP:=&*pp;
-            Q,mQ,sigma:=SigmaOnQuotientOfOA(isog,PP);
-            PP0:=pp[1];
-            gens:=[mQ(x):x in Generators(PP0)];
-            output:=[PP0];
-            for i in [1..gP-1] do
-                gens:=[sigma(x):x in gens];
-                assert exists(PP_next){id:id in pp|forall{x:x in gens|x@@mQ in id}};
-                Append(~output,PP_next);
-            end for;
-            Reverse(~output);
-            assert {myHash(id):id in pp} eq {myHash(id):id in output};
-            assert #output eq gP;
+        is_st,nub:=IsConjugateStable(nu);
+        nub_Hash:=myHash(nub);
+        if not is_st and IsDefined(isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p,nub_Hash) then
+           isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nu_Hash]:=[BarOnIdeal(isog,P):P in isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nub_Hash]];
         else
-            output:=pp;
+            _,_,_,_,A,_,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
+            // When we construct the WR{F,V}-ideals with maximal endomorphism ring,
+            // we are assuming that the primes of A above each given place are sorted according to 
+            // the action of sigma, as Waterhouse does. This does not make a difference if g_P is 1 or 2, 
+            // like in all the examples in the paper.
+            // More precisely, we will sort the ideal by [sigma^(g-1)(PP0),...,sigma(PP0),PP0],
+            // where PP0 is an arbitrarily chosen ideal.
+            pp:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu); //unsorted
+            gP:=#pp;
+            if gP gt 2 then
+                // the following does nothing if gP is 1 or 2
+                PP:=&*pp;
+                Q,mQ,sigma:=SigmaOnQuotientOfOA(isog,PP);
+                PP0:=pp[1];
+                gens:=[mQ(x):x in Generators(PP0)];
+                output:=[PP0];
+                for i in [1..gP-1] do
+                    gens:=[sigma(x):x in gens];
+                    assert exists(PP_next){id:id in pp|forall{x:x in gens|x@@mQ in id}};
+                    Append(~output,PP_next);
+                end for;
+                Reverse(~output);
+                assert {myHash(id):id in pp} eq {myHash(id):id in output};
+                assert #output eq gP;
+            else
+                output:=pp;
+            end if;
+            isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nu_Hash]:=output;
         end if;
-        isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nu_Hash]:=output;
     end if;
     return isog`PlacesOfDieudonneAlgebraSortedBySigmaAbove_p[nu_Hash];
 end intrinsic;

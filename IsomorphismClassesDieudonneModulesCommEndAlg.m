@@ -70,10 +70,13 @@ intrinsic ExponentsWTypeDualAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->SeqEnum
     cp:=CartesianProduct([ [-e_nu..0] : i in [1..g_nu]]);
     for tup0 in cp do
         tup:=[ tup0[i] : i in [1..g_nu] ];
-        if &+tup eq -Integers()!(g_nu*Valuation(pi,nu)/a) then
-            exp:=Reverse([ i eq g_nu select 0 else Self(g_nu-i) - tup[i] : i in Reverse([1..g_nu])]);
+        if &+tup eq -Integers()!(g_nu*(e_nu-Valuation(pi,nu)/a)) then
+            exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g_nu]];
+            // OLD approach, more cumbersome...
+            // exp:=Reverse([ i eq g_nu select 0 else Self(g_nu-i) - tup[i] : i in Reverse([1..g_nu])]);
             m:=Min(exp);
-            exp:=[e+m: e in exp]; // make them all positive
+            exp:=[e-m: e in exp]; // make them all positive
+            assert forall{e:e in exp|e ge 0};
             Append(~exps,exp);
         end if;
     end for;
@@ -95,19 +98,18 @@ intrinsic ExponentsConjStabRhoNotIdAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl)->
 
     exps:=[];
     // we get the following retrictions for n_i:
-    // 0<=n_i<=e    for i=1,...,g2-1
-    // 0=n_{g2}
-    // -e<=n_i<=0   for i=g2+1,...,g-1
-    // -e<=n_g<=e
+    // 0<=n_i<=e    for i=1,...,g2
+    // -e<=n_i<=0   for i=g2+1,...,g
     // sum_i n_i=0
-    cp:=[[0..e_nu]:i in [1..g2-1]] cat [[0]] cat [[-e_nu..0]:i in [g2+1..g-1]] cat [[-e_nu..e_nu]];
+    cp:=[[0..e_nu]:i in [1..g2]] cat [[-e_nu..0]:i in [g2+1..g]];
     cp:=CartesianProduct(cp);
     for tup0 in cp do
         tup:=[ tup0[i] : i in [1..g] ];
         if &+tup eq 0 then // n_g = -sum_i n_i where n_i=exp[i+1]-exp[i]
             exp:=[ i eq 1 select 0 else Self(i-1) + tup[i-1] : i in [1..g]];
             m:=Min(exp);
-            exp:=[e+m: e in exp]; // make them all positive
+            exp:=[e-m: e in exp]; // make them all positive
+            assert forall{e:e in exp|e ge 0};
             Append(~exps,exp);
         end if;
     end for;
@@ -145,7 +147,7 @@ intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
         for pair in conj_pairs do
             nu,nub:=Explode(pair);
             exps_nus[nu]:=ExponentsWTypeAtPlace(isog,nu);
-            exps_nus[nub]:=ExponentsWTypeDualAtPlace(isog,nu);
+            exps_nus[nub]:=ExponentsWTypeDualAtPlace(isog,nub);
         end for;
         for nu in rho_id do
             exps_nus[nu]:=ExponentsWTypeAtPlace(isog,nu);
@@ -156,6 +158,7 @@ intrinsic ExponentsDual(isog::IsogenyClassFq)->SeqEnum[SeqEnum[RngIntElt]]
 
         plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
         plE:=plE0 cat plE01 cat plE1;
+        assert #plE eq 2*#conj_pairs+#rho_id+#rho_notid;
         exps_nus:=[exps_nus[nu]:nu in plE]; // now the entries are sorted in the usual way.
 
         exps_nus_cc:=CartesianProduct(exps_nus);
@@ -285,10 +288,10 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
         exps_plE:=ExponentsDual(isog);
     end if;
     //"WARNING: changing J for test purposes";exps:=exps_01[2];
-    // FIXME We want J to be integral and as close as possible to OA
     plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // sorted by sigma !!!
     assert #plA eq #exps;
     JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
+    assert JOA subset OA;
     J:=WR!!JOA;
     ZBasisLLL(J);
     vprintf Algorithm_3,2 : "vals of the F-V stable OA-ideal J chosen for the container = %o\n",
@@ -351,3 +354,33 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
 
     return Delta_isom_classes_WR_F_V;
 end intrinsic;
+
+/*
+    //TEST
+
+    PP<x>:=PolynomialRing(Integers());
+    SetAssertions(2);
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=Split(Read("~/IsomClAbVarFqCommEndAlg/tests/weil_poly_sq_not_prime-ord-almord.txt"));
+    for s in all do
+        cc:=[StringToInteger(c):c in Split(s,"[,]")];
+        g:=(#cc-1) div 2;
+        q:=Round(cc[1]^(1/g));
+        test,p,a:=IsPrimePower(q);
+        if a lt 4 then
+            h:=PP!cc;
+            isog:=IsogenyClass(h);
+            conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
+            printf "%o,%o,%o",#conj_pairs,#rho_id,#rho_notid;
+            if not #ExponentsWType(isog,"all") eq #ExponentsDual(isog) then
+                printf " ERROR\n \t%o\n\t%o",StripWhiteSpace(Sprint(ExponentsWType(isog,"all"))),
+                                               StripWhiteSpace(Sprint(ExponentsDual(isog)));
+            end if;
+            printf "\n";
+        end if;
+    end for;
+
+*/
