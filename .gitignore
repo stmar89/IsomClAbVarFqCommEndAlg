@@ -5,4 +5,7 @@ old/parallel_storing/output
 old/parallel_storing/errors.txt
 tests/recompute_examples_parallel_output_all.m
 tests/recompute_examples_parallel_output_01.m
-
+tests/pols_parallel/20260730_correct.txt
+tests/pols_parallel/20260730_wrong.txt
+tests/pols_parallel/20260730_issues.txt
+tests/pols_parallel/joblog
