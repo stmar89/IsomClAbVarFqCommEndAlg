@@ -13,5 +13,7 @@ WKICM_WR.m
 IsomorphismClassesDieudonneModulesCommEndAlg.m
 IsomorphismClasses.m
 GenDeligneModules.m
+DualAbVarFq.m
+Pols.m
 SaveLoad.m
 }

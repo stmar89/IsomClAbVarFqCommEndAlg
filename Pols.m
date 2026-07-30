@@ -22,8 +22,6 @@
 // Copyright 2026, S. Marseglia
 /////////////////////////////////////////////////////
 
-//FIXME all the code here is before the modular rewrite.
-
 declare verbose Pols,3;
 
 // the first 2 are taken from AbVarFqIsogenies
@@ -103,18 +101,13 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
         T:=MultiplicatorRing(I);
         T_S:=TransversalQuotientUnitGroups(T,S);
         x0s:=[];
-        _,_,_,_,_,_,_,Delta_map,WR,_,_,_,primes_of_S_of_slope_in_01,_,_:=DieudonneAlgebraCommEndAlg(IsogenyClass(AV));
+        _,_,_,_,_,_,_,Delta_map:=DieudonneAlgebraCommEndAlg(IsogenyClass(AV));
         for v in T_S do
             x1:=x0*v;
             N:=Delta_map(x1)*M;
             B:=N meet Mv;
-            test:=((Index(N,B) mod p ne 0) and (Index(Mv,B) mod p ne 0)); //faster then the next
-            //FIXME the above test checks equality at p. If I want to check only the equality at (0,1), I should
-            // uncomment the "if" below.
-//            if not test then
-//                A:=N+Mv;
-//                test:=forall{P:P in primes_of_S_of_slope_in_01(WR)| A subset P*A+B}; // A=B at local-local parts?
-//            end if;
+            test:=((Index(N,B) mod p ne 0) and (Index(Mv,B) mod p ne 0));
+            // test is true iff (N+Mv)_p=(N cap Mv)_p iff N_p eq Mv_p
             if test then
                 Append(~x0s,x1);
             end if;
@@ -143,3 +136,5 @@ intrinsic PrincipalPolarizationsUpToIsomorphism(AV::AbelianVarietyFq,PHI::AlgEtQ
 
     return output;
 end intrinsic;
+
+// TESTs see /tests/test_Pols.m

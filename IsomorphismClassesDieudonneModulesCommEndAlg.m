@@ -412,8 +412,6 @@ end intrinsic;
         ,<x^6 + 3*x^5 + 8*x^4 + 20*x^3 + 32*x^2 + 48*x + 64, 3>
         ,<x^4 + 4*x^2 + 16, 7/9>
     ];
-    g_nu:=function(a,nu)
-    end function;
     for s in all do
         h:=s[1];
         isog:=IsogenyClass(h);

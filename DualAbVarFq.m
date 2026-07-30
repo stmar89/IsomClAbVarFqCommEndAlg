@@ -24,7 +24,10 @@
 
 declare attributes AbelianVarietyFq : DualAbVarFq;
 
-declare attributes IsogenyClassFq : glueing_gen_deligne_module_data_dual;
+declare attributes IsogenyClassFq : glueing_gen_deligne_module_data_dual,
+                                    TraceAL;
+
+declare attributes AlgEtQIdl: TraceALDualIdeal;
 
 intrinsic TraceAL(isog::IsogenyClassFq)->Map
 {Given an isogeny class isog with commutative endomorphism algebra and DieuddonneAlgebra A=E\otimes L returns the Trace from A to L.}
@@ -42,7 +45,7 @@ intrinsic TraceAL(isog::IsogenyClassFq)->Map
 
         L_basis_ofA:=[ pi_A^i : i in [0..Dimension(Ld)-1] ];
         TrAL:=map<A->L|x:->Trace(Matrix([mALd(x*b):b in L_basis_ofA]))>;
-        isog`TraceAL:=TrA;
+        isog`TraceAL:=TrAL;
     end if;
     return isog`TraceAL;
 end intrinsic;
@@ -74,7 +77,7 @@ intrinsic TraceALDualIdeal(isog::IsogenyClassFq,M::AlgEtQIdl)->AlgEtQIdl
         zb_Mt_lat_inLd:=[z*bb[i]:z in Basis(ci[i]),i in [1..#bb]]; 
         gens_Mt:=[ (Ld!g)@@mALd : g in zb_Mt_lat_inLd ];
         Mt:=Ideal(S,gens_Mt);
-        M`TraceADualIdeal:=Mt;
+        M`TraceALDualIdeal:=Mt;
     end if;
     return M`TraceALDualIdeal;
 end intrinsic;
@@ -108,7 +111,7 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
             require slopes eq "all" : "rerun the computation using slopes:=\"all\"";
             Mt:=TraceALDualIdeal(isog,M);
             if IsOrdinary(isog) then
-                delta_inv:=One(A);
+                delta_inv:=One(Algebra(M));
             else
                 if not assigned isog`delta_inv then
                     error "Rerun the computation of the isomorphism classes with the DualsCompatible vararg set to true"; //TODO update this error
@@ -117,7 +120,7 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
             end if;
             bar_onA:=BarOnDieudonneAlgebra(isog);
             Mv:=BarOnIdeal(isog,Mt);
-            Mv:=bar_onA(delta_inv)*Ideal(WR,gens_Mv);
+            Mv:=bar_onA(delta_inv)*Mv;
 
             // We compute Iv by glueing K:=Delta^-1(Mv) at p and J:=bar(I)^t everywhere else.
             J:=TraceDualIdeal(ComplexConjugate(I));
@@ -142,3 +145,42 @@ intrinsic DualAbelianVarietyCommEndAlg(AV::AbelianVarietyFq)->AlgEtQIdl,AlgEtQId
     end if;
     return Explode(AV`DualAbVarFq);
 end intrinsic;
+
+
+/*
+    //TESTs
+
+    //////////////////////
+    // DualAbelianVarietyCommEndAlg 
+    //////////////////////
+
+    PP<x>:=PolynomialRing(Integers());
+    SetAssertions(2);
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=[
+        <x^4+16,5/8>
+        ,<x^4 - 4*x^2 + 16, 5/12>
+        ,<x^6 - x^5 + 4*x^3 - 16*x + 64, 17/12>
+        ,<x^6 - 3*x^5 + 8*x^4 - 16*x^3 + 32*x^2 - 48*x + 64, 5>
+        ,<x^6 + x^5 - 4*x^3 + 16*x + 64, 17/12>
+        ,<x^6 - 3*x^5 + 8*x^4 - 20*x^3 + 32*x^2 - 48*x + 64, 3> 
+        ,<x^6 + 3*x^5 + 8*x^4 + 20*x^3 + 32*x^2 + 48*x + 64, 3>
+        ,<x^4 + 4*x^2 + 16, 7/9>
+    ];
+    g_nu:=function(a,nu)
+    end function;
+    for s in all do
+        h:=s[1];
+        isog:=IsogenyClass(h);
+        iso:=IsomorphismClassesCommEndAlg(isog:dual:=true);
+        t0:=Cputime();
+            _:=[DualAbelianVarietyCommEndAlg(A):A in iso];
+        t1:=Cputime(t0);
+        printf "t_duals=%o\t%o\n",t1,StripWhiteSpace(Sprint(Coefficients(h)));
+    end for;
+
+
+*/
