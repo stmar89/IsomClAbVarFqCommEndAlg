@@ -29,7 +29,7 @@ declare attributes AbelianVarietyFq : GeneralizedDeligneModule;
 declare attributes IsogenyClassFq : glueing_gen_deligne_module_data;
 
 
-intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl
+intrinsic GeneralizedDeligneModule(AV:AbelianVarietyFq)->AlgEtQIdl,AlgEtQIdl,MonStgElt
 {Given an abelian variety AV, it returns a pair (I,M) where I is a fractional ideal over R=ZFVOrder and M is a fractional ideal over WR (defined in DieudonneAlgebraCommEndAlg) such that I \otimes Zp = Delta_map^-1(M\otimes Zp). The ideal I encodes local information at l\neq p, the étale-local and local-étale information about AV, while M encodes the Dieudonne module.}
     if not assigned AV`GeneralizedDeligneModule then
         require assigned AV`IsomDataCommEndAlg : "The attribute IsomDataCommEndAlg is not assigned";

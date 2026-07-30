@@ -854,7 +854,7 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             assert forall{g:g in images_gens_Qm0[myHash(nub)]|g in J};
             assert forall{g:g in images_gens_Qm0_1[myHash(nub)]|g in J};
         end for;
-        m2:=m0+1+a; // m0+1+g_nu suffices, but this is a bit easier for the CRT.
+        //m2:=m0+1+a; // m0+1+g_nu suffices, but this is a bit easier for the CRT.
         QOA,qOA,sigma_QOA:=SigmaOnQuotientOfOA(isog,p^m2*OA);
         for nu in rho_id do
             g_nu:=GCD(Ilog(CharacteristicFiniteField(isog),FiniteField(isog)),InertiaDegree(nu));
@@ -936,6 +936,9 @@ end intrinsic;
 
 /*
     // TEST Dual approach
+    //////////////////////
+    // large data set
+    //////////////////////
     
     PP<x>:=PolynomialRing(Integers());
     SetAssertions(2);
@@ -977,7 +980,10 @@ end intrinsic;
         end try;
     end for;
 
-    // isolated cases 2,0,0.[15625,-10625,3750,-875,150,-17,1] ERROR
+    //////////////////////
+    // Selected ones, giving ERROR
+    //////////////////////
+
     PP<x>:=PolynomialRing(Integers());
     SetAssertions(2);
     AttachSpec("~/AbVarFq/spec");
@@ -985,29 +991,40 @@ end intrinsic;
     AttachSpec("~/AlgEt/specMtrx");
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
     m0:=10;
-    cc:=[15625,-10625,3750,-875,150,-17,1];
-    g:=(#cc-1) div 2;
-    q:=Round(cc[1]^(1/g));
-    test,p,a:=IsPrimePower(q);
-    if a lt 4 then
-        h:=PP!cc;
-        isog:=IsogenyClass(h);
-        conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
-        printf "%o,%o,%o",#conj_pairs,#rho_id,#rho_notid;
-        for exps in ExponentsDual(isog) do
-            plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
-            plE:=plE0 cat plE01 cat plE1;
-            plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE];
-            assert #plA eq #exps;
-            JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
-            _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-            assert JOA subset OA;
-            J:=WR!!JOA;
-            ZBasisLLL(J);
-            _:=SemilinearOperatorsDualComp(isog,J,m0);
-            printf ".";
-        end for;
-        printf "\n";
-    end if;
+    all:=[
+          [81,0,-9,0,1],                       // 0,0,1 ERROR
+          [15625,-10625,3750,-875,150,-17,1],  // 2,0,0 ERROR
+          [15625,-10000,3500,-825,140,-16,1]   // 1,0,1 ERROR
+         ]; 
+    for cc in all do
+        try
+            g:=(#cc-1) div 2;
+            q:=Round(cc[1]^(1/g));
+            test,p,a:=IsPrimePower(q);
+            if a lt 4 then
+                h:=PP!cc;
+                isog:=IsogenyClass(h);
+                conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
+                printf "%o,%o,%o",#conj_pairs,#rho_id,#rho_notid;
+                for exps in ExponentsDual(isog) do
+                    plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
+                    plE:=plE0 cat plE01 cat plE1;
+                    plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE];
+                    assert #plA eq #exps;
+                    JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
+                    _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+                    assert JOA subset OA;
+                    J:=WR!!JOA;
+                    ZBasisLLL(J);
+                    _:=SemilinearOperatorsDualComp(isog,J,m0);
+                    printf ".";
+                end for;
+                printf "\n";
+            end if;
+        catch e
+            printf "%o ERROR\n",StripWhiteSpace(Sprint(cc));
+            e;
+        end try;
+    end for;
 
 */
