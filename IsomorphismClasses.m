@@ -293,10 +293,15 @@ glue_local_parts_orders:=function(primes,orders)
     return S;
 end function;
 
-intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : slopesDieudonneModules:="(0,1)", IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AbVarFq]
-{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The VarArg slopesDieudonneModules can be either "(0,1)" (default) or "all": in the first case only the local-local part of the isomorphism classes of DieudonneModules will be computed using WR'\{F',V'\}-ideals and the rest is deduced using ZFV-ideals; in the second case ZFV-ideals are used only to compute the local parts away from the characteristic p, while WR\{F,V\}-modules are used to compute Dieudonné modules. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg.}
+intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : slopesDieudonneModules:="(0,1)", IncreaseMinimumPrecisionForSemilinearFVBy:=0,dual:=false)->SeqEnum[AbVarFq]
+{Given an isogeny class of abelian varieties over a finite field Fq, it returns representatives of the Fq-isomorphism classes in the isogeny class. The VarArg slopesDieudonneModules can be either "(0,1)" (default) or "all": in the first case only the local-local part of the isomorphism classes of DieudonneModules will be computed using WR'\{F',V'\}-ideals and the rest is deduced using ZFV-ideals; in the second case ZFV-ideals are used only to compute the local parts away from the characteristic p, while WR\{F,V\}-modules are used to compute Dieudonné modules. The meaning of the VarArg IncreaseMinimumPrecisionForSemilinearFVBy is given in the description of IsomorphismClassesDieudonneModulesCommEndAlg.
+//TODO describe dual
+}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
-    require slopesDieudonneModules in {"(0,1)","all"} : "The VarArg slopesDieudonneModules is set to an invalid string";
+    require slopesDieudonneModules in {"(0,1)","all"} : "The VarArg slopesDieudonneModules is set to an invalid string.";
+    if dual then
+        slopesDieudonneModules:="all";
+    end if;
     output:=[];
     places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);
     if slopesDieudonneModules eq "(0,1)" then
@@ -308,7 +313,7 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : slopesDieudonneMod
         places_ZFV:=SingPrimesOfZFVAwayFrom_p(isog);
         isom_ZFV:=IsomorphismClassesAwayFrom_pCommEndAlg(isog);
     end if;
-    isom_DM:=IsomorphismClassesDieudonneModulesCommEndAlg(isog,slopesDieudonneModules);
+    isom_DM:=IsomorphismClassesDieudonneModulesCommEndAlg(isog,slopesDieudonneModules : dual:=dual);
     primes:=places_DM cat places_ZFV;
     for dm in isom_DM do
         dm_order:=dm`DeltaEndomorphismRing;
@@ -336,8 +341,47 @@ intrinsic IsomorphismClassesCommEndAlg(isog::IsogenyClassFq : slopesDieudonneMod
 end intrinsic;
 
 
+/*
+    //TESTs
+
+    //////////////////////
+    // IsomorphismClassesCommEndAlg
+    //////////////////////
+
+    PP<x>:=PolynomialRing(Integers());
+    SetAssertions(2);
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=[
+        <x^4+16,5/8>
+        ,<x^4 - 4*x^2 + 16, 5/12>
+        ,<x^6 - x^5 + 4*x^3 - 16*x + 64, 17/12>
+        ,<x^6 - 3*x^5 + 8*x^4 - 16*x^3 + 32*x^2 - 48*x + 64, 5>
+        ,<x^6 + x^5 - 4*x^3 + 16*x + 64, 17/12>
+        ,<x^6 - 3*x^5 + 8*x^4 - 20*x^3 + 32*x^2 - 48*x + 64, 3> 
+        ,<x^6 + 3*x^5 + 8*x^4 + 20*x^3 + 32*x^2 + 48*x + 64, 3>
+        ,<x^4 + 4*x^2 + 16, 7/9>
+    ];
+    g_nu:=function(a,nu)
+    end function;
+    for s in all do
+        h:=s[1];
+        isog:=IsogenyClass(h);
+        t0:=Cputime();
+            N:=#IsomorphismClassesCommEndAlg(isog:dual:=true);
+        t1:=Cputime(t0);
+        isog:=IsogenyClass(h);
+        t0:=Cputime();
+            M:=#IsomorphismClassesCommEndAlg(isog:dual:=false);
+        t2:=Cputime(t0);
+        printf "t_dual_true=%o\tt_dual_false=%o\t%o\t%o\n",t1,t2,M ne N select "ERR" else "OK "
+                                                    ,StripWhiteSpace(Sprint(Coefficients(h)));
+    end for;
 
 
+*/
 
 
 

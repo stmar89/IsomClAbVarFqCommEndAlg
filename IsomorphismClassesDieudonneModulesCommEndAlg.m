@@ -283,11 +283,12 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
     // We construct the OA{F,V}-ideal J in whose quotient we will compute the approximations of the semilinear
     // operators to check the F-V-stability of the candidates.
     if not dual then
-        exps:=ExponentsWType(isog,slopes)[1];
+        exps_all:=ExponentsWType(isog,slopes);
     elif dual then
-        exps_plE:=ExponentsDual(isog);
+        exps_all:=ExponentsDual(isog);
     end if;
-    //"WARNING: changing J for test purposes";exps:=exps_01[2];
+    exps:=exps_all[1];
+    //"WARNING: changing J for test purposes";exps:=exps_all[2];
     plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE]; // sorted by sigma !!!
     assert #plA eq #exps;
     JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
@@ -311,7 +312,11 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
     vprintf Algorithm_3 : "m0 = %o\n",m0;
 
     vprintf Algorithm_3 : "Computing Qm0,qm0,FQm0,VQm0...";
-    Qm0,qm0,FQm0,VQm0,den_ideal:=SemilinearOperatorsWType(isog,J,m0,slopes);
+    if not dual then
+        Qm0,qm0,FQm0,VQm0,den_ideal:=SemilinearOperatorsWType(isog,J,m0,slopes);
+    elif dual then
+        Qm0,qm0,FQm0,VQm0,den_ideal:=SemilinearOperatorsDualComp(isog,J,m0);
+    end if;
     assert IsPowerOf(#Qm0,CharacteristicFiniteField(isog));
     vprintf Algorithm_3 : "done\n";
 
@@ -356,7 +361,11 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
 end intrinsic;
 
 /*
-    //TEST
+    //TESTs
+
+    //////////////////////
+    // Exponents
+    //////////////////////
 
     PP<x>:=PolynomialRing(Integers());
     SetAssertions(2);
@@ -383,4 +392,39 @@ end intrinsic;
         end if;
     end for;
 
+    //////////////////////
+    // IsomorphismClassesDieudonneModulesCommEndAlg
+    //////////////////////
+
+    PP<x>:=PolynomialRing(Integers());
+    SetAssertions(2);
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=[
+        <x^4+16,5/8>
+        ,<x^4 - 4*x^2 + 16, 5/12>
+        ,<x^6 - x^5 + 4*x^3 - 16*x + 64, 17/12>
+        ,<x^6 - 3*x^5 + 8*x^4 - 16*x^3 + 32*x^2 - 48*x + 64, 5>
+        ,<x^6 + x^5 - 4*x^3 + 16*x + 64, 17/12>
+        ,<x^6 - 3*x^5 + 8*x^4 - 20*x^3 + 32*x^2 - 48*x + 64, 3> 
+        ,<x^6 + 3*x^5 + 8*x^4 + 20*x^3 + 32*x^2 + 48*x + 64, 3>
+        ,<x^4 + 4*x^2 + 16, 7/9>
+    ];
+    g_nu:=function(a,nu)
+    end function;
+    for s in all do
+        h:=s[1];
+        isog:=IsogenyClass(h);
+        t0:=Cputime();
+            N:=#IsomorphismClassesDieudonneModulesCommEndAlg(isog,"all":dual:=true);
+        t1:=Cputime(t0);
+        isog:=IsogenyClass(h);
+        t0:=Cputime();
+            M:=#IsomorphismClassesDieudonneModulesCommEndAlg(isog,"all":dual:=false);
+        t2:=Cputime(t0);
+        printf "t_dual_true=%o\tt_dual_false=%o\t%o\t%o\n",t1,t2,M ne N select "ERR" else "OK "
+                                                    ,StripWhiteSpace(Sprint(Coefficients(h)));
+    end for;
 */
