@@ -3,7 +3,7 @@
 
     Use branch feature-bar_dual_pols on IsomClAbVarFqCommEndAlg
 
-    parallel -j 60 --timeout 3600 --resume-failed \
+    parallel -j 20 --timeout 7200 --resume-failed \
         --joblog ~/IsomClAbVarFqCommEndAlg/tests/pols_parallel/joblog \
         -a ~/IsomClAbVarFqCommEndAlg/tests/pols_parallel/weil_poly_sqfree_notFp_notord_notalmord.txt \
         magma -b s:={} ~/IsomClAbVarFqCommEndAlg/tests/pols_parallel/20260730_script.m 
