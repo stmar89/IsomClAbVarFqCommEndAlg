@@ -130,9 +130,9 @@ intrinsic AlphaWTypeAtPlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::RngIntElt)->Al
             // phi does the following two steps
             // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_{nu,i}^m
             // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+            beta:=&+[i lt g_nu select U_embs[i](Zero(Us_nu[i])) else U_embs[i](gamma):i in [1..g_nu]];
             // Action of the Frobenius on U
-            img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+            img:=(&+[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
             assert2 sigma_U(img) eq img;
             return img;
         end function;
@@ -221,9 +221,9 @@ intrinsic AlphaDualAtNonConjStablePlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::Rn
             // phi does the following two steps
             // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_{nu,i}^m2
             // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+            beta:=&+[i lt g_nu select U_embs[i](Zero(Us_nu[i])) else U_embs[i](gamma):i in [1..g_nu]];
             // Action of the Frobenius on U
-            img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+            img:=(&+[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
             assert2 sigma_U(img) eq img;
             return img;
         end function;
@@ -353,9 +353,9 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
             // phi does the following two steps
             // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_{nu,i}^m
             // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+            beta:=&+[i lt g_nu select U_embs[i](Zero(Us_nu[i])) else U_embs[i](gamma):i in [1..g_nu]];
             // Action of the Frobenius on U
-            img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+            img:=(&+[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
             assert2 sigma_U(img) eq img;
             return img;
         end function;
@@ -464,7 +464,7 @@ intrinsic AlphaDualAtConjStablePlaceRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl,
 
         pE0,pE01,pE1:=PlacesOfQFAbove_p(isog);
         pE:=pE0 cat pE01 cat pE1;
-        gamma:=integral_approx(pi,E!pa2,m+Dimension(E),[nu]);
+        gamma:=integral_approx(pi,E!pa2,RamificationIndex(nu)+m,[nu]); //FIXME is this precision enough?
         gamma:=gamma@@uE@@bar_id@uE;
 
         _,_,_,_,A,pi_A,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
@@ -510,9 +510,9 @@ intrinsic AlphaDualAtConjStablePlaceRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl,
             // phi does the following two steps
             // 1) gamma :-> beta = (1,...,1,gamma) in U = \prod_i US_nu[i] = OA/\prod_i PP_{nu,i}^m
             // 2) beta :-> beta*beta^sigma_Q*...*beta^(sigma_Q^(a-1)) in U
-            beta:=&*[i lt g_nu select U_embs[i]((One(A))@@us_nu[i]) else U_embs[i](gamma):i in [1..g_nu]];
+            beta:=&+[i lt g_nu select U_embs[i](Zero(Us_nu[i])) else U_embs[i](gamma):i in [1..g_nu]];
             // Action of the Frobenius on U
-            img:=(&*[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
+            img:=(&+[ i eq 1 select beta else sigma_U(Self(i-1)) : i in [1..a] ]); //in U
             assert2 sigma_U(img) eq img;
             return img;
         end function;
@@ -523,6 +523,8 @@ intrinsic AlphaDualAtConjStablePlaceRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl,
                                else gammaU@@phi@U_embs[g_nu] : i in [1..g_nu]]))@@U_pr; // (1,...,1,eps)
         eps_A_inv:=(&+([ i lt g_nu select U_embs[i](Zero(Us_nu[i])) 
                                else -gammaU@@phi@U_embs[g_nu] : i in [1..g_nu]]))@@U_pr; // (1,...,1,eps^-1)
+        assert2 forall{i:i in [1..(g_nu div 2)-1]|eps_A*eps_A_inv-1 in PPs_nu_m[i]};
+
         eps_A_bar:=bar_onA(eps_A); // (1,...,1,bar(eps),1,...,1)
         p_half:=(&+([i le (g_nu div 2) select embs[i](rs_nu[i](One(A))) 
                                       else embs[i](rs_nu[i](p*One(A))) : i in [1..g_nu]]))@@pr; // (1,...,1,p,...,p)
@@ -540,137 +542,6 @@ end intrinsic;
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////SemilinearOperators/////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
-
-// CRT APPROACH -- FIXME 4.4.ag_s_abk_cq fails
-// In the next two intrinsic we attempt to copute F and V on Qm0 and Qm0_1 by splitting the computation over 
-// the places of OE of slope in (0,1) and then taking a CRT-direct sum of the local homomorphisms.
-// It is not clear to me yet why it fails. One possibility is that the action of sigma does not preserve the
-// local components. I find this unlikely, but I will leave the investigation for a future attempt if needed.
-//
-//intrinsic SemilinearOperatorsWTypeAtPlace(isog::IsogenyClassFq,J::AlgEtQIdl,nu::AlgEtQIdl,m0::RngIntElt)->GrpAb,Map,Map,Map,AlgEtQIdl
-//{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, a place nu of the DeligneAlgebra and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to (J/p^m0*J)_nu, q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
-//    if not assigned isog`SemilinearOperatorsWType then
-//        isog`SemilinearOperatorsWTypeArray:=AssociativeArray();
-//    end if;
-//    nu_Hash:=myHash(nu);
-//    if not IsDefined(isog`SemilinearOperatorsWTypeArray,nu_Hash) then
-//        p:=CharacteristicFiniteField(isog);
-//        a:=Ilog(p,FiniteField(isog));
-//        _,_,_,_,A,pi_A,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-//
-//        PP:=PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu);
-//        // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in PP.
-//        // By looking at the composition series, one deduces that any 
-//        // M \geq Truncate(Log(Index(OA,P),Index(J,p^(m0+1)J)) will do.
-//        size:=(p^(m0+1))^AbsoluteDimension(Algebra(OA)); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-//        M:=Max( [ Truncate(Log(Index(OA,P),size)) : P in PP] );
-//        //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
-//        PP_M:=WR!!(&*PP)^M;
-//        PP_M_J:=J*PP_M;
-//
-//        Qm0_1,qm0_1:=Quotient(J,p^(m0+1)*J+PP_M_J);
-//        den_ideal:=p^m0*J+PP_M_J;
-//        Qm0,qm0:=Quotient(J,den_ideal);
-//        // these quotients are isomorphic to the nu-part of J/p^(m0+1)J and J/p^m0J
-//
-//        pr:=hom< Qm0_1->Qm0 | [ qm0(Qm0_1.i@@qm0_1) : i in [1..Ngens(Qm0_1)]] >;
-//        assert IsSurjective(pr);
-//        assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
-//        
-//        JOA:=OA!!J;
-//        assert JOA subset OA;
-//        m1:=m0+1+Valuation(Index(OA,JOA),p);
-//        //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
-//        // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
-//        // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
-//        QOA,qOA,sigma_QOA,powers_zz_diagonally_inOA_via_zbOE:=SigmaOnQuotientOfOA(isog,p^m1*OA);
-//
-//        alpha:=AlphaWTypeAtPlace(isog,nu,m1);
-//
-//        FQm0:=hom<Qm0->Qm0 | [ qm0(alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0)]]>;
-//        FQm0_1:=hom<Qm0_1->Qm0_1 | [ qm0_1(alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA)) : i in [1..Ngens(Qm0_1)]]>;
-//        assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
-//        // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
-//        assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))};
-//        assert2 forall{ x : x in Generators(Qm0_1) | (FQm0_1^a)(x) eq qm0_1(pi_A*(x@@qm0_1))};
-//
-//        mp:=hom<Qm0_1->Qm0_1 | [ p*(Qm0_1.j) : j in [1..Ngens(Qm0_1)] ]>;
-//        assert2 mp eq hom<Qm0_1->Qm0_1 | [ qm0_1(p*(Qm0_1.j)@@qm0_1) : j in [1..Ngens(Qm0_1)] ]>;
-//        assert Image(mp) subset Image(FQm0_1);
-//
-//        z_gamma_s:=[];
-//        for i in [1..Ngens(Qm0)] do
-//            gamma:=Qm0.i;
-//            x_gamma:=gamma@@pr;
-//            z_gamma:=(mp(x_gamma))@@FQm0_1;
-//            Append(~z_gamma_s,z_gamma);
-//        end for;
-//        VQm0:=hom<Qm0->Qm0 | [ pr(z_gamma_s[i]) : i in [1..Ngens(Qm0)] ] >;
-//        assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
-//        assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
-//
-//        // We check semilinearity for F, V: F*x = sigma(x)*F and x*V=V*sigma(x)  forall x in L?
-//        // It suffices to check if for powers of zz in OA.
-//        if GetAssertions() ge 2 then
-//            vprintf Algorithm_3,2 : "\tTesting semilinearity of F and V...";
-//            for z in powers_zz_diagonally_inOA_via_zbOE do
-//                sigma_z:=z@qOA@sigma_QOA@@qOA;
-//                z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-//                sigma_z_action_Qm0:=hom<Qm0->Qm0 | [ qm0(sigma_z*(Qm0.i@@qm0)) : i in [1..Ngens(Qm0)] ]>;
-//                assert2 forall{i:i in [1..Ngens(Qm0)]| FQm0(z_action_Qm0(Qm0.i)) eq sigma_z_action_Qm0(FQm0(Qm0.i))};
-//                assert2 forall{i:i in [1..Ngens(Qm0)]| z_action_Qm0(VQm0(Qm0.i)) eq VQm0(sigma_z_action_Qm0(Qm0.i))};
-//            end for;
-//            vprintf Algorithm_3,2 : "all good.\n";
-//        end if;
-//        isog`SemilinearOperatorsWTypeArray[nu_Hash]:=<Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M>;
-//    end if;
-//    Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M:=Explode(isog`SemilinearOperatorsWTypeArray[nu_Hash]);
-//    return Qm0,qm0,FQm0,VQm0,PP_M,m0,J,M;
-//end intrinsic;
-//
-//intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,nus::SeqEnum[AlgEtQIdl],m0::RngIntElt)->GrpAb,Map,Map,Map
-//{Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, a sequence of places nus of the DeligneAlgebra and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu in nus, q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q.}
-//    if not assigned isog`SemilinearOperatorsWType then
-//        p:=CharacteristicFiniteField(isog);
-//        Qs:=[];
-//        qs:=<>;
-//        Fs:=<>;
-//        Vs:=<>;
-//        PP_Ms:=[];
-//        for nu in nus do
-//            Q,q,F,V,PP_M,_,_,M:=SemilinearOperatorsWTypeAtPlace(isog,J,nu,m0);
-//            Append(~Qs,Q);
-//            Append(~qs,q);
-//            Append(~Fs,F);
-//            Append(~Vs,V);
-//            Append(~PP_Ms,PP_M);
-//        end for;
-//        den_ideal:=p^m0*J+(&*PP_Ms)*J;
-//        // with DIRECT SUM
-//        //Qm0,embs,projs:=DirectSum(Qs);
-//        //qm0:=map<Algebra(J)->Qm0|x:->&+[x@qs[i]@embs[i]:i in [1..#nus]]>; //preimages would require an annoying CRT
-//        //FQm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Fs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
-//        //VQm0:=hom<Qm0->Qm0|[&+[Qm0.j@projs[i]@Vs[i]@embs[i]: i in [1..#nus]]: j in [1..Ngens(Qm0)]]>;
-//        //assert Index(J,den_ideal) eq #Qm0;
-//        //assert2 forall{z:z in ZBasis(den_ideal)|qm0(z) eq Zero(Qm0)};
-//        // end DIRECT SUM; with CRT
-//        _,_,_,_,A,pi_A,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-//        J_toJs,Js_toJ:=ChineseRemainderTheoremFunctions(J,[(WR!!(p^m0*OA))+PP_M : PP_M in PP_Ms]);
-//        Qm0,qm0:=Quotient(J,den_ideal);
-//        FQm0:=hom<Qm0->Qm0|[<((Qm0.j@@qm0@J_toJs)[i])@qs[i]@Fs[i]@@qs[i]:i in [1..#nus]>@Js_toJ@qm0:j in [1..Ngens(Qm0)]]>;
-//        VQm0:=hom<Qm0->Qm0|[<((Qm0.j@@qm0@J_toJs)[i])@qs[i]@Vs[i]@@qs[i]:i in [1..#nus]>@Js_toJ@qm0:j in [1..Ngens(Qm0)]]>;
-//        // end CRT
-//        if GetAssertions() ge 2 then
-//            a:=Ilog(p,FiniteField(isog));
-//            assert2 forall{ x : x in Generators(Qm0) | (FQm0^a)(x) eq qm0(pi_A*(x@@qm0))}; //need preimage
-//            assert2 forall{ g : g in Generators(Qm0) | FQm0(VQm0(g)) eq p*g };
-//            assert2 forall{ g : g in Generators(Qm0) | VQm0(FQm0(g)) eq p*g };
-//        end if;
-//        isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,den_ideal,m0,J>;
-//    end if;
-//    Qm0,qm0,FQm0,VQm0:=Explode(isog`SemilinearOperatorsWType);
-//    return Qm0,qm0,FQm0,VQm0;
-//end intrinsic;
 
 intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntElt,slopes::MonStgElt)->GrpAb,Map,Map,Map,AlgEtQIdl,RngIntElt,AlgEtQIdl
 {Given an isogeny class isog, an ideal J over the maximal order of the DieudonneAlgebra which is F-V-stable for F,V of W-type, and a precision m0, returns Q,q,FQ,VQ where Q is isomorphic to direct sum of (J/p^m0*J)_nu for nu of slope in (0,1) or any --depending whether the argument slope is "(0,1)" or "all"-- q:J->Q is the natural projection and FQ,VQ are the reductions of F,V to Q. Moreover the intrinsic returns also the ideal den_ideal so that Q=J/den_ideal, and m0 and J.}
@@ -844,9 +715,8 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
         images_gens_Qm0:=AssociativeArray();
         images_gens_Qm0_1:=AssociativeArray();
         m1:=m0+1+Valuation(Index(OA,JOA),p);
-        //m2:=m1+10; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
+        //m2:=m1+100; "WARNING: m1 is forced now from ",m1,"to",m2; m1:=m2; //for debugging
         // We have the following inclusions, locally at p: p^m1*OA c p^(m0+1)*J c I c J c OA.
-        // This means the approximation of sigma on OA/p^m1*OA will give a well defined sigma on Q=J/I
         m2:=m1+a-1; //beause we need to take preimage via mult by p^(a-1)
         QOA,qOA,sigma_QOA:=SigmaOnQuotientOfOA(isog,p^m2*OA);
         for pair in conj_pairs do
@@ -865,9 +735,12 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             assert forall{g:g in images_gens_Qm0[myHash(nu)]|g in J};
             assert forall{g:g in images_gens_Qm0_1[myHash(nu)]|g in J};
             PPb:=PPs[myHash(nub)];
-            S,s:=Quotient(PPb^-(a-1),PPb^m1); 
+            S,s:=Quotient(PPb^-(a-1),PPb^(m2-(a-1))); 
             T,t:=ResidueRing(OA,PPb^m2); 
             mult:=iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>;
+            //FIXME There seems to be an issue with mult above when JOA ne OA....
+            //      Check exponents?
+            //      Maybe the issue is that I have PPb^m2 < PPb^(m0+1)*J only locally at nub?
             images_gens_Qm0[myHash(nub)]:=[(q_alpha_b*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nub)]:=[(q_alpha_b*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0_1)]];
             assert forall{g:g in images_gens_Qm0[myHash(nub)]|g in J};
@@ -884,6 +757,8 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             delta_inv_nus[myHash(nu)]:=delta_inv;
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
+            assert forall{g:g in images_gens_Qm0[myHash(nu)]|g in J};
+            assert forall{g:g in images_gens_Qm0_1[myHash(nu)]|g in J};
         end for;
         for nu in rho_notid do
             alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m0+1);
@@ -892,11 +767,13 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             delta_inv_nus[myHash(nu)]:=One(A);
             images_gens_Qm0[myHash(nu)]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
+            assert forall{g:g in images_gens_Qm0[myHash(nu)]|g in J};
+            assert forall{g:g in images_gens_Qm0_1[myHash(nu)]|g in J};
         end for;
         delta_inv:=CRT([PPs_m0_1[myHash(nu)]^a:nu in nus],[delta_inv_nus[myHash(nu)]:nu in nus]);
-        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0[myHash(nu)]:nu in nus]); // precision m0
-        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([images_gens_Qm0[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0)] ]>;
+        //J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0[myHash(nu)]:nu in nus]); // precision m0
         J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0_1[myHash(nu)]:nu in nus]); // precision m0+1
+        FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([images_gens_Qm0[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0)] ]>;
         FQm0_1:=hom<Qm0_1->Qm0_1| [qm0_1(Jnus_J([images_gens_Qm0_1[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0_1)] ]>;
         assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
         // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
@@ -1011,10 +888,10 @@ end intrinsic;
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
     m0:=10;
     all:=[
-          [81,0,-9,0,1],                       // 0,0,1 ERROR
+          [81,0,-9,0,1],                       // 0,0,1 ERROR, not always occurring
+          [15625,-9375,3125,-725,125,-15,1],   // 1,0,0 ERROR, different from the following, not always occurring
           [15625,-10625,3750,-875,150,-17,1],  // 2,0,0 ERROR
           [15625,-8750,2500,-525,100,-14,1],   // 2,0,0 ERROR
-          [15625,-9375,3125,-725,125,-15,1],   // 1,0,0 ERROR
           [15625,-10000,3500,-825,140,-16,1]   // 1,0,1 ERROR
          ]; 
     for cc in all do
