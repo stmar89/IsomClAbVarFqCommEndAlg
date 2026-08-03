@@ -34,10 +34,11 @@ declare attributes IsogenyClassFq : AlphaWType,
                                     delta_inv;
 
 integral_approx:=function(a,b,m,nus)
-// Input: nus a list of places of O.
+// Input: nus a list of places of the maximal order O of an étale algebra.
 //        a,b in O, such that a/b is in O_nu, for every nu in nus.
 //        m a positive integer.
-// Output: an element y of O such that val_nu(y-x)>=m, for every nu in nus. 
+// Output: an element y of O mapping via O->O_nu to the image of a/b in O_nu, for every nu in nus. 
+// FIXME: The output does not depend on the integer m, which then should be interanlly computed.
     x:=a/b;
     O:=Order(nus[1]);
     if x in O then
