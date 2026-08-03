@@ -37,21 +37,39 @@ integral_approx:=function(a,b,m,nus)
 // Input: nus a list of places of the maximal order O of an étale algebra.
 //        a,b in O, such that a/b is in O_nu, for every nu in nus.
 //        m a positive integer.
-// Output: an element y of O mapping via O->O_nu to the image of a/b in O_nu, for every nu in nus. 
-// FIXME: The output does not depend on the integer m, which then should be interanlly computed.
+// Output: an element y of O such that val_nu(y-a/b)>=m, for every nu in nus. 
     x:=a/b;
     O:=Order(nus[1]);
     if x in O then
         return x;
     end if;
-    aO:=a*O;
+    assert2 forall{nu:nu in nus|Valuation(a,nu) ge Valuation(b,nu)};
     bO:=b*O;
-    fac_bO:=Factorization(bO);
-    supp_b:={ g[1]:g in fac_bO };
-    primes:=Setseq(supp_b join Seqset(nus));
-    cs:=[primes[i] in nus select One(O) else b:i in [1..#primes]];
-    c:=CRT([mu^m:mu in primes],cs);
-    y:=c*a/b;
+    fac_bO:=AssociativeArray(:Default:=0);
+    for g in Factorization(bO) do
+        fac_bO[g[1]]:=g[2];
+    end for;
+    
+    ys:=[];
+    for nu in nus do
+        Enu,mnu:=Completion(nu: MinPrecision:=m+fac_bO[nu]);
+        Append(~ys,(a@mnu/b@mnu)@@mnu);
+    end for;
+    assert forall{y:y in ys|y in O};
+    if #nus eq 1 then
+        y:=ys[1];
+    else
+        y:=CRT([nu^(m+fac_bO[nu]):nu in nus],ys);
+    end if;
+// OLD
+//    fac_bO:=Factorization(bO);
+//    supp_b:={ g[1]:g in fac_bO };
+//    primes:=Setseq(supp_b join Seqset(nus));
+//    cs:=[primes[i] in nus select One(O) else b:i in [1..#primes]];
+//    c:=CRT([mu^m:mu in primes],cs);
+//    y:=c*a/b; // y has positive valuation at every max ideal, hence it is integral
+                // but I am not sure that it is congruent to a/b at nus ...
+                // I should not merely put One(O), but actually compute b^-1 mod nu^(m+val_nu(b))
     assert y in O;
     assert2 forall{nu:nu in nus|Valuation(y,nu) eq Valuation(x,nu)};
     return y;
