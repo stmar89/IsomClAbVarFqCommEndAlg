@@ -175,9 +175,9 @@ intrinsic AlphaDualAtNonConjStablePlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::Rn
     end if;
     nu_Hash:=myHash(nu);
     if not IsDefined(isog`AlphaDualAtNonConjStablePlace,nu_Hash) then
-        m2:=2*m; //FIXME: later we need to take the pre-image on RR:=Rs_nu[g_nu] by the multiplication by the 
-                // the exact element u0. I think we need to double the precision to make sure that q_alpha_nu
-                // is computed at precision m.
+        m2:=2*m; // later we need to take the pre-image on RR:=Rs_nu[g_nu] by the multiplication by the 
+                 // the exact element u0. I think we need to double the precision to make sure that q_alpha_nu
+                 // is computed at precision m.
         _,_,_,_,A,pi_A,_,Delta_map:=DieudonneAlgebraCommEndAlg(isog);
         p:=CharacteristicFiniteField(isog);
         q:=FiniteField(isog);
@@ -233,8 +233,7 @@ intrinsic AlphaDualAtNonConjStablePlace(isog::IsogenyClassFq,nu::AlgEtQIdl,m::Rn
         E:=DeligneAlgebra(isog);
         pi:=PrimitiveElement(E);
         val_nu:=Valuation(pi,nu); // in E
-        w_nu:=integral_approx(pi,t_nu^val_nu,Dimension(E)*(m2+a),[nu]); //FIXME the precision here is very 
-                                                                      // likely high enough, but maybe not optimal
+        w_nu:=integral_approx(pi,t_nu^val_nu,Dimension(E)*(m2+a),[nu]);
         wU:=U_pr(Delta_map(w_nu)); // in E->A->U
 
         gamma0:=wU@@phi; // in Us[g_nu], the last component of U
@@ -365,8 +364,7 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         E:=DeligneAlgebra(isog);
         pi:=PrimitiveElement(E);
         val_nu:=Valuation(pi,nu); // in E
-        w_nu:=integral_approx(pi,t_nu^val_nu,Dimension(E)*(m2+a),[nu]); //FIXME the precision here is very 
-                                                                      // likely high enough, but maybe not optimal
+        w_nu:=integral_approx(pi,t_nu^val_nu,Dimension(E)*(m2+a),[nu]);
         wU:=U_pr(Delta_map(w_nu)); // in E->A->U
         gamma0:=wU@@phi; // in Us[g_nu], the last component of U
         gamma_A:=(&+[i lt g_nu select 
@@ -663,7 +661,7 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
         pr:=hom< Qm0_1->Qm0 | [ qm0(Qm0_1.i@@qm0_1) : i in [1..Ngens(Qm0_1)]] >;
         assert IsSurjective(pr);
         assert2 forall{ z : z in ZBasis(J) | pr(qm0_1(z)) eq qm0(z) };
-        
+       
         JOA:=OA!!J;
         assert JOA subset OA;
        
@@ -734,15 +732,21 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             images_gens_Qm0_1[myHash(nu)]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
             assert forall{g:g in images_gens_Qm0[myHash(nu)]|g in J};
             assert forall{g:g in images_gens_Qm0_1[myHash(nu)]|g in J};
-            PPb:=PPs[myHash(nub)];
-            S,s:=Quotient(PPb^-(a-1),PPb^(m2-(a-1))); 
-            T,t:=ResidueRing(OA,PPb^m2); 
+            // now we divide by p^(a-1) by taking a preimage
+            S,s:=Quotient((p^-(a-1))*OA,p^(m2-(a-1))*OA); 
+            T,t:=ResidueRing(OA,p^m2*OA); 
             mult:=iso<S->T|[((S.i@@s)*(p^(a-1)))@t:i in [1..Ngens(S)]]>;
-            //FIXME There seems to be an issue with mult above when JOA ne OA....
-            //      Check exponents?
-            //      Maybe the issue is that I have PPb^m2 < PPb^(m0+1)*J only locally at nub?
-            images_gens_Qm0[myHash(nub)]:=[(q_alpha_b*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0)]];
-            images_gens_Qm0_1[myHash(nub)]:=[(q_alpha_b*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA))@t@@mult@@s : i in [1..Ngens(Qm0_1)]];
+            image_qq:=function(g,qq)
+            // qq can be either qm0 or qm0_1
+                gg:=(q_alpha_b*(g@@qq@qOA@sigma_QOA@@qOA))@t@@mult@@s;
+                // mult^-1 is mod (pOA)^m2, so I need to do a further CRT to isolate the nub component.
+                // For simplicity we just do the CRT mod p^(m2) also when working mod p^m0 or p^m0+1, since the
+                // correspodning CRT-data has already been computed.
+                gg:=CRT(PPs_m2,[mu eq nub select gg else Zero(A):mu in nus]);
+                return gg;
+            end function;
+            images_gens_Qm0[myHash(nub)]:=[image_qq(Qm0.i,qm0) : i in [1..Ngens(Qm0)]];
+            images_gens_Qm0_1[myHash(nub)]:=[image_qq(Qm0_1.i,qm0_1) : i in [1..Ngens(Qm0_1)]];
             assert forall{g:g in images_gens_Qm0[myHash(nub)]|g in J};
             assert forall{g:g in images_gens_Qm0_1[myHash(nub)]|g in J};
         end for;
@@ -771,9 +775,9 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             assert forall{g:g in images_gens_Qm0_1[myHash(nu)]|g in J};
         end for;
         delta_inv:=CRT([PPs_m0_1[myHash(nu)]^a:nu in nus],[delta_inv_nus[myHash(nu)]:nu in nus]);
-        //J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0[myHash(nu)]:nu in nus]); // precision m0
-        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0_1[myHash(nu)]:nu in nus]); // precision m0+1
+        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0[myHash(nu)]:nu in nus]); // precision m0
         FQm0:=hom<Qm0->Qm0| [qm0(Jnus_J([images_gens_Qm0[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0)] ]>;
+        J_Jnus,Jnus_J:=ChineseRemainderTheoremFunctions(JOA,[PPs_m0_1[myHash(nu)]:nu in nus]); // precision m0+1
         FQm0_1:=hom<Qm0_1->Qm0_1| [qm0_1(Jnus_J([images_gens_Qm0_1[myHash(nu)][i]:nu in nus])) : i in [1..Ngens(Qm0_1)] ]>;
         assert2 forall{ x : x in Generators(Qm0_1) | FQm0(pr(x)) eq pr(FQm0_1(x))};
         // in the next assert2's, we check that FQm0^a and FQm0_1^a are equal to multiplication by pi_A
