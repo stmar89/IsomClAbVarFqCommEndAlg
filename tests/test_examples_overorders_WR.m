@@ -45,6 +45,10 @@
     for h in input do
         isog:=IsogenyClass(h);
         p:=CharacteristicFiniteField(isog);
+        q:=FiniteField(isog);
+        a:=Ilog(p,q);
+        printf "a=%o\t%o\n",a,h;
+
         plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
         plE:=plE01;;
         plA:=Seqset(&cat[PlacesOfDieudonneAlgebraAbovePlaceOfQF(isog,nu):nu in plE]); 
@@ -56,6 +60,6 @@
         for S in oo do
             pp_ff:=Seqset(PrimesAbove(OA!!Conductor(S)));
             assert pp_ff subset plA;
-            #plA,#pp_ff;
+            printf "\t%o,%o,%o\n",CohenMacaulayType(S),#plA,#pp_ff;
         end for;
     end for;

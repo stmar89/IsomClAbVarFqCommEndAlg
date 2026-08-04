@@ -45,11 +45,11 @@ intrinsic TotPosUnitsModUbarU(S::AlgEtQOrd)->SeqEnum[AlgEtQElt]
         U,u:=UnitGroup(S);
         Up:=TotallyRealPositiveUnitGroup(S);
         if IsConjugateStable(S) then
-            gens:=[Up!(U.i*ComplexConjugate(u(U.i))@@u): i in [1..Ngens(U)]];
+            gens:=[Up!(U.i+ComplexConjugate(u(U.i))@@u): i in [1..Ngens(U)]];
             den:=sub<Up|gens>;
         else
             UK,uK:=UnitGroup(MaximalOrder(Algebra(S)));
-            gens_inUK:=[(UK!(U.i)*(ComplexConjugate(u(U.i))@@uK)): i in [1..Ngens(U)]];
+            gens_inUK:=[(UK!(U.i)+(ComplexConjugate(u(U.i))@@uK)): i in [1..Ngens(U)]];
             den:=Up meet sub<UK|gens_inUK>;
         end if;
         trans:=Transversal(Up,den);
