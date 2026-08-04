@@ -515,15 +515,20 @@ intrinsic AlphaDualAtConjStablePlaceRhoNotId(isog::IsogenyClassFq,nu::AlgEtQIdl,
             return img;
         end function;
         phi:=hom<Us_nu[g_nu]->U | [ image_phi(Us_nu[g_nu].i) : i in [1..Ngens(Us_nu[g_nu])]] >;
-
+//FIXME
+print g_nu;
         gammaU:=U_pr(Delta_map(gamma));
         eps_A:=(&+([ i lt g_nu select U_embs[i](Zero(Us_nu[i])) 
                                else gammaU@@phi@U_embs[g_nu] : i in [1..g_nu]]))@@U_pr; // (1,...,1,eps)
         eps_A_inv:=(&+([ i lt g_nu select U_embs[i](Zero(Us_nu[i])) 
                                else -gammaU@@phi@U_embs[g_nu] : i in [1..g_nu]]))@@U_pr; // (1,...,1,eps^-1)
-        assert forall{i:i in [1..(g_nu div 2)-1]|eps_A*eps_A_inv-1 in PPs_nu_m[i]};
+        assert forall{i:i in [1..g_nu-1]|eps_A-1 in PPs_nu_m[i]};
+        assert forall{i:i in [1..g_nu-1]|eps_A_inv-1 in PPs_nu_m[i]};
+        assert forall{i:i in [1..g_nu]|eps_A*eps_A_inv-1 in PPs_nu_m[i]};
 
         eps_A_bar:=bar_onA(eps_A); // (1,...,1,bar(eps),1,...,1)
+        assert forall{i:i in [1..g_nu]|i ne (g_nu div 2) select eps_A_bar-1 in PPs_nu_m[i] else true};
+
         p_half:=(&+([i le (g_nu div 2) select embs[i](rs_nu[i](One(A))) 
                                       else embs[i](rs_nu[i](p*One(A))) : i in [1..g_nu]]))@@pr; // (1,...,1,p,...,p)
         alpha_nu:=eps_A_inv*eps_A_bar*p_half; 
@@ -752,26 +757,31 @@ intrinsic SemilinearOperatorsDualComp(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngI
             assert forall{g:g in images_gens_Qm0[Hnub]|g in J};
             assert forall{g:g in images_gens_Qm0_1[Hnub]|g in J};
         end for;
-        //m2:=m0+1+a; // m0+1+g_nu suffices, but this is a bit easier for the CRT.
+        // TODO why do I work with this choice of m2 here?
+        //m2:=m0+1+a; // m0+1+g_nu suffices.
         QOA,qOA,sigma_QOA:=SigmaOnQuotientOfOA(isog,p^m2*OA);
         for nu in rho_id do
             Hnu:=myHash(nu);
             g_nu:=GCD(Ilog(CharacteristicFiniteField(isog),FiniteField(isog)),InertiaDegree(nu));
             alpha,delta_inv:=AlphaDualAtConjStablePlaceRhoId(isog,nu,m2);
-            //TODO explains the next 2 lines
-            PPs_m2:=[PPs[Hmu]^m2:Hmu in Hnus];
-            alpha:=CRT(PPs_m2,[Hmu eq Hnu select alpha else Zero(A):Hmu in Hnus]);
+            //TODO explains the next 2 lines, why can I CRT with prec m3?
+            //PPs_m2:=[PPs[Hmu]^m2:Hmu in Hnus];
+            alpha:=CRT(PPs_m3,[Hmu eq Hnu select alpha else Zero(A):Hmu in Hnus]);
             delta_inv_nus[Hnu]:=delta_inv;
             images_gens_Qm0[Hnu]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[Hnu]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
             assert forall{g:g in images_gens_Qm0[Hnu]|g in J};
             assert forall{g:g in images_gens_Qm0_1[Hnu]|g in J};
         end for;
+        // TODO why do I work with this choice of m2 here?
+        m2:=m0+1;
         for nu in rho_notid do
             Hnu:=myHash(nu);
-            alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m0+1);
-            //TODO explains the next line
-            alpha:=CRT([PPs_m0_1[Hmu]:Hmu in Hnus],[Hmu eq Hnu select alpha else Zero(A):Hmu in Hnus]);
+            alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m2);
+            //alpha:=AlphaDualAtConjStablePlaceRhoNotId(isog,nu,m0+1);
+            //TODO explains the next line. Do I want to work at prec m3 or m0+1?
+            //alpha:=CRT([PPs_m0_1[Hmu]:Hmu in Hnus],[Hmu eq Hnu select alpha else Zero(A):Hmu in Hnus]);
+            alpha:=CRT(PPs_m3,[Hmu eq Hnu select alpha else Zero(A):Hmu in Hnus]);
             delta_inv_nus[Hnu]:=One(A);
             images_gens_Qm0[Hnu]:=[alpha*(Qm0.i@@qm0@qOA@sigma_QOA@@qOA) : i in [1..Ngens(Qm0)]];
             images_gens_Qm0_1[Hnu]:=[alpha*(Qm0_1.i@@qm0_1@qOA@sigma_QOA@@qOA): i in [1..Ngens(Qm0_1)]];
@@ -853,12 +863,13 @@ end intrinsic;
             cc:=[StringToInteger(c):c in Split(s,"[,]")];
             g:=(#cc-1) div 2;
             q:=Round(cc[1]^(1/g));
-            test,p,a:=IsPrimePower(q);
+            _,p,a:=IsPrimePower(q);
             if a lt 4 then
                 h:=PP!cc;
+                ccs:=StripWhiteSpace(Sprint(cc));
                 isog:=IsogenyClass(h);
                 conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
-                printf "%o,%o,%o",#conj_pairs,#rho_id,#rho_notid;
+                printf "%o,%o,%o\ta=%o\t[OA:JOA]=",#conj_pairs,#rho_id,#rho_notid,a;
                 for exps in ExponentsDual(isog) do
                     plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
                     plE:=plE0 cat plE01 cat plE1;
@@ -867,16 +878,18 @@ end intrinsic;
                     JOA:=&*[ plA[i]^exps[i] : i in [1..#exps] ]; 
                     _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
                     assert JOA subset OA;
+                    ind:=Index(OA,JOA);
+                    test,n:=IsPowerOf(ind,p);
+                    assert test;
                     J:=WR!!JOA;
                     ZBasisLLL(J);
+                    printf "%o^%o ",p,n;
                     _:=SemilinearOperatorsDualComp(isog,J,m0);
-                    printf ".";
                 end for;
-                printf "\n";
+                printf "%o OK\n",ccs;
             end if;
         catch e
-            printf "%o ERROR\n",s;
-            e;
+            printf "%o %o ERROR\n",e`Position,ccs;
         end try;
     end for;
 
@@ -892,17 +905,15 @@ end intrinsic;
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
     m0:=10;
     all:=[
+          [81,0,-9,0,1],                       // 0,0,1 ERROR, 534 not always occurring
+          [81,0,-9,0,1],                       // 0,0,1 ERROR, 534 not always occurring
+          [81,0,-9,0,1],                       // 0,0,1 ERROR, 534 not always occurring
+          [15625,-10000,3500,-825,140,-16,1],  // 1,0,1 ERROR, 534 not always occurring
+          [15625,-10000,3500,-825,140,-16,1],  // 1,0,1 ERROR, 534 not always occurring
+          [15625,-10000,3500,-825,140,-16,1],  // 1,0,1 ERROR, 534 not always occurring
           [15625,-10625,3750,-875,150,-17,1],  // 2,0,0 
           [15625,-8750,2500,-525,100,-14,1],   // 2,0,0 
-          [15625,-9375,3125,-725,125,-15,1],   // 1,0,0 ERROR, 788 not always occurring
-          [15625,-9375,3125,-725,125,-15,1],   // 1,0,0 ERROR, 788 not always occurring
-          [15625,-9375,3125,-725,125,-15,1],   // 1,0,0 ERROR, 788 not always occurring
-          [81,0,-9,0,1],                       // 0,0,1 ERROR, 534 not always occurring
-          [81,0,-9,0,1],                       // 0,0,1 ERROR, 534 not always occurring
-          [81,0,-9,0,1],                       // 0,0,1 ERROR, 534 not always occurring
-          [15625,-10000,3500,-825,140,-16,1],  // 1,0,1 ERROR, 534 not always occurring
-          [15625,-10000,3500,-825,140,-16,1],  // 1,0,1 ERROR, 534 not always occurring
-          [15625,-10000,3500,-825,140,-16,1]   // 1,0,1 ERROR, 534 not always occurring
+          [15625,-9375,3125,-725,125,-15,1]    // 1,0,0 FIXED, 788 not always occurring
          ]; 
     for cc in all do
         try
