@@ -61,7 +61,7 @@
             out_str cat:=Sprintf("%o^%o ",p,n);
             Append(~Js,J);
         end for;
-        out_str cat:=Sprintf "\t%o",ccs;
+        out_str cat:=Sprintf("\t%o",ccs);
         for J in Js do
             _:=SemilinearOperatorsDualComp(isog,J,m0);
         end for;
