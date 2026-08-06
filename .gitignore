@@ -6,3 +6,4 @@ old/parallel_storing/errors.txt
 tests/recompute_examples_parallel_output_all.m
 tests/recompute_examples_parallel_output_01.m
 tests/pols_parallel/joblog
+tests/semilin_ops_parallel/joblog
