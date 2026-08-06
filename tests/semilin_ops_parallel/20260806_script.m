@@ -18,7 +18,7 @@
     AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
     Attach("~/PolarizationsFq/magma/misc.m");
 
-    fld:="~/IsomClAbVarFqCommEndAlg/tests/rho_notid_a_4_gnu_4.txt/";
+    fld:="~/IsomClAbVarFqCommEndAlg/tests/semilin_ops_parallel/";
     run:="20260806_";
     
     ok_file:=fld*run*"ok.txt";
@@ -66,8 +66,10 @@
             _:=SemilinearOperatorsDualComp(isog,J,m0);
         end for;
         fprintf ok_file,"%o\n",out_str;
+        printf "%o\n",out_str;
     catch e
         fprintf issue_file,"%o %o\n",out_str,e`Position;
+        printf "%o %o\n",out_str,e`Position;
     end try;
 
     quit;
