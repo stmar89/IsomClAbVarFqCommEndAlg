@@ -44,7 +44,7 @@
         isog:=IsogenyClass(h);
         conj_pairs,rho_id,rho_notid:=SortPlacesOfQFAbove_p(isog);
         _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-        out_str:=Sprintf("%o,%o,%o\ta=%o\t[OA:JOA]=",#conj_pairs,#rho_id,#rho_notid,a)
+        out_str:=Sprintf("%o,%o,%o\ta=%o\t[OA:JOA]=",#conj_pairs,#rho_id,#rho_notid,a);
         plE0,plE01,plE1:=PlacesOfQFAbove_p(isog);
         plE:=plE0 cat plE01 cat plE1;
         plA:=&cat[PlacesOfDieudonneAlgebraSortedBySigmaAbovePlaceOfQF(isog,nu):nu in plE];
@@ -61,7 +61,7 @@
             out_str cat:=Sprintf("%o^%o ",p,n);
             Append(~Js,J);
         end for;
-        out_str cat:=Sprintf "%o",ccs;
+        out_str cat:=Sprintf "\t%o",ccs;
         for J in Js do
             _:=SemilinearOperatorsDualComp(isog,J,m0);
         end for;
