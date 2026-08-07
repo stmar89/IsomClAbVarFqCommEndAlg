@@ -124,16 +124,20 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
     // but only a quotient isomorphic to its p-part.
         ZBasisLLL(A);
         ZBasisLLL(B);
-        if prec eq 0 then
-            prec:=Valuation(Index(A,B),p);
+        ind:=Index(A,B);
+        v_ind:=Valuation(ind,p);
+        if v_ind eq 0 then
+            return 0; // A_p = B_p
         end if;
-        if prec eq 0 then
-            return 0;
-        end if;
+        prec:=Max(prec,v_ind+1);
+        Zp:=pAdicRing(p,prec);
         zbB:=ZBasis(B);
-        M:=Matrix(pAdicRing(p,prec),AbsoluteCoordinates(zbB,A));
+        M:=Matrix(Zp,AbsoluteCoordinates(zbB,A));
         n:=#zbB;
-        vp_exp:=Valuation(ElementaryDivisors(M)[n]);
+        elt:=ElementaryDivisors(M);
+        assert #elt eq n;
+        assert Valuation(&*elt) eq Valuation(Zp!ind);
+        vp_exp:=Valuation(elt[n]);
         return vp_exp;
     end function;
 
@@ -214,3 +218,33 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
     assert2 forall{I:I in IIs|(Index((p^m0)*J+I,I) mod p) ne 0};
     return IIs,m0;
 end intrinsic;
+
+/*
+    TESTs
+
+    PP<x>:=PolynomialRing(Integers());
+    //SetAssertions(2);
+    //SetDebugOnError(true);
+    AttachSpec("~/AbVarFq/spec");
+    AttachSpec("~/AlgEt/specMod");
+    AttachSpec("~/AlgEt/specMtrx");
+    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    all:=[
+    //    x^6+3*x^5+3*x^4+x^3+9*x^2+27*x+27,
+    //    x^6+6*x^5+20*x^4+50*x^3+100*x^2+150*x+125,
+    //    x^4 + 7*x^2 + 49
+    x^6 - 4*x^5 + 21*x^4 - 54*x^3 + 189*x^2 - 324*x + 729
+    ,x^6 - 4*x^5 + 21*x^4 - 45*x^3 + 189*x^2 - 324*x + 729
+    ,x^6 - 4*x^5 + 24*x^4 - 72*x^3 + 216*x^2 - 324*x + 729
+    ,x^6 - 4*x^5 + 30*x^4 - 72*x^3 + 270*x^2 - 324*x + 729
+    ,x^6 - 4*x^5 + 24*x^4 - 63*x^3 + 216*x^2 - 324*x + 729
+    ,x^6 - 3*x^5 + 9*x^3 - 243*x + 729
+    ,x^6 - 3*x^5 + 18*x^3 - 243*x + 729
+    ,x^6 - 3*x^5 + 36*x^3 - 243*x + 729
+    ];
+    for h in all do
+        isog:=IsogenyClass(h);
+        M:=#IsomorphismClassesDieudonneModulesCommEndAlg(isog,"all":dual:=true);
+    end for;
+
+*/
