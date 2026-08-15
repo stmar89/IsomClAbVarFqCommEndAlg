@@ -30,25 +30,31 @@
             isog:=IsogenyClass(h);
             R:=ZFVOrder(isog);
             E:=DeligneAlgebra(isog);
-            OE:=MaximalOrder(E);
+            pi:=PrimitiveElement(E);
+            OE:=R!!OneIdeal(MaximalOrder(E));
             ss:=SingularPrimes(R);
             max_cm:=[];
             for P in ss do
                 kP:=Index(R,P);
-                OP:=Index(OE,OE!!P);
-                Append(~max_cm,Ilog(kP,OP)-1);
+                OP:=Index(OE,OneIdeal(R)+OE*P);
+                max_cm_P:=Ilog(kP,OP)+1;
+//                if pi in P and q/pi in P then
+//                    assert kP eq p;
+//                    assert max_cm_P eq 2*g-1;
+//                end if;
+                Append(~max_cm,max_cm_P);
             end for;
             max_cm_OE:=Max(max_cm);
 
-            _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
-            ss:=SingularPrimes(WR);
-            max_cm:=[];
-            for P in ss do
-                kP:=Index(WR,P);
-                OP:=Index(OA,OA!!P);
-                Append(~max_cm,Ilog(kP,OP)-1);
-            end for;
-            max_cm_OA:=Max(max_cm);
-            printf "a=%o,g=%o,max_cm_type_R=%o,max_cm_type_WR=%o\n",a,g,max_cm_OE,max_cm_OA;
+//            _,_,_,_,_,_,OA,_,WR:=DieudonneAlgebraCommEndAlg(isog);
+//            ss:=SingularPrimes(WR);
+//            max_cm:=[];
+//            for P in ss do
+//                kP:=Index(WR,P);
+//                OP:=Index(OA,OA!!P);
+//                Append(~max_cm,Ilog(kP,OP)-1);
+//            end for;
+//            max_cm_OA:=Max(max_cm);
+//            printf "a=%o,g=%o,max_cm_type_R=%o,max_cm_type_WR=%o\n",a,g,max_cm_OE,max_cm_OA;
         end if;
     end for;

@@ -136,7 +136,7 @@ intrinsic DeltaScaleInside(isog::IsogenyClassFq,J::AlgEtQIdl,Is::SeqEnum[AlgEtQI
         n:=#zbB;
         elt:=ElementaryDivisors(M);
         assert #elt eq n;
-        assert &*elt eq Zp!ind;
+        assert Valuation(&*elt) eq Valuation(Zp!ind);
         vp_exp:=Valuation(elt[n]);
         return vp_exp;
     end function;

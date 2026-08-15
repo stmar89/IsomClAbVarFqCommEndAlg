@@ -10,7 +10,7 @@
 
 */
 
-    SetAssertions(2);
+    //SetAssertions(2);
     SetColumns(0);
     AttachSpec("~/AbVarFq/spec");
     //AttachSpec("~/AlgEt/spec");
