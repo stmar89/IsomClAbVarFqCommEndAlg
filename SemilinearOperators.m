@@ -314,7 +314,7 @@ intrinsic AlphaDualAtConjStablePlaceRhoId(isog::IsogenyClassFq,nu::AlgEtQIdl,m::
         assert #PPs_nu eq g_nu;
         e_nu:=RamificationIndex(nu);
 
-        // In the construction of delta_nu, we need to divide by g_nu. 
+        // In the construction of delta_nu, we need to divide by p^g_nu. 
         // We increase the precision accordingly.
         m2:=m+g_nu;
         OA_mod_I,qOA_mod_I,sigma:=SigmaOnQuotientOfOA(isog,p^m2*OA);
