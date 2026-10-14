@@ -66,6 +66,7 @@ Changelog
   * A bug occurring when `gP` is strictly greater than 2 has been fixed. 
   * Fixed precision issues while calling Truncate in combination with taking roots or logs.
   * Included a new intrinsic to compute a-numbers; see aNumber.
+  * A bug in IsomorphismClassesAwayFromLocalLocalCommEndAlg regarding sorting of singular primes is fixed.
   
   This version has been tested with Magma 2.29-10.
   
