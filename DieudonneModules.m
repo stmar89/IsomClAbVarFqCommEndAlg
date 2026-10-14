@@ -32,7 +32,7 @@ declare verbose sigma,3;
 declare verbose alpha_at_precision,3;
 declare verbose Delta_scaling,3;
 
-declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg,
+declare attributes IsogenyClassFq : DieudonneAlgebraCommEndAlg,
                                     SemilinearOperators;
                                
 declare attributes AlgEtQ         : sigma_fin_prec,
@@ -46,11 +46,11 @@ declare attributes AlgEtQIdl :      DeltaEndomorphismRing,
                                     PlacesOfAAbove;
 
 ////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
+///////////////////////////////// DieudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,UserProgram,UserProgram,UserProgram
-{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
+{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DieudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
 <L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
@@ -63,7 +63,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 - alpha_at_precision is a function that given a positive integer m returns an element alpha of OA, as reqired by Algorithm 2 of the paper, to define the reductions of the semilinear operator F with the Frobenius property and of W-type; more precisely: alpha is congruent mod p^m*OA to an element alpha' whose image in A\otimes_Q Qp = \prod_nu \prod_(i=1)^gnu LE_nu has nu component alpha'_nu=(1,....,1,u) where N_(LE_nu/E_nu)(u)=pi_nu.
 - A_as_vector_space_over_L_data is a tuple consistsing of three L-linear isomorphisms m1,m2,m3 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)).
 }
-    if not assigned isog`DiedudonneAlgebraCommEndAlg then
+    if not assigned isog`DieudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         R:=ZFVOrder(isog);
         E:=Algebra(R);
@@ -479,9 +479,9 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
             return alpha;
         end function;
 
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data>;
+        isog`DieudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,sigma_OA_mod_I,Delta_inverse_ideal,primes_of_A_above_place_of_E,primes_of_S_of_slope_in_01,alpha_at_precision,A_as_vector_space_over_L_data>;
     end if;
-    return Explode(isog`DiedudonneAlgebraCommEndAlg);
+    return Explode(isog`DieudonneAlgebraCommEndAlg);
 end intrinsic;
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -509,9 +509,9 @@ end intrinsic;
 ////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
-{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DieudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperators.}
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
-    vprintf DieudonneModules,1 : "Computing DiedudonneAlgebraCommEndAlg...";
+    vprintf DieudonneModules,1 : "Computing DieudonneAlgebraCommEndAlg...";
     R:=ZFVOrder(isog);
     E:=Algebra(R);
     pi:=PrimitiveElement(E);
