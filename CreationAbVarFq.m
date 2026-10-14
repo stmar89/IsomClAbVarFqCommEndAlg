@@ -61,7 +61,7 @@ returns the unique abelian variety in isog with EndomorphismRing S such that: th
             if slopes eq "(0,1)" then
                 E:=Algebra(R);
                 places_0,places_01,places_1:=PrimesOfZFVAbove_p(isog);
-                places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_0|not IsInvertible(P)];
+                places_away_01:=SingPrimesOfZFVAwayFrom_p(isog) cat [P:P in places_0|not IsInvertible(P)] cat [P:P in places_1|not IsInvertible(P)];
                 end_test:=[];
                 for T in OverOrders(R) do
                     mT:=R!!OneIdeal(T);
