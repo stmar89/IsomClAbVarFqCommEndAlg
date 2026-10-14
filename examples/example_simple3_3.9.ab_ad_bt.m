@@ -19,7 +19,6 @@
 
     // loading precomputed data
     fld:="~/IsomClAbVarFqCommEndAlg/examples/";
-    input_ls:=Pipe("ls " cat fld,"");
     file:="3.9.ab_ad_bt";
     str:=Read(fld cat file);
     iso:=LoadAbVarFqCommEndAlg(isog,str);
