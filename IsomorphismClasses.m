@@ -48,9 +48,9 @@ intrinsic IsomorphismClassesAwayFromLocalLocalCommEndAlg(isog::IsogenyClassFq)->
     ps:=[];
     sing:=SingularPrimes(R);
     sing_ell:=SingPrimesOfZFVAwayFrom_p(isog);
-    ppR_0,_,ppR_1:=PrimesOfZFVAbove_p(isog);
+    ppR_0,_,_:=PrimesOfZFVAbove_p(isog);
     sing_0:=[P:P in ppR_0|P in sing];
-    sing_1:=[P:P in ppR_1|P in sing];
+    sing_1:=[ComplexConjugate(P):P in sing_0];
 
     part_ell:=[];
     for ell in sing_ell do
