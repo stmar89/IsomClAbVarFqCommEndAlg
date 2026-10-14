@@ -63,6 +63,7 @@ Changelog
   This version has been tested with Magma 2.29-6.
 - <code>v1.0.2</code> Bugfix:
   * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`appendix`](Computational_Appendix.pdf).
+  * A bug occurring when `gP` is strictly greater than 2 has been fixed. 
   
   This version has been tested with Magma 2.29-7.
   
