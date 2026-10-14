@@ -272,6 +272,10 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slop
             assert IsOrdinary(isog);
             dm:=OneIdeal(WR);
             dm`DeltaEndomorphismRing:=ZFVOrder(isog);
+            Qm0,qm0:=Quotient(dm,dm);
+            FQm0:=IdentityHomomorphism(Qm0);
+            VQm0:=FQm0;
+            isog`SemilinearOperatorsWType:=<Qm0,qm0,FQm0,VQm0,dm,0,dm,slopes>;
             return [dm]; 
         end if;
     elif slopes eq "all" then

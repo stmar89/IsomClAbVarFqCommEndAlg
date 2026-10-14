@@ -30,16 +30,20 @@ intrinsic aNumber(AV:AbelianVarietyFq)->RngIntElt
         require assigned AV`IsomDataCommEndAlg : "The attribute IsomDataCommEndAlg is not assigned";
         isog:=IsogenyClass(AV);
         require IsSquarefree(isog) : "At the moment it is implemented only for abelian varieties with commutative Fq-endomorphism algebra.";
-        Q,mQ,F,V,dJ,m0,J:=SemilinearOperators(isog);
-        require m0 gt 0 : "The SemilinearOperators need to be computed at positive precision. Rerun IsomorphismClassesCommEndAlg with the parameter IncreaseMinimumPrecisionForSemilinearFVBy set to 1";
-        _,dm:=IsomDataCommEndAlg(AV);
-        assert dm subset J;
-        M:=sub<Q|[mQ(z):z in ZBasis(dm)]>;
-        FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
-        VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
-        q:=FiniteField(isog);
-        a_num:=Ilog(q,Index(M,FM+VM));
-        AV`aNumber:=a_num;
+        if IsOrdinary(AV) then
+            AV`aNumber:=0;
+        else
+            Q,mQ,F,V,dJ,m0,J:=SemilinearOperators(isog);
+            require m0 gt 0 : "The SemilinearOperators need to be computed at positive precision. Rerun IsomorphismClassesCommEndAlg with the parameter IncreaseMinimumPrecisionForSemilinearFVBy set to 1";
+            _,dm:=IsomDataCommEndAlg(AV);
+            assert dm subset J;
+            M:=sub<Q|[mQ(z):z in ZBasis(dm)]>;
+            FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
+            VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
+            q:=FiniteField(isog);
+            a_num:=Ilog(q,Index(M,FM+VM));
+            AV`aNumber:=a_num;
+        end if;
     end if;
     return AV`aNumber;
 end intrinsic;
