@@ -830,9 +830,9 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     primes_01_WR:=primes_of_S_of_slope_in_01(WR);
     // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in primes_01_WR.
     // By looking at the composition series, one deduces that any 
-    // M \geq Truncate(Log(Index(WR,P),Index(J,p^(m0+1)J)) will do.
+    // M \geq Ilog(Index(WR,P),Index(J,p^(m0+1)J)) will do.
     size:=(p^(m0+1))^AbsoluteDimension(A); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-    M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in primes_01_WR] );
+    M:=Max( [ Ilog(Index(WR,P),Index(J,p^(m0+1)J)) : P in primes_01_WR] );
     //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
     vprintf Algorithm_3,1 : "done. Got M=%o\n",M;
     PP01:=(&*(primes_01_WR))^M;
