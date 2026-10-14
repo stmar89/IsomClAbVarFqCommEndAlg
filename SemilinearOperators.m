@@ -571,9 +571,9 @@ intrinsic SemilinearOperatorsWType(isog::IsogenyClassFq,J::AlgEtQIdl,m0::RngIntE
 
         // Need M such that P^M*J c p^(m0+1)J, locally at P, for each P in pps.
         // By looking at the composition series, one deduces that any 
-        // M \geq Truncate(Log(Index(OA,P),Index(J,p^(m0+1)J)) will do.
+        // M \geq Ilog(Index(OA,P),Index(J,p^(m0+1)J)) will do.
         size:=(p^(m0+1))^AbsoluteDimension(Algebra(OA)); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-        M:=Max( [ Truncate(Log(Index(WR,P),size)) : P in pps] );
+        M:=Max( [ Ilog(Index(OA,P),Index(J,p^(m0+1)J)) : P in pps] );
         //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
         PP_M:=(&*pps)^M;
         PP_M_J:=J*PP_M;

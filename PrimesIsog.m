@@ -202,7 +202,8 @@ If the vararg CheckMaximal is set to false, the instrinsic will accept as input 
         pi:=PrimitiveElement(E);
         h:=DefiningPolynomial(E);
         g:=Degree(h) div 2;
-        q:=Truncate(ConstantCoefficient(h)^(1/g));
+        t,q:=IsPower(ConstantCoefficient(h),g);
+        assert t;
         t,p,a:=IsPrimePower(q);
         assert t;
         if not IsMaximal(S) then
