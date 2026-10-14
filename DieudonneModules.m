@@ -339,9 +339,8 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
                 pp:=PrimesAbove(Ideal(OA,[ Delta_map(z) : z in ZBasis(P)]));
                 gP:=#pp;
                 if gP gt 2 then
-                    // the following does nothing if gP is 1 or 2
                     PP:=&*pp;
-                    Q,mQ:=ResidueRing(PP);
+                    Q,mQ:=ResidueRing(OA,PP);
                     PP0:=pp[1];
                     gens:=[mQ(x):x in Generators(PP0)];
                     ss:=sigma_OA_mod_I(Q,mQ,A);
