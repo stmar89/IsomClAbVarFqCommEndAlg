@@ -25,7 +25,7 @@
 declare verbose Algorithm_2,3;
 declare verbose Algorithm_3,3;
 
-declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg,
+declare attributes IsogenyClassFq : DieudonneAlgebraCommEndAlg,
                                     ExponentsWType,
                                     ExponentsDual;
 
@@ -255,7 +255,7 @@ intrinsic WRIdealsWithFVStableExtensionToOA(isog::IsogenyClassFq,slopes::MonStgE
 end intrinsic;
 
 intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq,slopes::MonStgElt : dual:=false , IncreaseMinimumPrecisionForSemilinearFVBy:=0)->SeqEnum[AlgEtQIdl]
-{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DiedudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperatorsWType. The second argument slopes can have values "(0,1)" or "all" and determined whether only the local-local part of the whole Dieudonne modules are computed.
+{Given an isogeny class of abelian varieties over Fq with commutative endomorphism algebra returns representatives of the isomorphism classes of the local-local parts of the Dieudonné modules of the varieties. These representatives are given as fractional WR-ideals, where WR is defined as in DieudonneAlgebraCommEndAlg, which are stable under the action of semilinar operators F and V=pF^-1, where F has the Frobenius property and is of W-type. See the paper for the definitions. The action of F and V is computed on a quotient, whose size is determined by a precision parameter m. This m is calculated automatically to guarantee that the output of this function is correct. One can increase this parameter by setting the VarArg IncreaseMinimumPrecisionForSemilinearFVBy to a strinctly positive value. The operators can be recovered using SemilinearOperatorsWType. The second argument slopes can have values "(0,1)" or "all" and determined whether only the local-local part of the whole Dieudonne modules are computed.
 //TODO describe dual
 }
     require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";

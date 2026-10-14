@@ -27,7 +27,7 @@
 declare verbose DieudonneModules,3;
 declare verbose DieudonneModules_L,3;
 
-declare attributes IsogenyClassFq : DiedudonneAlgebraCommEndAlg;
+declare attributes IsogenyClassFq : DieudonneAlgebraCommEndAlg;
 declare attributes AlgEtQIdl      : DeltaEndomorphismRing;
 
 ///////////////
@@ -46,11 +46,11 @@ OrderAsFreeAbelianGroup:=function(R)
 end function;
 
 ////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// DiedudonneAlgebraCommEndAlg /////////////////////////////////
+///////////////////////////////// DieudonneAlgebraCommEndAlg /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
 intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrdIdl,RngIntElt,AlgEtQ,AlgEtQElt,AlgEtQOrd,Map,AlgEtQOrd,Tup,Tup
-{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DiedudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
+{Let isog be an isogeny class of abelian varieties over Fq, with q=p^a, with commutative endomorphism algebra E=Q[pi]. This intrisic populates the attribute DieudonneAlgebraCommEndAlg of the isogeny class, which consists of the tuple 
 <L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,A_as_vector_space_over_L_data,OA_as_abelian_group_data> where
 - L is a number field such that L\otimes_Q Qp is an unramified field extension of Qp of degree a; OL is its maximal order and PL=p*OL; normPL is the size of OL/PL;
 - A is an etale algebra isomorphic to E\otimes_Q L; OA is its maximal order;
@@ -58,7 +58,7 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
 - Delta_map is the natural embedding of E->A; pi_A is the image of pi, the Frobenius endomorphism of isog;
 - A_as_vector_space_over_L_data is a tuple consistsing of four L-linear isomorphisms m1,m2,m3,m4 allowing to represent A as an L-vector space. Let V1 be the direct sums of L[x]/(gi) where gi runs over the factors of the Weil polynomial over L[x] and where each extension of L is considered as an L-vector space using the power basis. Let V2 be L-vector space structure on A induced by the L-basis pi_A^i where i=0,..,dim_Q(E). Then m1:A->V1 and m2:V2->V1 are the natural isomorphisms and m3:A->V2 is the composition a:->m2^-1(m1(a)). In other words, it corresponds to the presentation A=L[pi_A] of A, or equivalently A = Z[pi] \otimes_Z L. Finally, m4:A->V2 is an L-isomorphism in which we instead use the ZBasis of OE; it corresponds to the decomposition A = OE \otimes_Z L.
 - OA_as_abelian_group_data is the tuple <FOA,fOA,imageDeltaOE_inFOA> where FOA is a free abelian group and fOA:=OA->FOA is an isomorphism, and imageDeltaOE_inFOA is the image of Delta(OE) in FOA. This tuple is used to compute Delta^-1 of orders and ideals in the DieudonneAlgebra.}
-    if not assigned isog`DiedudonneAlgebraCommEndAlg then
+    if not assigned isog`DieudonneAlgebraCommEndAlg then
         require IsSquarefree(isog) : "The Weil polynomial of the isogeny class needs to be squarefree.";
         R:=ZFVOrder(isog);
         E:=Algebra(R);
@@ -209,9 +209,9 @@ intrinsic DieudonneAlgebraCommEndAlg(isog::IsogenyClassFq)->FldNum,RngOrd,RngOrd
         imageDeltaOE_inFOA:=sub<FOA | [fOA(Delta_image(z)) : z in ZBasis(MaximalOrder(E)) ]>;
         OA_as_abelian_group_data:=<FOA,fOA,imageDeltaOE_inFOA>;
 
-        isog`DiedudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
+        isog`DieudonneAlgebraCommEndAlg:=<L,OL,PL,normPL,A,pi_A,OA,Delta_map,WR,A_as_vector_space_over_L_data,OA_as_abelian_group_data>;
     end if;
-    return Explode(isog`DiedudonneAlgebraCommEndAlg);
+    return Explode(isog`DieudonneAlgebraCommEndAlg);
 end intrinsic;
 
 
