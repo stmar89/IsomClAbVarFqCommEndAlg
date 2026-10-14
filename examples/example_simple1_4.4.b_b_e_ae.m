@@ -23,7 +23,7 @@
     file:="4.4.b_b_e_ae";
     str:=Read(fld cat file);
     iso:=LoadAbVarFqCommEndAlg(isog,str);
-    printf "We have precomputed the isomorphism classes and we load them in the previous 5 lines of code.\nTo recompute them, which takes approximatively 5 minutes, comment the previous 5 lines out and uncomment the next line";
+    printf "We have precomputed the isomorphism classes and we load them in the previous 5 lines of code.\nTo recompute them, which takes approximatively 5 minutes, comment the previous 5 lines out and uncomment the next line\n";
     //iso:=IsomorphismClasses(isog);
 
     R:=ZFVOrder(isog);
