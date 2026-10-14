@@ -55,21 +55,18 @@
     ends:=[ EndomorphismRing(A) : A in iso ];
     printf "For each overorder S, we print the following string of data:\n\tiS = which overorder of Z[pi,q/pi]\n\t[OE:S]\n\td(S) = #Dieudonné modules with End S\n\th(S)=#Pic(S)\n\ta numbers of the DM with End S\n\tis S maximal at (0,1)?\n\tdoes S contain O_{E^+}?\n\tindices of minimal overorders\n\n";
     for iS->S in oo do
-        dmS:={@ dmA where _,dmA:=IsomDataCommEndAlg(A) : A in iso | EndomorphismRing(A) eq S @};
+        A_S:=[A: A in iso | EndomorphismRing(A) eq S];
+        dmS:={@ dmA where _,dmA:=IsomDataCommEndAlg(A) : A in A_S @};
         // a-numbers
         a_nums:=[];
         for dm in dmS do
-            assert dm subset J;
-            M:=sub<Q|[mQ(z):z in ZBasis(dm)]>;
-            FM:=sub<M|[M!F(M.i):i in [1..Ngens(M)]]>;
-            VM:=sub<M|[M!V(M.i):i in [1..Ngens(M)]]>;
-            Append(~a_nums,Ilog(q,Index(M,FM+VM)));
+            assert exists(A){A:A in A_S|dm eq dmA where _,dmA:=IsomDataCommEndAlg(A)};
+            Append(~a_nums,aNumber(A));
         end for;
         // indices of minimal overorders (to find the place of S in the graph of inclusions)
         ind_min_oo:=[ Index(oo,T) : T in MinimalOverOrders(S) ];
         printf "%o,%o,%o,%o,%o,%o,%o,%o\n",iS,Index(OE,S),#dmS,#PicardGroup(S),a_nums,is_maximal_at_01(S),contains_OEp(S),ind_min_oo;
     end for;
-
 /*
 
 */

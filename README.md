@@ -65,8 +65,9 @@ Changelog
   * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`appendix`](Computational_Appendix.pdf).
   * A bug occurring when `gP` is strictly greater than 2 has been fixed. 
   * Fixed precision issues while calling Truncate in combination with taking roots or logs.
+  * Included a new intrinsic to compute a-numbers; see aNumber.
   
-  This version has been tested with Magma 2.29-7.
+  This version has been tested with Magma 2.29-10.
   
   The bug above does not affect the content of the referenced paper below.
 
