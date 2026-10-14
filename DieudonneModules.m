@@ -532,10 +532,16 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     end if;
 
     vprintf DieudonneModules,2 : "places of E w/ slope in (0,1) = %o\n",Sort([ Slope(P) : P in plE_sl_in01]);
-    // Early exit if no places 
+    // Early exit if no local local places, i.e. if ordinary.
     if #plE_sl_in01 eq 0 then
+        // we artificially set the semilinear operators to 0 and the local-local dieudonne module to WR
+        // to avoid issues with the glueing and saving.
         dm:=OneIdeal(WR);
         dm`DeltaEndomorphismRing:=R;
+        Qm0,qm0:=Quotient(dm,dm);
+        FQm0:=IdentityHomomorphism(Qm0); // this is zero
+        VQm0:=FQm0;
+        isog`SemilinearOperators:=<0,dm,dm,Qm0,qm0,FQm0,VQm0>;
         return [dm],plE_sl_in01; 
     end if;
 
