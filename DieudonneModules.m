@@ -832,7 +832,7 @@ intrinsic IsomorphismClassesDieudonneModulesCommEndAlg(isog::IsogenyClassFq : In
     // By looking at the composition series, one deduces that any 
     // M \geq Ilog(Index(WR,P),Index(J,p^(m0+1)J)) will do.
     size:=(p^(m0+1))^AbsoluteDimension(A); // size = #J/p^(m0+1)J = (p^(m0+1))^dim_Q(A)
-    M:=Max( [ Ilog(Index(WR,P),Index(J,p^(m0+1)J)) : P in primes_01_WR] );
+    M:=Max( [ Ilog(Index(WR,P),Index(J,p^(m0+1)*J)) : P in primes_01_WR] );
     //M1:=M+10; "WARNING: M is forced now from ",M,"to",M1; M:=M1; //for debugging
     vprintf Algorithm_3,1 : "done. Got M=%o\n",M;
     PP01:=(&*(primes_01_WR))^M;
