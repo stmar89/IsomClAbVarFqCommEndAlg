@@ -12,6 +12,7 @@ SemilinearOperators.m
 WKICM_WR.m
 IsomorphismClassesDieudonneModulesCommEndAlg.m
 IsomorphismClasses.m
+aNumber.m
 GenDeligneModules.m
 DualAbVarFq.m
 Pols.m
