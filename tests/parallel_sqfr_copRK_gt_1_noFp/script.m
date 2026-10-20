@@ -28,13 +28,7 @@
         ROP:=R!!(OOP);
         oo:=OverOrders(R);
         output:=[ S : S in oo | OO1 eq ( (R!!OneIdeal(S))+ROP ) ];
-
-        OOP:=PrimesAbove(OOP);
-        assert #OOP eq 1;
-        OOP:=OOP[1];
-        ram:=RamificationIndex(OOP);
-        assert ram in {1,2};
-        return output,ram;
+        return output;
     end function;
 
     coeffs:=[StringToInteger(c):c in Split(cc,"[ ,]")];
@@ -54,7 +48,7 @@
     num_isom:=#iso;
     num_test:=0;
     R:=ZFVOrder(isog);
-    oo_max_at_ss,ram:=overorders_maximal_at_ss(R);
+    oo_max_at_ss:=overorders_maximal_at_ss(R);
     is_R_End:=R in ends;
     is_R_End:=is_R_End select "t" else "f";
     End_not_max_at_ss:=exists{S:S in ends|S notin oo_max_at_ss};
