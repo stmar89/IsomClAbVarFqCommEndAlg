@@ -13,15 +13,16 @@ Please send comments and bug reports to `stefano.marseglia89@gmail.com`.
 
 Installation
 --
-- Clone the repository [`AlgEt`](https://github.com/stmar89/AlgEt). If you are on a version of Magma prior to 2.29 then attach all `spec`  files. If you are using Magma 2.29 or more recent, then attach only `specMtrx` and `specMod`.
+- Clone the repository [`AlgEt`](https://github.com/stmar89/AlgEt). If you are on a version of Magma prior to 2.29 then attach all `spec`  files. If you are using Magma 2.29 or a more recent version, then attach only `specMtrx` and `specMod`.
 - Clone the repository [`AbVarFq`](https://github.com/stmar89/AbVarFq) and make sure to attach the corresponding `spec` file.
+- Attach these dependencies using `AttachSpec("depends.spec")`. This file assumes that the dependencies have been cloned in the same folder as this repository and that you are using a version of Magma newer than 2.29. If this is not the case, modify it accordingly.
 
 Quick start
 ---
 The main intrinsic provided by the package is `IsomorphismClassesCommEndAlg`. Here is a first example:
 ```
-AttachSpec("~/AbVarFq/spec"); AttachSpec("~/AlgEt/specMod"); AttachSpec("~/AlgEt/specMtrx"); //AttachSpec("~/AlgEt/spec"); // this spec file is part of Magma since 2.29
-AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");    
+AttachSpec("depends.spec");
+AttachSpec("spec");    
 PP<x>:=PolynomialRing(Integers());
 isog:=IsogenyClass(x^6-3*x^4+2*x^3-12*x^2+64);
 E:=DeligneAlgebra(isog);
@@ -67,6 +68,7 @@ Changelog
   * Fixed precision issues while calling Truncate in combination with taking roots or logs.
   * Included a new intrinsic to compute a-numbers; see aNumber.
   * A bug in IsomorphismClassesAwayFromLocalLocalCommEndAlg regarding sorting of singular primes is fixed.
+  * We included a spec file for dependencies.
   
   This version has been tested with Magma 2.29-10.
   

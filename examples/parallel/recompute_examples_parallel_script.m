@@ -10,11 +10,8 @@ parallel script, to run on screen
     //SAVE:=false;
     SetAssertions(2);
 
-    AttachSpec("~/AbVarFq/spec");
-    //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    AttachSpec("../../depends.spec");
+    AttachSpec("../../spec");    
 
     function Base26Encode(n)
             alphabet := "abcdefghijklmnopqrstuvwxyz";

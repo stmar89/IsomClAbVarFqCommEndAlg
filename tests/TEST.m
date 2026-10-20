@@ -2,11 +2,8 @@
 
     // Testing on a few classes together with saving loading.
 
-    AttachSpec("~/AlgEt/spec");
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/AbVarFq/spec");
-    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    AttachSpec("../depends.spec");
+    AttachSpec("../spec");    
 
     PP<x>:=PolynomialRing(Integers());
 
@@ -70,11 +67,9 @@
 
     // TeST on a very big set of inputs: comparing ordinary, cs, almost ordinary data
 
-    AttachSpec("~/AlgEt/spec");
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/AbVarFq/spec");
-    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    AttachSpec("../depends.spec");
+    AttachSpec("../spec");    
+
     SetAssertions(2);
 
     overorders_maximal_at_ss:=function(R)
@@ -100,8 +95,6 @@
         return output,ram;
     end function;
 
-    //SetVerbose("DieudonneModules",2);
-    //SetVerbose("Algorithm_3",2);
     SetAssertions(2);
     SetDebugOnError(true);
 

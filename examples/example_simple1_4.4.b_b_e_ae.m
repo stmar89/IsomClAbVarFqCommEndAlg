@@ -2,11 +2,8 @@
 /*
 */
 
-    AttachSpec("~/AbVarFq/spec");
-    //AttachSpec("~/AlgEt/spec"); // this spec file in is magma since 2.29
-    AttachSpec("~/AlgEt/specMod");
-    AttachSpec("~/AlgEt/specMtrx");
-    AttachSpec("~/IsomClAbVarFqCommEndAlg/spec");
+    AttachSpec("../depends.spec");
+    AttachSpec("../spec");    
 
     PP<x>:=PolynomialRing(Integers());
 
