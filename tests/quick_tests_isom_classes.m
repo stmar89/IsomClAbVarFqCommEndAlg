@@ -154,5 +154,5 @@
             out:="NA";
         end if;
 
-        printf "Computed %5o isom. cl. in %o secs.\tComparison with previous results: %o.\tThe isogeny class is %o with Weil poly %o\n",num_isom,t1,out,descr,h;
+        printf "Computed %5o isom. cl. in %7o secs. Comparison with previous results: %o.\tThe isogeny class is %o with Weil poly %o\n",num_isom,t1,out,descr,h;
     end for;
