@@ -61,7 +61,7 @@ Changelog
   - A bug affecting in some cases the computation of the precision required to verify when a `WR`-ideal is a `WR{F,V}`-ideal leading to incorrect outputs, is now fixed.
          
   This version has been tested with Magma 2.29-6.
-- <code>v1.0.2</code> Bugfix:
+- <code>v1.0.2</code> Bugfixes:
   * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`appendix`](Computational_Appendix.pdf).
   * A bug occurring when `gP` is strictly greater than 2 has been fixed. 
   * Fixed precision issues while calling `Truncate` in combination with taking roots or logs.
