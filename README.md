@@ -37,7 +37,6 @@ Details
 --
 
 For complete descriptions and more details we refer to the [`List of commands`](https://github.com/stmar89/IsomClAbVarFqCommEndAlg/blob/main/doc/ListOfCommands.md).
-Use the magma command `AttachSpec("spec")` after opening magma in the folder where you have downloaded the repo.
 
 As in [`AbVarFq`](https://github.com/stmar89/AbVarFq), the abelian varieties have type `AbelianVarietyFq`.
 In this package the information about the isomorphism class of each abelian variety is stored in the attribute `IsomDataCommEndAlg=<I,M,J,S>`, where `I` is a `Z[pi,q/pi]`-ideal encoding the local information of all l-Tate modules (for all l neq p) together with the étale-local and local-étale part of the Dieudonné module, `M` represents the local-local part of the Dieudonné module, and `J` determines the position of the abelian variety in the orbit of the class group of the endomorphism ring `S`, which acts on the local information just described.
@@ -51,7 +50,7 @@ In order to recover all isomorphism classes, as tuples `<I,M,J,S>`, we do the fo
   - The isomorphism classes of the `M`s are computed using the intrinsic `IsomorphismClassesDieudonneModulesCommEndAlg`, which is a combination of Algorithm A from the [`appendix`](Computational_Appendix.pdf) together with Algorithms 1 and 2 from the main paper.
   - The action of the semilinear Frobenius and Verschiebung on each `M` (in an appropriate finite quotient) is recovered by the intrinsic `SemilinearOperators`.
   - The endomorphism ring `S` of each isomorphism class can be recovered using the intrinsic `EndomorphismRing` from [`AbVarFq`](https://github.com/stmar89/AbVarFq); see Algorithm C in the [`appendix`](Computational_Appendix.pdf).
-  - All tuples `<I,M,J,S>` are computed by the intrinsic `IsomorphismClassesCommEndAlg`, which is based on the wrapper Algorithm D from the [`appendix`](Computational_Appendix.pdf).
+  - All tuples `<I,M,J,S>` are computed by the intrinsic `IsomorphismClassesCommEndAlg`, which wraps the above and is based on Algorithm D from the [`appendix`](Computational_Appendix.pdf).
 
 Changelog
 --
@@ -62,17 +61,15 @@ Changelog
   - A bug affecting in some cases the computation of the precision required to verify when a `WR`-ideal is a `WR{F,V}`-ideal leading to incorrect outputs, is now fixed.
          
   This version has been tested with Magma 2.29-6.
-- <code>v1.0.2</code> Bugfix:
+- <code>v1.0.2</code> Bugfixes:
   * The representative function returned with `units_quotient_fixed_sigma` now gives representatives which are units at all places of `OA'` and not just modulo `ff_prod`. See Remark IV in the [`appendix`](Computational_Appendix.pdf).
   * A bug occurring when `gP` is strictly greater than 2 has been fixed. 
-  * Fixed precision issues while calling Truncate in combination with taking roots or logs.
-  * Included a new intrinsic to compute a-numbers; see aNumber.
-  * A bug in IsomorphismClassesAwayFromLocalLocalCommEndAlg regarding sorting of singular primes is fixed.
-  * We included a spec file for dependencies.
+  * Fixed precision issues while calling `Truncate` in combination with taking roots or logs.
+  * Included a new intrinsic to compute a-numbers; see `aNumber`.
+  * A bug in `IsomorphismClassesAwayFromLocalLocalCommEndAlg` regarding sorting of singular primes is fixed.
+  * We included a spec file for dependencies; see `depends.spec`.
   
   This version has been tested with Magma 2.29-10.
-  
-  The bug above does not affect the content of the referenced paper below.
 
 References
 --
