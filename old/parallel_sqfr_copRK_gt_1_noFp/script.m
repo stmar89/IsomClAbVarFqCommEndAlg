@@ -1,4 +1,12 @@
 /*
+    This in support of Observation 3.8 of the paper.
+    This parallel script takes as input a big list of squarefree isogeny classes over non-prime fields of dimension g 
+    with p-rank < g-1 (so neither ordinary nor almost-ordinary). 
+    The Frobenius order R of each such isogeny class has a unique local-local maximal ideal P=(p,pi,q/pi).
+    The outputi for each class has the following format:
+    #isom. cl. : timings in secs : max g_nu for nu with slope in (0,1) : is R an End? : is there an End which is not maximal at P? : coefficients.
+
+    Here is the parallel script to run the computation. Adjust # of jobs and timeout accordingly.
     parallel -a weil_poly_sqfr_copRK_gt_1_noFp_sorted.txt --j 60 --joblog joblog --timeout 18000 magma -b cc:={} script.m
 */
     

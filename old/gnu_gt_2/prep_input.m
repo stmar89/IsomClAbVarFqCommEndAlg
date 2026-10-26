@@ -1,9 +1,5 @@
 /*
 
-
-    parallel -a ../weil_poly_pRK_gt_1_noFp.txt magma -b cc:={} ./prep_input.m 
-
-    // with chunking the input in a bunch of files
     parallel --pipe --cat -N 100 "magma -b all:={} ./prep_input.m" < ../weil_poly_pRK_gt_1_noFp.txt
 
 */

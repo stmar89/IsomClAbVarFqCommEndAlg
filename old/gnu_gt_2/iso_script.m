@@ -1,5 +1,9 @@
 /*
 
+    This parallel script takes as input a big list of squarefree isogeny classes over non-prime fields of dimension g 
+    with p-rank < g-1 (so neither ordinary nor almost-ordinary) with a local-local place with g_nu>2.
+    For each such class it outputs the number of isomorphism classes and timings.
+
     parallel --joblog joblog --timeout 600 -a input.m magma -b cc:={} ./iso_script.m 
 
 */
