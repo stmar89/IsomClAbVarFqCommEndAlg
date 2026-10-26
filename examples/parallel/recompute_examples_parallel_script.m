@@ -1,7 +1,7 @@
 /*
 parallel script, to run on screen
-    rm 2.4.a_e 3.8.l_ci_ia 3.9.ab_ad_bt 4.4.ag_s_abk_cq 4.4.b_b_e_ae && \
-    parallel -a ~/IsomClAbVarFqCommEndAlg/examples/parallel/recompute_examples_parallel_input magma -b c:={} ~/IsomClAbVarFqCommEndAlg/examples/parallel/recompute_examples_parallel_script.m
+    rm ../2.4.a_e ../3.8.l_ci_ia ../3.9.ab_ad_bt ../4.4.ag_s_abk_cq ../4.4.b_b_e_ae && \
+    parallel -a ./recompute_examples_parallel_input magma -b c:={} ./recompute_examples_parallel_script.m
 */
 
     // The next variable determines wheather we save again the isom
