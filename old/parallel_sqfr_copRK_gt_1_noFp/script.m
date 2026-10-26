@@ -1,5 +1,5 @@
 /*
-    This in support of Observation 3.8 of the paper.
+    This in support of Observation 7.8 of the paper.
     This parallel script takes as input a big list of squarefree isogeny classes over non-prime fields of dimension g 
     with p-rank < g-1 (so neither ordinary nor almost-ordinary). 
     The Frobenius order R of each such isogeny class has a unique local-local maximal ideal P=(p,pi,q/pi).
